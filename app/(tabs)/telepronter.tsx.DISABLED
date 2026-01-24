@@ -1,0 +1,24 @@
+import { useEffect, useState } from "react";
+import { ScrollView, StyleSheet, Text } from "react-native";
+
+export default function Teleprompter({ text = "" }) {
+  const [scrollY, setScrollY] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setScrollY(prev => prev + 1);
+    }, 50);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <ScrollView style={styles.container} contentOffset={{ x: 0, y: scrollY }}>
+      <Text style={styles.text}>{text}</Text>
+    </ScrollView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { height: 200, width: "90%", borderWidth: 1, borderColor: "#000", marginVertical: 20 },
+  text: { fontSize: 20, lineHeight: 30 },
+});
