@@ -34,12 +34,12 @@ ${PRESETS[preset]}
 /* ===== TEMPLATE LOCALI (UGUALI A EXPLORE) ===== */
 const TEMPLATE_MAP: Record<string, any[]> = {
   dance: [
-    require("../../assets/videos/dance1.mp4"),
-    require("../../assets/videos/dance2.mp4"),
-    require("../../assets/videos/dance3.mp4"),
-    require("../../assets/videos/dance4.mp4"),
-    require("../../assets/videos/dance5.mp4"),
-    require("../../assets/videos/dance6.mp4"),
+    //require("../../assets/videos/dance1.mp4"),//
+    //require("../../assets/videos/dance2.mp4"),//
+   //require("../../assets/videos/dance3.mp4"),//
+   //require("../../assets/videos/dance4.mp4"),//
+    //require("../../assets/videos/dance5.mp4"),//
+    //require("../../assets/videos/dance6.mp4"),//
   ],
   fantasy: [
     require("../../assets/videos/fantasyAI1.mp4"),
@@ -59,6 +59,7 @@ const TEMPLATE_MAP: Record<string, any[]> = {
     require("../../assets/videos/calcio1.mp4"),
     require("../../assets/videos/calcio2.mp4"),
     require("../../assets/videos/calcio3.mp4"),
+    require("../../assets/videos/calcio4.mp4"),
   ],
   winter: [
     require("../../assets/videos/winter1.mp4"),
