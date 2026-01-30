@@ -4,6 +4,3 @@ node_modules
 .expo-shared
 .vscode
 
-
-**/*.mp4
-**/*.mov
