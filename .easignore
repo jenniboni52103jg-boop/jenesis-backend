@@ -1,6 +1,10 @@
+# node / build
 node_modules
 .git
 .expo
 .expo-shared
-.vscode
+ios
+android
 
+# video pesanti
+assets/videos/*
