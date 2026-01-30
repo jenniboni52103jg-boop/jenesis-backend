@@ -15,6 +15,7 @@ const dance2 = require("../../assets/videos/dance2.mp4");
 const dance3 = require("../../assets/videos/dance3.mp4");
 const dance4 = require("../../assets/videos/dance4.mp4");
 const dance5 = require("../../assets/videos/dance5.mp4");
+const dance6 = require("../../assets/videos/dance6.mp4");
 
 const fantasyAI1 = require("../../assets/videos/fantasyAI1.mp4");
 const fantasyAI2 = require("../../assets/videos/fantasyAI2.mp4");

@@ -39,6 +39,7 @@ const TEMPLATE_MAP: Record<string, any[]> = {
     require("../../assets/videos/dance3.mp4"),
     require("../../assets/videos/dance4.mp4"),
     require("../../assets/videos/dance5.mp4"),
+    require("../../assets/videos/dance6.mp4"),
   ],
   fantasy: [
     require("../../assets/videos/fantasyAI1.mp4"),
