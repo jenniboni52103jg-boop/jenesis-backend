@@ -1,0 +1,10 @@
+node_modules
+.git
+.expo
+.expo-shared
+.vscode
+ios
+android 
+
+**/*.mp4
+**/*.mov
