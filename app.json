@@ -5,20 +5,27 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.jennifer21.NanoBananaPro"
+      "bundleIdentifier": "com.jennifer21.NanoBananaPro",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
-
     "android": {
       "package": "com.jennifer21.NanoBananaPro"
     },
-
     "web": {
       "output": "static"
     },
-
-    "plugins": ["expo-router"]
+    "plugins": [
+      "expo-router"
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "19301f31-8a32-4af9-8d8b-9132ae6e0e49"
+      }
+    }
   }
 }
