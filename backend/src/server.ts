@@ -39,6 +39,9 @@ cloudinary.config({
 });
 
 const app = express();
+app.get('/', (req, res) => {
+  res.send('Server attivo 🚀');
+});
 const upload = multer({ storage: multer.memoryStorage() });
 
 const ROOT_DIR = process.cwd();
