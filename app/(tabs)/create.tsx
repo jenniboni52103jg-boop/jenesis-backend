@@ -12,7 +12,7 @@ import {
   StyleSheet,
   Text, TextInput, TouchableOpacity, TouchableWithoutFeedback, View
 } from "react-native";
-import { CREDIT_COSTS } from "../../constants/credits";
+import { CREDIT_COSTS } from "../constants/credits";
 import { useCredits } from "../contexts/CreditsContext";
 import { checkPremium } from "../services/revenuecat";
 import { addProjectToProjects } from "./projects";
