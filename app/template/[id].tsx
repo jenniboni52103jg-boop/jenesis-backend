@@ -14,7 +14,7 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
-import { TEMPLATES } from "../../constants/templates";
+import { TEMPLATES } from "../constants/templates";
 
 const API_URL = "https://injurable-giavanna-purselike.ngrok-free.dev";
 
@@ -185,7 +185,7 @@ export default function TemplateDetail() {
         >
           <View style={[styles.videoCard, getRatioStyle()]}>
             <Video
-              source={template.video}
+             // source={template.video}
               style={StyleSheet.absoluteFill}
               resizeMode={ResizeMode.COVER}
               shouldPlay

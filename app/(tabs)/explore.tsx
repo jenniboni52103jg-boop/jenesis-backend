@@ -18,8 +18,8 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import "../../constants/templates";
-import { TEMPLATES } from "../../constants/templates";
+import "../constants/templates";
+import { TEMPLATES } from "../constants/templates";
 import { auth } from "../../firebase";
 import { CALCIO_ARCHETYPES_CARDS } from "../services/calcioCards";
 import { SCENES_3 } from "../services/calcioPrompts";

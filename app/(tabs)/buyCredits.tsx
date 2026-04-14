@@ -1,7 +1,7 @@
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
-import { getBillingState,} from "../../backend/src/services/billing";
+import { getBillingState,} from "../services/billing";
 import { useFocusEffect } from "@react-navigation/native";
 import { useCallback } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -119,8 +119,8 @@ useFocusEffect(
     let alive = true;
 
  (async () => {
-      const state = await getBillingState();
-      if (alive) setPlanState(state.plan as "free" | "pro");
+     // const state = await getBillingState();
+      //if (alive) setPlanState(state.plan as "free" | "pro");
     })();
 
     return () => {
