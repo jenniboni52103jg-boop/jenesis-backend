@@ -1,0 +1,32 @@
+{
+  "expo": {
+    "name": "NanoBananaPro",
+    "slug": "NanoBananaPro",
+    "version": "1.0.0",
+    "orientation": "portrait",
+
+    "ios": {
+      "bundleIdentifier": "com.jennifer21.NanoBananaPro",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSAppTransportSecurity": {
+          "NSAllowsArbitraryLoads": true
+        }
+      }
+    },
+
+    "android": {
+      "package": "com.jennifer21.NanoBananaPro"
+    },
+
+    "plugins": [
+      "react-native-purchases"
+    ],
+
+    "extra": {
+      "eas": {
+        "projectId": "258ff88e-f0e1-43f9-9062-8ddecc8482a7"
+      }
+    }
+  }
+}

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CLIENT_ID</key>
+	<string>205077231736-nnmdc3it0kke6t11ti3cjv26svc3g6us.apps.googleusercontent.com</string>
+	<key>REVERSED_CLIENT_ID</key>
+	<string>com.googleusercontent.apps.205077231736-nnmdc3it0kke6t11ti3cjv26svc3g6us</string>
+	<key>API_KEY</key>
+	<string>AIzaSyBa_N3ZVEDESWoth8811U6PjQN5lIJfG0g</string>
+	<key>GCM_SENDER_ID</key>
+	<string>205077231736</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>com.jennifer21.NanoBananaPro</string>
+	<key>PROJECT_ID</key>
+	<string>jenniferai</string>
+	<key>STORAGE_BUCKET</key>
+	<string>jenniferai.firebasestorage.app</string>
+	<key>IS_ADS_ENABLED</key>
+	<false></false>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false></false>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true></true>
+	<key>IS_GCM_ENABLED</key>
+	<true></true>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true></true>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:205077231736:ios:96499593822f5f2419958d</string>
+</dict>
+</plist>
