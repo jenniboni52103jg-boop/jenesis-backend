@@ -1,7 +1,30 @@
+import "react-native-url-polyfill/auto";
 import { Ionicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
+import { useEffect } from "react";
+import Purchases from "react-native-purchases";
+import { Platform } from "react-native";
 
 export default function TabsLayout() {
+
+  useEffect(() => {
+    const initRevenueCat = async () => {
+      try {
+        await Purchases.configure({
+          apiKey: Platform.select({
+            ios: "test_GpZKHSpWbTLdDBVsjixIYyiarUo", // 🔥 METTI LA TUA VERA
+          })!,
+        });
+
+        console.log("✅ RevenueCat configurato");
+      } catch (e) {
+        console.log("❌ ERRORE CONFIG RC", e);
+      }
+    };
+
+    initRevenueCat();
+  }, []);
+
   return (
     <Tabs
       screenOptions={{
