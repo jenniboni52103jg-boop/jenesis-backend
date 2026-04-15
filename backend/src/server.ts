@@ -2259,10 +2259,10 @@ app.post("/ai-photos/generate", async (req, res) => {
 function getTemplates(templateKey: string) {
   if (templateKey === "autumn") {
     return [
-      path.join(__dirname, "templates/autumn/autumn_1.jpg"),
-      path.join(__dirname, "templates/autumn/autumn_2.jpg"),
-      path.join(__dirname, "templates/autumn/autumn_3.jpg"),
-      path.join(__dirname, "templates/autumn/autumn_4.jpg"),
+      path.join(__dirname, "templates/autunno/autunno_1.jpg"),
+      path.join(__dirname, "templates/autunno/autunno_2.jpg"),
+      path.join(__dirname, "templates/autunno/autunno_3.jpg"),
+      path.join(__dirname, "templates/autunno/autunno_4.jpg"),
     ];
   }
 
