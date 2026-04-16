@@ -772,7 +772,7 @@ async function hedraGetAssetDownloadUrl(assetId) {
 const avatarJobs = new Map();
 const styleJobs = new Map();
 const STYLE_TEMPLATES = {
-    autumn: [
+    autunno: [
         "https://.../autunno1.jpg",
         "https://.../autunno2.jpg",
         "https://.../autunno3.jpg",
@@ -1775,15 +1775,13 @@ app.post("/ai-photos/generate", async (req, res) => {
     }
 });
 function getTemplates(templateKey) {
-    if (templateKey === "autumn") {
-        return [
-            path_1.default.join(__dirname, "templates/autunno/autunno_1.jpg"),
-            path_1.default.join(__dirname, "templates/autunno/autunno_2.jpg"),
-            path_1.default.join(__dirname, "templates/autunno/autunno_3.jpg"),
-            path_1.default.join(__dirname, "templates/autunno/autunno_4.jpg"),
-        ];
-    }
-    throw new Error("Template not found");
+    const basePath = path_1.default.join(process.cwd(), "backend/src/assets/style-templates", templateKey);
+    return [
+        path_1.default.join(basePath, "autunno1.jpg"),
+        path_1.default.join(basePath, "autunno2.jpg"),
+        path_1.default.join(basePath, "autunno3.jpg"),
+        path_1.default.join(basePath, "autunno4.jpg"),
+    ];
 }
 /* ================== ROUTE AI EFFECTS ================== */
 app.post("/effects/generate", async (req, res) => {
