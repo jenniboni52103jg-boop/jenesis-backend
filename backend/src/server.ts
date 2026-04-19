@@ -160,7 +160,6 @@ async function convertIfHeic(file: any) {
 
   return file.buffer;
 }
-/* ================== async per image- AI video ================== */
 
 /* ================== HELPERS RUNWAY ================== */
 
@@ -1507,6 +1506,24 @@ app.post("/generate-image", async (req, res) => {
     // 🧠 BASE PROMPT
     let finalPrompt = String(promptText);
 
+ if (resolution === "2k" && isPremium) {
+  finalPrompt += `
+
+ULTRA PREMIUM MODE:
+- hyper realistic photography
+- insane level of detail
+- ultra sharp 8k textures
+- cinematic lighting like a movie scene
+- volumetric light, depth of field
+- professional color grading (Hollywood look)
+- skin micro details, pores, fine imperfections
+- realistic reflections and shadows
+- global illumination
+- perfect exposure balance
+
+This MUST look like a high-end professional photo, not AI.
+`;
+}
     // 🎯 STYLE
     if (style === "photorealistic") {
       finalPrompt += `
@@ -1581,6 +1598,37 @@ cartoon, 3d render, cgi, pixar, disney, toy, plastic, fake, anime, big eyes, sty
 DO NOT look like AI generated.
 `;
 
+if (style === "cartoon") {
+  finalPrompt += `
+
+Cartoon / animated style illustration.
+
+STYLE RULES:
+- stylized character
+- smooth skin
+- clean outlines
+- vibrant colors
+- soft shading
+- slightly exaggerated features
+- big expressive eyes
+- perfect symmetry
+
+REFERENCES:
+- Pixar style
+- Disney style
+- animated movie character
+
+QUALITY:
+- ultra clean render
+- no realism
+- no skin texture
+- no pores
+- no camera look
+
+NEGATIVE:
+realistic, photo, DSLR, skin texture, pores, noise
+`;
+}
     // 🔥 BLOCCO PREMIUM
     const finalResolution =
       resolution === "2k" && isPremium ? "2k" : "1k";
@@ -1614,10 +1662,12 @@ if (resolution === "2k" && isPremium) {
 if (isPremium) {
   buffer = await sharp(buffer)
     .jpeg({ quality: 100 }) // 🔥 PRO
+    .sharpen(1.5)
     .toBuffer();
 } else {
   buffer = await sharp(buffer)
-    .jpeg({ quality: 85 }) // 👈 FREE
+    .jpeg({ quality: 75 }) // 👈 FREE
+    .blur(0.3)
     .toBuffer();
 }
 
@@ -1648,9 +1698,12 @@ app.post("/api/runway/image-to-video", upload.single("image"), async (req: any, 
     const { quality } = req.body;
     const isUltra = quality === "ultra";
 
-    if (!req.file?.buffer) {
-      return res.status(400).json({ error: "Missing image file" });
-    }
+    console.log("📦 FILE:", req.file);
+
+    if (!req.file || !req.file.buffer) {
+  console.log("❌ FILE NON ARRIVATO");
+  return res.status(400).json({ error: "Missing image file" });
+}
 
     const prompt = String(req.body?.prompt ?? "Animate this image naturally");
     const ratio = toRunwayRatio(String(req.body?.ratio ?? "720:1280"));
@@ -1748,58 +1801,6 @@ app.post("/api/runway/image-to-video", upload.single("image"), async (req: any, 
   } catch (error: any) {
     console.error("❌ Runway image-to-video error:", error?.message ?? error);
 
-    return res.status(500).json({
-      error: error?.message || "Runway image-to-video failed",
-    });
-  }
-});
-
-/* ================== RUNWAY IMAGE → VIDEO ================== */
-
-app.post("/api/runway/image-to-video", upload.single("image"), async (req: any, res) => {
-  try {
-    if (!req.file?.buffer) {
-      return res.status(400).json({ error: "Missing image file" });
-    }
-
-    const prompt = String(req.body?.prompt ?? "Animate this image naturally");
-    const ratio = toRunwayRatio(String(req.body?.ratio ?? "720:1280"));
-    const durationRaw = Number(req.body?.duration ?? 5);
-    const duration = durationRaw === 10 ? 10 : 5;
-
-    const mimeType = req.file.mimetype || "image/jpeg";
-    const dataUri = bufferToDataUri(req.file.buffer, mimeType);
-
-    console.log("🎬 Runway start image-to-video...");
-    console.log("ratio:", ratio);
-    console.log("duration:", duration);
-
-    const task = await runway.imageToVideo
-      .create({
-        model: "gen4.5",
-        promptImage: dataUri,
-        promptText: prompt,
-        ratio,
-        duration,
-      })
-      .waitForTaskOutput();
-
-    const videoUrl = normalizeRunwayOutput(task);
-
-    if (!videoUrl) {
-      console.log("❌ Runway task output:", task);
-      return res.status(500).json({
-        error: "Runway non ha restituito un videoUrl valido",
-      });
-    }
-
-    console.log("✅ Runway video pronto");
-    return res.json({
-      videoUrl,
-      taskId: task?.id ?? null,
-    });
-  } catch (error: any) {
-    console.error("❌ Runway image-to-video error:", error?.message ?? error);
     return res.status(500).json({
       error: error?.message || "Runway image-to-video failed",
     });
