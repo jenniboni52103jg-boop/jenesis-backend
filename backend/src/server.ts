@@ -143,6 +143,7 @@ async function uploadToCloudinary(buffer: Buffer) {
     stream.end(buffer);
   });
 }
+
 /* ================== per cards couple ================== */
 async function convertIfHeic(file: any) {
   if (
@@ -162,7 +163,6 @@ async function convertIfHeic(file: any) {
 }
 
 /* ================== HELPERS RUNWAY ================== */
-
 function toRunwayRatio(ratio: string) {
   if (ratio === "9:16" || ratio === "720:1280") return "720:1280";
   if (ratio === "16:9" || ratio === "1280:720") return "1280:720";
@@ -220,8 +220,8 @@ function pickBase64(result: any) {
     result?.output?.[0]?.base64
   );
 }
-/* ================== AI EFFECTS IMAGE FILTERS ================== */
 
+/* ================== AI EFFECTS IMAGE FILTERS ================== */
 function effectImageFilter(effect: string) {
   if (effect === "movie") {
     return "scale=720:1280:force_original_aspect_ratio=increase,crop=720:1280,setsar=1,eq=contrast=1.12:saturation=1.08:brightness=-0.02,unsharp=5:5:0.8:5:5:0.0,vignette=PI/5";
@@ -314,7 +314,6 @@ async function applyWatermarkToBuffer(imageBuffer: Buffer): Promise<Buffer> {
 }
 
 // ---------------- SWAPFACE per photo ai ----------------
-
 async function swapFace(templatePath: string, userBuffer: Buffer) {
   process.env.FAL_KEY = "8ee7f096-30f2-46b2-8e20-2108740cec98:271e1e9b6c13ad1f49426b699bdd565f";
 
@@ -353,7 +352,6 @@ async function swapFace(templatePath: string, userBuffer: Buffer) {
     throw error;
   }
 }
-// ---------------- REFINE IMAGE ----------------
 
 //}
 /* ================== HELPERS ELEVENLABS ================== */
