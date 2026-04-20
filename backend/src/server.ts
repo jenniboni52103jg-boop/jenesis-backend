@@ -23,6 +23,7 @@ import crypto from "crypto";
 
 console.log("REPLICATE KEY:", process.env.REPLICATE_API_KEY);
 console.log("FAL KEY LENGTH:", process.env.FAL_KEY?.length);
+console.log("FFMPEG PATH:", ffmpegPath);
 
 process.env.FAL_KEY = process.env.FAL_KEY || "";
 fal.config({
@@ -1686,6 +1687,7 @@ return res.json({
     });
   }
 });
+
 /* ================== RUNWAY IMAGE → VIDEO ================== */
 app.post("/api/runway/image-to-video", upload.single("image"), async (req: any, res) => {
   try {
@@ -1697,6 +1699,7 @@ app.post("/api/runway/image-to-video", upload.single("image"), async (req: any, 
     const isUltra = quality === "ultra";
 
     console.log("📦 FILE:", req.file);
+    console.log("REQ.FILE:", req.file);
 
     if (!req.file || !req.file.buffer) {
   console.log("❌ FILE NON ARRIVATO");
@@ -1734,14 +1737,14 @@ app.post("/api/runway/image-to-video", upload.single("image"), async (req: any, 
       return res.status(500).json({
         error: "Runway non ha restituito un videoUrl valido",
       });
-    }
+   }
 
     console.log("🎬 Processing video...");
 
     // 📥 scarica video
     const videoBuffer = await fetch(videoUrl).then((r) => r.buffer());
 
-    // 📁 path
+     //📁 path
     const inputPath = path.join(TEMP_DIR, `runway_${Date.now()}.mp4`);
     const outputPath = path.join(VIDEOS_DIR, `runway_wm_${Date.now()}.mp4`);
 
@@ -1768,7 +1771,7 @@ app.post("/api/runway/image-to-video", upload.single("image"), async (req: any, 
           },
         ];
 
-    // 🎬 FFMPEG (QUALITÀ REALE)
+     //🎬 FFMPEG (QUALITÀ REALE)
     await new Promise((resolve, reject) => {
       ffmpeg(processedInput)
         .outputOptions([
@@ -1796,13 +1799,14 @@ app.post("/api/runway/image-to-video", upload.single("image"), async (req: any, 
       taskId: task?.id ?? null,
     });
 
-  } catch (error: any) {
-    console.error("❌ Runway image-to-video error:", error?.message ?? error);
+  } catch (err: any) {
+  console.error("💥 RUNWAY ERROR:", err);
 
-    return res.status(500).json({
-      error: error?.message || "Runway image-to-video failed",
-    });
-  }
+  res.status(500).json({
+    error: "runway_error",
+    message: err?.error?.error || err.message,
+  });
+}
 });
 
 /* ================== HEDRA VOICES ================== */
@@ -1842,6 +1846,130 @@ app.get("/api/hedra/voices", async (_req, res) => {
   } catch (err: any) {
     console.error("❌ Hedra voices error:", err);
     return res.status(500).json({ error: err?.message });
+  }
+});
+
+/* -------------------NUOVA ROUTE--------------*/
+app.post("/generate-motion-speaking-video", upload.single("image"), async (req: any, res) => {
+  try {
+    const isPremium = req.body?.isPremium === "true" || req.body?.isPremium === true;
+    const prompt = String(req.body?.actionPrompt || "Animate naturally");
+    const speech = String(req.body?.speechText || "");
+    const voiceId = String(req.body?.voiceId || "");
+
+    if (!req.file?.buffer) {
+      return res.status(400).json({ error: "Missing image" });
+    }
+
+    /* STEP 1 — Runway motion */
+    const dataUri = `data:${req.file.mimetype};base64,${req.file.buffer.toString("base64")}`;
+
+    const runwayTask = await runway.imageToVideo.create({
+      model: "gen4.5",
+      promptImage: dataUri,
+      promptText: prompt,
+      ratio: "720:1280",
+      duration: 5,
+    }).waitForTaskOutput();
+
+    const videoUrl =
+      (Array.isArray((runwayTask as any).output)
+        ? ((runwayTask as any).output[0]?.url || (runwayTask as any).output[0])
+        : null) ||
+      (runwayTask as any).videoUrl ||
+      null;
+
+    if (!videoUrl) {
+      throw new Error("Runway video generation failed");
+    }
+
+    /* STEP 2 — Hedra voice */
+    const audioGenId = await hedraGenerateAudio({
+      text: speech,
+      voiceId,
+    });
+
+    const audioResult = await hedraPollGenerationResult(audioGenId);
+
+    console.log("✅ HEDRA AUDIO RESULT:");
+    console.log(JSON.stringify(audioResult, null, 2));
+
+    let audioUrl =
+      audioResult?.url ||
+      audioResult?.audio_url ||
+      audioResult?.download_url ||
+      audioResult?.streaming_url ||
+      audioResult?.asset?.url ||
+      audioResult?.asset?.download_url ||
+      audioResult?.result?.url ||
+      null;
+
+    if (!audioUrl) {
+      const audioAssetId =
+        audioResult?.asset_id ||
+        audioResult?.asset?.id ||
+        null;
+
+      if (!audioAssetId) {
+        throw new Error("Audio generation failed: no audioUrl and no asset_id");
+      }
+
+      audioUrl = await hedraGetAssetDownloadUrl(audioAssetId);
+
+      if (!audioUrl) {
+        throw new Error("Audio generation failed: Hedra did not return audioUrl");
+      }
+
+      console.log("✅ HEDRA AUDIO FALLBACK URL:", audioUrl);
+    }
+
+    /* STEP 3 — download video + audio */
+    const videoPath = path.join(TEMP_DIR, `video_${Date.now()}.mp4`);
+    const audioPath = path.join(TEMP_DIR, `audio_${Date.now()}.mp3`);
+    const outputPath = path.join(VIDEOS_DIR, `final_${Date.now()}.mp4`);
+
+    const videoBuffer = await fetch(videoUrl).then((r) => r.buffer());
+    const audioBuffer = await fetch(audioUrl).then((r) => r.buffer());
+
+    fs.writeFileSync(videoPath, videoBuffer);
+    fs.writeFileSync(audioPath, audioBuffer);
+    
+    const filters = isPremium
+  ? []
+  : [
+      {
+        filter: "drawtext",
+        options: {
+          text: "JenesisAI",
+          fontcolor: "white@0.5",
+          fontsize: "h/20",
+          x: "(w-text_w)/2",
+          y: "(h-text_h)*0.9",
+          shadowcolor: "black",
+          shadowx: 2,
+          shadowy: 2,
+        },
+      },
+    ];
+    /* STEP 4 — merge audio + video */
+    await new Promise((resolve, reject) => {
+      ffmpeg(videoPath)
+        .input(audioPath)
+        .videoFilters(filters)
+        .outputOptions("-shortest")
+        .save(outputPath)
+        .on("end", resolve)
+        .on("error", reject);
+    });
+   try { fs.unlinkSync(videoPath); } catch {}
+   try { fs.unlinkSync(audioPath); } catch {}
+
+    const finalUrl = `${getPublicBaseUrl(req)}/videos/${path.basename(outputPath)}`; 
+    console.log("✅ FINAL VIDEO URL:", finalUrl);
+    return res.json({ videoUrl: finalUrl });
+  } catch (err: any) {
+    console.error(err);
+    return res.status(500).json({ error: err.message });
   }
 });
 /* ================== TALKING PHOTO ================== */

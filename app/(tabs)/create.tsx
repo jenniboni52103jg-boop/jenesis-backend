@@ -639,7 +639,7 @@ if (avatarVoiceMode === "clone" && recordedAudioBase64) {
   form.append("audioBase64", recordedAudioBase64);
 }
 
-const res = await fetch("https://injurable-giavanna-purselike.ngrok-free.dev/avatar/start", {
+const res = await fetch(`${API_URL}/avatar/start`, {
   method: "POST",
   body: form,
   headers: {
@@ -1156,27 +1156,11 @@ const clearRecordedAudio = async () => {
     }
   };
 
-/*------------- GENERATE IMAGE -> VIDEO ----------*/
+/*------------- GENERATE IMAGE - VIDEO ----------*/
 const generateVideo = async () => {
-  //if (!isPro) {
- // setShowPaywall(true); // oppure navigation al paywall
-  //return;
-//}
   // 👇 METTILO QUI
-    const access = await checkAccess("video");
-
-if (!access.ok) {
-  Alert.alert(
-    "Passa a PRO",
-    "Sblocca tutte le funzionalità premium 🚀",
-    [
-      { text: "Annulla", style: "cancel" },
-      { text: "Vai", onPress: openPaywall }
-    ]
-  );
-  return;
-}
-
+    //const access = await checkFeatureAccess("video");
+    //if (!access.ok) return;
   if (!selectedImage) {
     Alert.alert("Errore", "Seleziona un'immagine prima");
     return;
@@ -1213,6 +1197,8 @@ if (addVoice && !useRecordedAudio && !selectedVoiceExists) {
     return;
   }
 
+  //if (!(await guardGenerationOrPaywall())) return;
+
   try {
     setVideoLoading(true);
     setSavingToProjects(true);
@@ -1232,7 +1218,7 @@ if (addVoice && !useRecordedAudio && !selectedVoiceExists) {
       "3:4": "768:1024",
 };
       form.append("quality", quality);
-      form.append("ratio", "720:1280");
+      form.append("ratio", ratioMap[textRatio]);
       form.append("duration", "5");
 
       form.append(
@@ -1243,7 +1229,7 @@ if (addVoice && !useRecordedAudio && !selectedVoiceExists) {
           type: "image/jpeg",
         } as any
       );
-    
+
       const res = await fetch(`${API_URL}/api/runway/image-to-video`, {
         method: "POST",
         headers: {
@@ -1252,37 +1238,21 @@ if (addVoice && !useRecordedAudio && !selectedVoiceExists) {
         body: form,
       });
 
-     const text = await res.text();
-console.log("RAW:", text);
-
-let data;
-try {
-  data = JSON.parse(text);
-} catch (e) {
-  console.log("❌ NON JSON → backend rotto");
-  throw new Error("Server error");
-}
+      const data = await res.json();
 
       if (!res.ok) {
   if (data?.error === "PRO_REQUIRED") {
-    setShowPaywall(true);
+    openPaywall();
     return;
   }
 
   throw new Error(data?.error || "Errore generazione talking video");
 }
 
-let creditsToSpend = addVoice
-  ? CREDIT_COSTS.video.voice
-  : CREDIT_COSTS.video.base;
-
-
       if (!data?.videoUrl) {
         throw new Error("Backend non ha restituito videoUrl");
       }
 
-    if (!(await spendCredits(creditsToSpend))) return;
-    
       await saveImageVideoToProjects(data.videoUrl, "720:1280", selectedImage);
       setGeneratedVideoUrl(data.videoUrl);
     } 
@@ -1293,10 +1263,11 @@ let creditsToSpend = addVoice
     else {
       const form = new FormData();
       form.append("useVoiceClone", useRecordedAudio ? "true" : "false");
-    
+      //form.append("isPremiumUser", isPremiumUser ? "true" : "false");
+
       form.append("avatarVoiceMode", avatarVoiceMode); 
       form.append("avatarInputType", avatarInputType);
-      form.append("isPremium", isPremium ? "true" : "false");
+      //form.append("isPremiumUser", isPremiumUser ? "true" : "false");
 
       form.append("actionPrompt", actionPrompt.trim());
       form.append("speechText", useRecordedAudio ? "" : speechText.trim());
@@ -1340,16 +1311,12 @@ let creditsToSpend = addVoice
       if (!data?.videoUrl) {
         throw new Error("Backend non ha restituito videoUrl");
       }
-      
-      let creditsToSpend = addVoice
-  ? CREDIT_COSTS.video.voice
-  : CREDIT_COSTS.video.base;
-
-    if (!(await spendCredits(creditsToSpend))) return;
 
       await saveImageVideoToProjects(data.videoUrl, "720:1280", selectedImage);
       setGeneratedVideoUrl(data.videoUrl);
     }
+
+   // await consumeGeneration();
 
     setSavedToProjects(true);
     setTimeout(() => setSavedToProjects(false), 2500);
