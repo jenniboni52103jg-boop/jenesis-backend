@@ -160,8 +160,6 @@ async function convertIfHeic(file: any) {
 
   return file.buffer;
 }
-/* ================== async per image- AI video ================== */
-
 /* ================== HELPERS RUNWAY ================== */
 
 function toRunwayRatio(ratio: string) {
@@ -354,8 +352,6 @@ async function swapFace(templatePath: string, userBuffer: Buffer) {
     throw error;
   }
 }
-// ---------------- REFINE IMAGE ----------------
-
 //}
 /* ================== HELPERS ELEVENLABS ================== */
 async function elevenTextToSpeech(text: string, voiceId?: string) {
@@ -655,8 +651,8 @@ async function transformImageWithStyle(opts: {
 
   return Buffer.from(base64, "base64");
 }
-/* ================== HEDRA CORE ================== */
 
+/* ================== HEDRA CORE ================== */
 async function hedraCreateAsset(opts: {
   name: string;
   type: "image" | "audio";
@@ -952,7 +948,6 @@ async function hedraGetAssetDownloadUrl(assetId: string) {
 }
 
 /* ================== JOBS AVATAR ================== */
-
 type AvatarJobStatus =
   | "queued"
   | "processing"
@@ -1748,58 +1743,6 @@ app.post("/api/runway/image-to-video", upload.single("image"), async (req: any, 
   } catch (error: any) {
     console.error("❌ Runway image-to-video error:", error?.message ?? error);
 
-    return res.status(500).json({
-      error: error?.message || "Runway image-to-video failed",
-    });
-  }
-});
-
-/* ================== RUNWAY IMAGE → VIDEO ================== */
-
-app.post("/api/runway/image-to-video", upload.single("image"), async (req: any, res) => {
-  try {
-    if (!req.file?.buffer) {
-      return res.status(400).json({ error: "Missing image file" });
-    }
-
-    const prompt = String(req.body?.prompt ?? "Animate this image naturally");
-    const ratio = toRunwayRatio(String(req.body?.ratio ?? "720:1280"));
-    const durationRaw = Number(req.body?.duration ?? 5);
-    const duration = durationRaw === 10 ? 10 : 5;
-
-    const mimeType = req.file.mimetype || "image/jpeg";
-    const dataUri = bufferToDataUri(req.file.buffer, mimeType);
-
-    console.log("🎬 Runway start image-to-video...");
-    console.log("ratio:", ratio);
-    console.log("duration:", duration);
-
-    const task = await runway.imageToVideo
-      .create({
-        model: "gen4.5",
-        promptImage: dataUri,
-        promptText: prompt,
-        ratio,
-        duration,
-      })
-      .waitForTaskOutput();
-
-    const videoUrl = normalizeRunwayOutput(task);
-
-    if (!videoUrl) {
-      console.log("❌ Runway task output:", task);
-      return res.status(500).json({
-        error: "Runway non ha restituito un videoUrl valido",
-      });
-    }
-
-    console.log("✅ Runway video pronto");
-    return res.json({
-      videoUrl,
-      taskId: task?.id ?? null,
-    });
-  } catch (error: any) {
-    console.error("❌ Runway image-to-video error:", error?.message ?? error);
     return res.status(500).json({
       error: error?.message || "Runway image-to-video failed",
     });
