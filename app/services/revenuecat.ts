@@ -4,7 +4,7 @@ import Purchases from "react-native-purchases";
 export async function initRevenueCat() {
   try {
     await Purchases.configure({
-      apiKey: "test_GpZKHSpWbTLdDBVsjixIYyiarUo", // 🔑 tua API key
+      apiKey: "appl_KVREdrrSHPaulxZHkXRIekUIhZA", // 🔑 tua API key
     });
 
     console.log("✅ RevenueCat ready");
@@ -18,7 +18,10 @@ export async function getOffers() {
   try {
     const offerings = await Purchases.getOfferings();
 
+    console.log("🔥 OFFERINGS:", offerings);
+
     if (offerings.current) {
+      console.log("🔥 PACKAGES:", offerings.current.availablePackages);
       return offerings.current.availablePackages;
     }
 

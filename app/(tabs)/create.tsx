@@ -17,7 +17,7 @@ import { useCredits } from "../contexts/CreditsContext";
 import { checkPremium } from "../services/revenuecat";
 import { addProjectToProjects } from "./projects";
 
-const API_URL = "https://brunette-items-provinces-reaches.trycloudflare.com";
+const API_URL = "https://jenesis-ai.onrender.com";
 
 
 type HedraVoice = {
@@ -78,6 +78,10 @@ const checkUser = async () => {
   }, [user, router]);
   
   const [isPremium, setIsPremium] = useState(false);//poi collego al pagamento
+  useEffect(() => {
+  AsyncStorage.setItem("isPremium", "true");
+  setIsPremium(true);
+}, []);
   useEffect(() => {
   const loadPremium = async () => {
   const value = await AsyncStorage.getItem("isPremium");
@@ -558,10 +562,10 @@ const getBase64FromAsset = async (assetSource: any) => {
 };
 /* ------------GENERATE ANIMATE AVATAR ------------*/
 const generateAndAnimateAvatar = async () => {
-  if (!isPro) {
-  setShowPaywall(true); // oppure navigation al paywall
-  return;
-}
+  //if (!isPro) {
+  //setShowPaywall(true); // oppure navigation al paywall
+ // return;
+//}
   try {
     // 👇 METTILO QUI
     const access = await checkAccess("avatar");
@@ -698,10 +702,10 @@ function getEffectPrompt(effect: string | null) {
 }
 /* -------------------- funzioni AI effects  -------------------- */
 const generateEffectsVideo = async () => {
-  if (!isPro) {
-  setShowPaywall(true); // oppure navigation al paywall
-  return;
-}
+  //if (!isPro) {
+  //setShowPaywall(true); // oppure navigation al paywall
+  //return;
+//}
   const access = await checkAccess("effects");
 if (!access.ok) {
   setShowPaywall(true);
@@ -1003,7 +1007,6 @@ const clearRecordedAudio = async () => {
 };
 
   /* -------------------- PICKERS -------------------- */
-
   const pickImage = async () => {
   const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
 
@@ -1155,10 +1158,10 @@ const clearRecordedAudio = async () => {
 
 /*------------- GENERATE IMAGE -> VIDEO ----------*/
 const generateVideo = async () => {
-  if (!isPro) {
-  setShowPaywall(true); // oppure navigation al paywall
-  return;
-}
+  //if (!isPro) {
+ // setShowPaywall(true); // oppure navigation al paywall
+  //return;
+//}
   // 👇 METTILO QUI
     const access = await checkAccess("video");
 
@@ -1249,7 +1252,16 @@ if (addVoice && !useRecordedAudio && !selectedVoiceExists) {
         body: form,
       });
 
-      const data = await res.json();
+     const text = await res.text();
+console.log("RAW:", text);
+
+let data;
+try {
+  data = JSON.parse(text);
+} catch (e) {
+  console.log("❌ NON JSON → backend rotto");
+  throw new Error("Server error");
+}
 
       if (!res.ok) {
   if (data?.error === "PRO_REQUIRED") {
@@ -1351,10 +1363,10 @@ let creditsToSpend = addVoice
 };
 /*-----------GENERATE TALKING PHOTO ---------- */
   const generateTalkingPhoto = async () => {
-    if (!isPro) {
-  setShowPaywall(true); // oppure navigation al paywall
-  return;
-}
+    //if (!isPro) {
+  //setShowPaywall(true); // oppure navigation al paywall
+  //return;
+//}
    // 👇 METTILO QUI
     const access = await checkAccess("talking");
     if (!access.ok) {
@@ -1455,16 +1467,16 @@ if (!(await spendCredits(cost))) return;
   };
 /*-------- GENERATE TEXT -IMAGE ------------*/
   const generateTextImage = async () => {
-    if (!isPro) {
-  setShowPaywall(true); // oppure navigation al paywall
-  return;
-}
+    //if (!isPro) {
+  //setShowPaywall(true); // oppure navigation al paywall
+ // return;
+//}
     // 👇 METTILO QUI
-    const access = await checkAccess("image");
-    if (!access.ok) {
-  setShowPaywall(true);
-  return;
-}
+    //const access = await checkAccess("image");
+   // if (!access.ok) {
+ // setShowPaywall(true);
+ // return;
+//}
 
     Keyboard.dismiss();
 
