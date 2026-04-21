@@ -1249,7 +1249,13 @@ if (addVoice && !useRecordedAudio && !selectedVoiceExists) {
         body: form,
       });
 
-      const data = await res.json();
+      let data;
+
+try {
+  data = await res.json();
+} catch (e) {
+  throw new Error("Risposta backend non valida (probabile timeout)");
+}
 
       if (!res.ok) {
   if (data?.error === "PRO_REQUIRED") {
