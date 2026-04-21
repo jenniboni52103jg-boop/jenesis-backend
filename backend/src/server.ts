@@ -21,6 +21,11 @@ import multer from "multer";
 import fetch from "node-fetch";
 import crypto from "crypto";
 
+if (!ffmpegPath) {
+  throw new Error("FFMPEG NOT FOUND");
+}
+ffmpeg.setFfmpegPath(ffmpegPath as string);
+
 console.log("REPLICATE KEY:", process.env.REPLICATE_API_KEY);
 console.log("FAL KEY LENGTH:", process.env.FAL_KEY?.length);
 console.log("FFMPEG PATH:", ffmpegPath);
@@ -51,8 +56,6 @@ const VIDEOS_DIR = path.join(ROOT_DIR, "videos");
 
 if (!fs.existsSync(TEMP_DIR)) fs.mkdirSync(TEMP_DIR, { recursive: true });
 if (!fs.existsSync(VIDEOS_DIR)) fs.mkdirSync(VIDEOS_DIR, { recursive: true });
-
-ffmpeg.setFfmpegPath(ffmpegPath as string);
 
 app.use(cors());
 app.use(express.json({ limit: "50mb" }));
