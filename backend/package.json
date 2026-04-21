@@ -30,6 +30,11 @@
     "replicate": "^1.4.0",
     "sharp": "^0.34.5"
   },
+
+  "engines": {
+    "node": "18.x"
+  },
+
   "devDependencies": {
     "@types/cors": "^2.8.17",
     "@types/express": "^4.17.21",

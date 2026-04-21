@@ -22,7 +22,7 @@ if (!ffmpegPath) {
   throw new Error("FFMPEG NOT FOUND");
 }
 
-ffmpeg.setFfmpegPath(ffmpegPath as string);
+ffmpeg.setFfmpegPath(ffmpegPath);
 
 console.log("REPLICATE KEY:", process.env.REPLICATE_API_KEY);
 console.log("FAL KEY LENGTH:", process.env.FAL_KEY?.length);
