@@ -23,6 +23,7 @@ import crypto from "crypto";
 
 console.log("REPLICATE KEY:", process.env.REPLICATE_API_KEY);
 console.log("FAL KEY LENGTH:", process.env.FAL_KEY?.length);
+console.log("FFMPEG PATH:", ffmpegPath);
 
 process.env.FAL_KEY = process.env.FAL_KEY || "";
 fal.config({
@@ -1643,9 +1644,13 @@ app.post("/api/runway/image-to-video", upload.single("image"), async (req: any, 
     const { quality } = req.body;
     const isUltra = quality === "ultra";
 
-    if (!req.file?.buffer) {
-      return res.status(400).json({ error: "Missing image file" });
-    }
+    console.log("📦 FILE:", req.file);
+    console.log("REQ.FILE:", req.file);
+
+    if (!req.file || !req.file.buffer) {
+  console.log("❌ FILE NON ARRIVATO");
+  return res.status(400).json({ error: "Missing image file" });
+}
 
     const prompt = String(req.body?.prompt ?? "Animate this image naturally");
     const ratio = toRunwayRatio(String(req.body?.ratio ?? "720:1280"));
@@ -1678,14 +1683,14 @@ app.post("/api/runway/image-to-video", upload.single("image"), async (req: any, 
       return res.status(500).json({
         error: "Runway non ha restituito un videoUrl valido",
       });
-    }
+   }
 
     console.log("🎬 Processing video...");
 
     // 📥 scarica video
     const videoBuffer = await fetch(videoUrl).then((r) => r.buffer());
 
-    // 📁 path
+     //📁 path
     const inputPath = path.join(TEMP_DIR, `runway_${Date.now()}.mp4`);
     const outputPath = path.join(VIDEOS_DIR, `runway_wm_${Date.now()}.mp4`);
 
@@ -1712,7 +1717,7 @@ app.post("/api/runway/image-to-video", upload.single("image"), async (req: any, 
           },
         ];
 
-    // 🎬 FFMPEG (QUALITÀ REALE)
+     //🎬 FFMPEG (QUALITÀ REALE)
     await new Promise((resolve, reject) => {
       ffmpeg(processedInput)
         .outputOptions([
@@ -1740,13 +1745,14 @@ app.post("/api/runway/image-to-video", upload.single("image"), async (req: any, 
       taskId: task?.id ?? null,
     });
 
-  } catch (error: any) {
-    console.error("❌ Runway image-to-video error:", error?.message ?? error);
+  } catch (err: any) {
+  console.error("💥 RUNWAY ERROR:", err);
 
-    return res.status(500).json({
-      error: error?.message || "Runway image-to-video failed",
-    });
-  }
+  res.status(500).json({
+    error: "runway_error",
+    message: err?.error?.error || err.message,
+  });
+}
 });
 
 /* ================== HEDRA VOICES ================== */
