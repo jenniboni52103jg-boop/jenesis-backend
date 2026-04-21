@@ -1161,7 +1161,8 @@ const generateVideo = async () => {
   // 👇 METTILO QUI
     //const access = await checkFeatureAccess("video");
     //if (!access.ok) return;
-  if (!selectedImage) {
+  
+    if (!selectedImage) {
     Alert.alert("Errore", "Seleziona un'immagine prima");
     return;
   }
@@ -1229,6 +1230,9 @@ if (addVoice && !useRecordedAudio && !selectedVoiceExists) {
           type: "image/jpeg",
         } as any
       );
+      
+      //const controller = new AbortController();
+      //const timeout = setTimeout(() => controller.abort(), 600000); // 3 minuti
 
       const res = await fetch(`${API_URL}/api/runway/image-to-video`, {
         method: "POST",
@@ -1236,9 +1240,18 @@ if (addVoice && !useRecordedAudio && !selectedVoiceExists) {
           "ngrok-skip-browser-warning": "true",
         },
         body: form,
+        //signal: controller.signal,
       });
 
-      const data = await res.json();
+//clearTimeout(timeout);
+
+let data;
+
+try {
+  data = await res.json();
+} catch (e) {
+  throw new Error("Risposta backend non valida (probabile timeout)");
+}
 
       if (!res.ok) {
   if (data?.error === "PRO_REQUIRED") {
