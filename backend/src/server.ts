@@ -18,14 +18,17 @@ import { CALCIO_ARCHETYPES_MAP, CalcioSceneKey } from "./calcioCards";
 import { getCouplePrompt, restyleCalcioImage, restyleImage, restyleStyleCardImage } from "./restyle";
 dotenv.config({ path: "../.env" });
 
+
+
+// usa il binario di sistema
 if (!ffmpegPath) {
   throw new Error("FFMPEG NOT FOUND");
 }
-
 ffmpeg.setFfmpegPath(ffmpegPath);
 
 console.log("REPLICATE KEY:", process.env.REPLICATE_API_KEY);
 console.log("FAL KEY LENGTH:", process.env.FAL_KEY?.length);
+console.log("FFMPEG PATH:", "/usr/bin/ffmpeg");
 console.log("FFMPEG PATH:", ffmpegPath);
 
 process.env.FAL_KEY = process.env.FAL_KEY || "";
@@ -1798,6 +1801,7 @@ app.post("/api/runway/image-to-video", upload.single("image"), async (req: any, 
     console.log("✅ Runway video pronto");
 
     return res.json({
+      jobId: "123",
       videoUrl: finalUrl,
       taskId: task?.id ?? null,
     });
