@@ -13,7 +13,7 @@ import { restyleImage, restyleCalcioImage, restyleStyleCardImage, getStyleCardPr
 import sharp from "sharp";
 import { removeBackground } from "@imgly/background-removal-node";
 import { ElevenLabsClient } from "elevenlabs";
-import ffmpegPath from "ffmpeg-static";
+//import ffmpegPath from "ffmpeg-static";
 import ffmpeg from "fluent-ffmpeg";
 import FormData from "form-data";
 import fs from "fs";
@@ -21,14 +21,14 @@ import multer from "multer";
 import fetch from "node-fetch";
 import crypto from "crypto";
 
-if (!ffmpegPath) {
-  throw new Error("FFMPEG NOT FOUND");
-}
-ffmpeg.setFfmpegPath(ffmpegPath);
+// usa il binario di sistema
+ffmpeg.setFfmpegPath("/usr/bin/ffmpeg");
+console.log("FFMPEG PATH:", "/usr/bin/ffmpeg");
+//ffmpeg.setFfmpegPath(ffmpegPath);
 
 console.log("REPLICATE KEY:", process.env.REPLICATE_API_KEY);
 console.log("FAL KEY LENGTH:", process.env.FAL_KEY?.length);
-console.log("FFMPEG PATH:", ffmpegPath);
+//console.log("FFMPEG PATH:", ffmpegPath);
 
 process.env.FAL_KEY = process.env.FAL_KEY || "";
 fal.config({
