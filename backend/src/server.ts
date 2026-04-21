@@ -1744,6 +1744,7 @@ app.post("/api/runway/image-to-video", upload.single("image"), async (req: any, 
     console.log("✅ Runway video pronto");
 
     return res.json({
+      jobId: "123",
       videoUrl: finalUrl,
       taskId: task?.id ?? null,
     });
