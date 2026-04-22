@@ -1697,6 +1697,8 @@ return res.json({
 /* ================== RUNWAY IMAGE → VIDEO ================== */
 app.post("/api/runway/image-to-video", upload.single("image"), async (req: any, res) => {
   try {
+    console.log("IS PREMIUM:", req.body.isPremium);
+
     const isPremium =
       req.body?.isPremium === "true" || req.body?.isPremium === true;
 
@@ -1777,20 +1779,29 @@ app.post("/api/runway/image-to-video", upload.single("image"), async (req: any, 
           },
         ];
 
+        const filterString = isPremium
+  ? null
+  : "drawtext=text='JenesisAI':fontcolor=white@0.5:fontsize=40:x=(w-text_w)/2:y=h-60:shadowcolor=black:shadowx=2:shadowy=2";
+
      //🎬 FFMPEG (QUALITÀ REALE)
-    await new Promise((resolve, reject) => {
-      ffmpeg(processedInput)
-        .outputOptions([
-          "-c:v libx264",
-          isUltra ? "-crf 16" : "-crf 23",
-          "-preset slow",
-          "-pix_fmt yuv420p",
-        ])
-        .videoFilters(filters)
-        .save(outputPath)
-        .on("end", resolve)
-        .on("error", reject);
-    });
+   await new Promise((resolve, reject) => {
+  const command = ffmpeg(processedInput)
+    .outputOptions([
+      "-c:v libx264",
+      isUltra ? "-crf 16" : "-crf 23",
+      "-preset slow",
+      "-pix_fmt yuv420p",
+    ]);
+
+  if (filterString) {
+    command.videoFilters(filterString);
+  }
+
+  command
+    .save(outputPath)
+    .on("end", resolve)
+    .on("error", reject);
+});
 
     // 🧹 cleanup
     try { fs.unlinkSync(inputPath); } catch {}
@@ -1801,7 +1812,6 @@ app.post("/api/runway/image-to-video", upload.single("image"), async (req: any, 
     console.log("✅ Runway video pronto");
 
     return res.json({
-      jobId: "123",
       videoUrl: finalUrl,
       taskId: task?.id ?? null,
     });
@@ -1809,10 +1819,17 @@ app.post("/api/runway/image-to-video", upload.single("image"), async (req: any, 
   } catch (err: any) {
   console.error("💥 RUNWAY ERROR:", err);
 
-  res.status(500).json({
-    error: "runway_error",
-    message: err?.error?.error || err.message,
-  });
+  // 🔥 gestione intelligente errori
+let errorType = "GENERIC";
+
+if (err?.message?.includes("credit") || err?.message?.includes("quota")) {
+  errorType = "NO_CREDITS";
+}
+
+res.status(500).json({
+  error: errorType,
+  message: err?.message,
+});
 }
 });
 
@@ -1856,13 +1873,30 @@ app.get("/api/hedra/voices", async (_req, res) => {
   }
 });
 
-/* -------------------NUOVA ROUTE--------------*/
+/* -------------------NUOVA ROUTE per image-video--------------*/
 app.post("/generate-motion-speaking-video", upload.single("image"), async (req: any, res) => {
   try {
+    console.log("BODY:", req.body);
+
     const isPremium = req.body?.isPremium === "true" || req.body?.isPremium === true;
     const prompt = String(req.body?.actionPrompt || "Animate naturally");
     const speech = String(req.body?.speechText || "");
     const voiceId = String(req.body?.voiceId || "");
+    
+    console.log("VOICE ID:", voiceId);
+    console.log("SPEECH:", speech);
+    
+    if (!speech || speech.trim().length < 2) {
+  return res.status(400).json({
+    error: "speechText vuoto"
+  });
+}
+
+if (!voiceId) {
+  return res.status(400).json({
+    error: "voiceId mancante"
+  });
+}
 
     if (!req.file?.buffer) {
       return res.status(400).json({ error: "Missing image" });
