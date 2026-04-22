@@ -5,7 +5,7 @@ import crypto from "crypto";
 import dotenv from "dotenv";
 import { ElevenLabsClient } from "elevenlabs";
 import express from "express";
-import ffmpegPath from "ffmpeg-static";
+//import ffmpegPath from "ffmpeg-static";
 import ffmpeg from "fluent-ffmpeg";
 import FormData from "form-data";
 import fs from "fs";
@@ -19,18 +19,17 @@ import { getCouplePrompt, restyleCalcioImage, restyleImage, restyleStyleCardImag
 dotenv.config({ path: "../.env" });
 
 
-
 // usa il binario di sistema
-if (!ffmpegPath) {
-  throw new Error("FFMPEG NOT FOUND");
-}
-
-ffmpeg.setFfmpegPath(ffmpegPath as string);
+//if (!ffmpegPath) {
+ // throw new Error("FFMPEG NOT FOUND");
+//}
+ffmpeg.setFfmpegPath("/usr/bin/ffmpeg");
+//ffmpeg.setFfmpegPath(ffmpegPath as string);
 
 console.log("REPLICATE KEY:", process.env.REPLICATE_API_KEY);
 console.log("FAL KEY LENGTH:", process.env.FAL_KEY?.length);
-//console.log("FFMPEG PATH:", "/usr/bin/ffmpeg");
-console.log("FFMPEG PATH:", ffmpegPath);
+console.log("FFMPEG USATO:", "/usr/bin/ffmpeg");
+//console.log("FFMPEG PATH:", ffmpegPath);
 
 process.env.FAL_KEY = process.env.FAL_KEY || "";
 fal.config({
@@ -1698,6 +1697,17 @@ return res.json({
 /* ================== RUNWAY IMAGE → VIDEO ================== */
 app.post("/api/runway/image-to-video", upload.single("image"), async (req: any, res) => {
   try {
+
+    // 🚫 BLOCCO RUNWAY (DEBUG MODE)
+
+  return res.json({
+
+    videoUrl: "https://test-video.mp4",
+
+    debug: "RUNWAY DISABILITATO"
+
+  });
+  
     console.log("IS PREMIUM:", req.body.isPremium);
 
     const isPremium =
