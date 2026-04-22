@@ -1,5 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect } from "@react-navigation/native";
+import * as MediaLibrary from "expo-media-library";
 import { Asset } from "expo-asset";
 import { Audio } from "expo-av";
 import * as FileSystem from "expo-file-system/legacy";
@@ -31,6 +32,37 @@ type ElevenVoice = {
   id: string;
   name: string;
   preview_url?: string | null;
+};
+
+const saveImageVideoToProjects = async (videoUrl, ratio, image) => {
+  try {
+    console.log("🎬 SALVO VIDEO:", videoUrl);
+
+    // 1. Permessi
+    const { status } = await MediaLibrary.requestPermissionsAsync();
+    if (status !== "granted") {
+      throw new Error("Permesso galleria negato");
+    }
+
+    // 2. Scarica video in locale
+    const localUri = FileSystem.documentDirectory + `video-${Date.now()}.mp4`;
+
+    const download = await FileSystem.downloadAsync(videoUrl, localUri);
+
+    console.log("📥 Download completato:", download.uri);
+
+    // 3. Salva in galleria
+    await MediaLibrary.saveToLibraryAsync(download.uri);
+
+    console.log("✅ Salvato in Camera Roll");
+
+    // 4. (opzionale) salva anche nel tuo storage interno Projects
+    // 👉 qui puoi salvare URL o localUri nel tuo stato/app
+
+  } catch (err) {
+    console.log("❌ Errore salvataggio:", err);
+    throw err;
+  }
 };
 
 export default function CreateScreen() {
@@ -78,6 +110,10 @@ const checkUser = async () => {
   }, [user, router]);
   
   const [isPremium, setIsPremium] = useState(false);//poi collego al pagamento
+  useEffect(() => {
+  AsyncStorage.setItem("isPremium", "true");
+  setIsPremium(true);
+}, []);
   useEffect(() => {
   const loadPremium = async () => {
   const value = await AsyncStorage.getItem("isPremium");
@@ -558,10 +594,10 @@ const getBase64FromAsset = async (assetSource: any) => {
 };
 /* ------------GENERATE ANIMATE AVATAR ------------*/
 const generateAndAnimateAvatar = async () => {
-  if (!isPro) {
-  setShowPaywall(true); // oppure navigation al paywall
-  return;
-}
+  //if (!isPro) {
+  //setShowPaywall(true); // oppure navigation al paywall
+ // return;
+//}
   try {
     // 👇 METTILO QUI
     const access = await checkAccess("avatar");
@@ -635,7 +671,7 @@ if (avatarVoiceMode === "clone" && recordedAudioBase64) {
   form.append("audioBase64", recordedAudioBase64);
 }
 
-const res = await fetch("https://injurable-giavanna-purselike.ngrok-free.dev/avatar/start", {
+const res = await fetch(`${API_URL}/avatar/start`, {
   method: "POST",
   body: form,
   headers: {
@@ -698,10 +734,10 @@ function getEffectPrompt(effect: string | null) {
 }
 /* -------------------- funzioni AI effects  -------------------- */
 const generateEffectsVideo = async () => {
-  if (!isPro) {
-  setShowPaywall(true); // oppure navigation al paywall
-  return;
-}
+  //if (!isPro) {
+  //setShowPaywall(true); // oppure navigation al paywall
+  //return;
+//}
   const access = await checkAccess("effects");
 if (!access.ok) {
   setShowPaywall(true);
@@ -1003,7 +1039,6 @@ const clearRecordedAudio = async () => {
 };
 
   /* -------------------- PICKERS -------------------- */
-
   const pickImage = async () => {
   const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
 
@@ -1153,28 +1188,13 @@ const clearRecordedAudio = async () => {
     }
   };
 
-/*------------- GENERATE IMAGE -> VIDEO ----------*/
+/*------------- GENERATE IMAGE - VIDEO ----------*/
 const generateVideo = async () => {
-  if (!isPro) {
-  setShowPaywall(true); // oppure navigation al paywall
-  return;
-}
   // 👇 METTILO QUI
-    const access = await checkAccess("video");
+    //const access = await checkFeatureAccess("video");
+    //if (!access.ok) return;
 
-if (!access.ok) {
-  Alert.alert(
-    "Passa a PRO",
-    "Sblocca tutte le funzionalità premium 🚀",
-    [
-      { text: "Annulla", style: "cancel" },
-      { text: "Vai", onPress: openPaywall }
-    ]
-  );
-  return;
-}
-
-  if (!selectedImage) {
+    if (!selectedImage) {
     Alert.alert("Errore", "Seleziona un'immagine prima");
     return;
   }
@@ -1210,6 +1230,8 @@ if (addVoice && !useRecordedAudio && !selectedVoiceExists) {
     return;
   }
 
+  //if (!(await guardGenerationOrPaywall())) return;
+
   try {
     setVideoLoading(true);
     setSavingToProjects(true);
@@ -1229,7 +1251,7 @@ if (addVoice && !useRecordedAudio && !selectedVoiceExists) {
       "3:4": "768:1024",
 };
       form.append("quality", quality);
-      form.append("ratio", "720:1280");
+      form.append("ratio", ratioMap[textRatio]);
       form.append("duration", "5");
 
       form.append(
@@ -1240,7 +1262,10 @@ if (addVoice && !useRecordedAudio && !selectedVoiceExists) {
           type: "image/jpeg",
         } as any
       );
-    
+
+      form.append("isPremium", isPremium ? "true" : "false");
+      //form.append("isPremium", "true");
+
       const res = await fetch(`${API_URL}/api/runway/image-to-video`, {
         method: "POST",
         headers: {
@@ -1249,7 +1274,7 @@ if (addVoice && !useRecordedAudio && !selectedVoiceExists) {
         body: form,
       });
 
-      let data;
+let data;
 
 try {
   data = await res.json();
@@ -1259,7 +1284,7 @@ try {
 
       if (!res.ok) {
   if (data?.error === "PRO_REQUIRED") {
-    setShowPaywall(true);
+    openPaywall();
     return;
   }
 
@@ -1270,13 +1295,10 @@ let creditsToSpend = addVoice
   ? CREDIT_COSTS.video.voice
   : CREDIT_COSTS.video.base;
 
-
       if (!data?.videoUrl) {
         throw new Error("Backend non ha restituito videoUrl");
       }
 
-    if (!(await spendCredits(creditsToSpend))) return;
-    
       await saveImageVideoToProjects(data.videoUrl, "720:1280", selectedImage);
       setGeneratedVideoUrl(data.videoUrl);
     } 
@@ -1287,15 +1309,16 @@ let creditsToSpend = addVoice
     else {
       const form = new FormData();
       form.append("useVoiceClone", useRecordedAudio ? "true" : "false");
-    
-      form.append("avatarVoiceMode", avatarVoiceMode); 
-      form.append("avatarInputType", avatarInputType);
-      form.append("isPremium", isPremium ? "true" : "false");
+      //form.append("isPremiumUser", isPremiumUser ? "true" : "false");
+
+      //form.append("avatarVoiceMode", avatarVoiceMode); 
+      //form.append("avatarInputType", avatarInputType);
 
       form.append("actionPrompt", actionPrompt.trim());
-      form.append("speechText", useRecordedAudio ? "" : speechText.trim());
+      //form.append("speechText", useRecordedAudio ? "" : speechText.trim());
 
-      if (!useRecordedAudio) {
+if (!useRecordedAudio) {
+  form.append("speechText", speechText.trim());      
         form.append("voiceId", selectedHedraVoice || "");
       }
 
@@ -1325,25 +1348,54 @@ let creditsToSpend = addVoice
         body: form,
       });
 
-      const data = await res.json();
+      //const data = await res.json();
+      //let data;
 
+//try {
+  //const text = await res.text();
+  //data = JSON.parse(text);
+//} catch (e) {
+ // console.log("❌ NON JSON:", e);
+ // Alert.alert("Errore", "Errore server (voice/video)");
+ // return;
+//}
+let text = await res.text();
+console.log("🔥 RAW BACKEND:", text);
+
+let data;
+
+try {
+  data = JSON.parse(text);
+} catch (e) {
+ Alert.alert("Errore", "Risposta server non valida");
+console.log("❌ RAW BACKEND:", text); // 👈 QUESTO È FONDAMENTALE
+  return;
+}
       if (!res.ok) {
-        throw new Error(data?.error || "Errore generazione talking video");
-      }
 
+  if (data?.error === "NO_CREDITS") {
+    Alert.alert("Crediti finiti", "Ricarica per continuare");
+    openPaywall();
+    return;
+  }
+
+  if (data?.error === "GENERATION_FAILED") {
+    Alert.alert("Errore", "Errore generazione video");
+    return;
+  }
+
+  Alert.alert("Errore", data?.message || "Errore sconosciuto");
+  return;
+}
       if (!data?.videoUrl) {
         throw new Error("Backend non ha restituito videoUrl");
       }
-      
-      let creditsToSpend = addVoice
-  ? CREDIT_COSTS.video.voice
-  : CREDIT_COSTS.video.base;
-
-    if (!(await spendCredits(creditsToSpend))) return;
 
       await saveImageVideoToProjects(data.videoUrl, "720:1280", selectedImage);
       setGeneratedVideoUrl(data.videoUrl);
     }
+
+   // await consumeGeneration();
 
     setSavedToProjects(true);
     setTimeout(() => setSavedToProjects(false), 2500);
@@ -1355,12 +1407,13 @@ let creditsToSpend = addVoice
     setSavingToProjects(false);
   }
 };
+
 /*-----------GENERATE TALKING PHOTO ---------- */
   const generateTalkingPhoto = async () => {
-    if (!isPro) {
-  setShowPaywall(true); // oppure navigation al paywall
-  return;
-}
+    //if (!isPro) {
+  //setShowPaywall(true); // oppure navigation al paywall
+  //return;
+//}
    // 👇 METTILO QUI
     const access = await checkAccess("talking");
     if (!access.ok) {
@@ -1461,16 +1514,16 @@ if (!(await spendCredits(cost))) return;
   };
 /*-------- GENERATE TEXT -IMAGE ------------*/
   const generateTextImage = async () => {
-    if (!isPro) {
-  setShowPaywall(true); // oppure navigation al paywall
-  return;
-}
+    //if (!isPro) {
+  //setShowPaywall(true); // oppure navigation al paywall
+ // return;
+//}
     // 👇 METTILO QUI
-    const access = await checkAccess("image");
-    if (!access.ok) {
-  setShowPaywall(true);
-  return;
-}
+    //const access = await checkAccess("image");
+   // if (!access.ok) {
+ // setShowPaywall(true);
+ // return;
+//}
 
     Keyboard.dismiss();
 
@@ -3745,4 +3798,4 @@ proBadgeInlineText: {
   fontSize: 10,
   fontWeight: "bold",
 },
-}); 
+});
