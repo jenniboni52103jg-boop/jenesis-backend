@@ -17,7 +17,7 @@ import { useCredits } from "../contexts/CreditsContext";
 import { checkPremium } from "../services/revenuecat";
 import { addProjectToProjects } from "./projects";
 
-const API_URL = "https://brunette-items-provinces-reaches.trycloudflare.com";
+const API_URL = "https://jenesis-backend-1.onrender.com";
 
 
 type HedraVoice = {
@@ -1249,7 +1249,13 @@ if (addVoice && !useRecordedAudio && !selectedVoiceExists) {
         body: form,
       });
 
-      const data = await res.json();
+      let data;
+
+try {
+  data = await res.json();
+} catch (e) {
+  throw new Error("Risposta backend non valida (probabile timeout)");
+}
 
       if (!res.ok) {
   if (data?.error === "PRO_REQUIRED") {
