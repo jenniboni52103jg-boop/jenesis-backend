@@ -1,5 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect } from "@react-navigation/native";
+import * as MediaLibrary from "expo-media-library";
 import { Asset } from "expo-asset";
 import { Audio } from "expo-av";
 import * as FileSystem from "expo-file-system/legacy";
@@ -31,6 +32,37 @@ type ElevenVoice = {
   id: string;
   name: string;
   preview_url?: string | null;
+};
+
+const saveImageVideoToProjects = async (videoUrl, ratio, image) => {
+  try {
+    console.log("🎬 SALVO VIDEO:", videoUrl);
+
+    // 1. Permessi
+    const { status } = await MediaLibrary.requestPermissionsAsync();
+    if (status !== "granted") {
+      throw new Error("Permesso galleria negato");
+    }
+
+    // 2. Scarica video in locale
+    const localUri = FileSystem.documentDirectory + `video-${Date.now()}.mp4`;
+
+    const download = await FileSystem.downloadAsync(videoUrl, localUri);
+
+    console.log("📥 Download completato:", download.uri);
+
+    // 3. Salva in galleria
+    await MediaLibrary.saveToLibraryAsync(download.uri);
+
+    console.log("✅ Salvato in Camera Roll");
+
+    // 4. (opzionale) salva anche nel tuo storage interno Projects
+    // 👉 qui puoi salvare URL o localUri nel tuo stato/app
+
+  } catch (err) {
+    console.log("❌ Errore salvataggio:", err);
+    throw err;
+  }
 };
 
 export default function CreateScreen() {
@@ -1161,7 +1193,7 @@ const generateVideo = async () => {
   // 👇 METTILO QUI
     //const access = await checkFeatureAccess("video");
     //if (!access.ok) return;
-  
+
     if (!selectedImage) {
     Alert.alert("Errore", "Seleziona un'immagine prima");
     return;
@@ -1230,9 +1262,9 @@ if (addVoice && !useRecordedAudio && !selectedVoiceExists) {
           type: "image/jpeg",
         } as any
       );
-      
-      //const controller = new AbortController();
-      //const timeout = setTimeout(() => controller.abort(), 600000); // 3 minuti
+
+      form.append("isPremium", isPremium ? "true" : "false");
+      //form.append("isPremium", "true");
 
       const res = await fetch(`${API_URL}/api/runway/image-to-video`, {
         method: "POST",
@@ -1240,10 +1272,7 @@ if (addVoice && !useRecordedAudio && !selectedVoiceExists) {
           "ngrok-skip-browser-warning": "true",
         },
         body: form,
-        //signal: controller.signal,
       });
-
-//clearTimeout(timeout);
 
 let data;
 
@@ -1262,6 +1291,10 @@ try {
   throw new Error(data?.error || "Errore generazione talking video");
 }
 
+let creditsToSpend = addVoice
+  ? CREDIT_COSTS.video.voice
+  : CREDIT_COSTS.video.base;
+
       if (!data?.videoUrl) {
         throw new Error("Backend non ha restituito videoUrl");
       }
@@ -1278,14 +1311,14 @@ try {
       form.append("useVoiceClone", useRecordedAudio ? "true" : "false");
       //form.append("isPremiumUser", isPremiumUser ? "true" : "false");
 
-      form.append("avatarVoiceMode", avatarVoiceMode); 
-      form.append("avatarInputType", avatarInputType);
-      //form.append("isPremiumUser", isPremiumUser ? "true" : "false");
+      //form.append("avatarVoiceMode", avatarVoiceMode); 
+      //form.append("avatarInputType", avatarInputType);
 
       form.append("actionPrompt", actionPrompt.trim());
-      form.append("speechText", useRecordedAudio ? "" : speechText.trim());
+      //form.append("speechText", useRecordedAudio ? "" : speechText.trim());
 
-      if (!useRecordedAudio) {
+if (!useRecordedAudio) {
+  form.append("speechText", speechText.trim());      
         form.append("voiceId", selectedHedraVoice || "");
       }
 
@@ -1315,12 +1348,45 @@ try {
         body: form,
       });
 
-      const data = await res.json();
+      //const data = await res.json();
+      //let data;
 
+//try {
+  //const text = await res.text();
+  //data = JSON.parse(text);
+//} catch (e) {
+ // console.log("❌ NON JSON:", e);
+ // Alert.alert("Errore", "Errore server (voice/video)");
+ // return;
+//}
+let text = await res.text();
+console.log("🔥 RAW BACKEND:", text);
+
+let data;
+
+try {
+  data = JSON.parse(text);
+} catch (e) {
+  Alert.alert("ERRORE BACKEND", text); // 👈 QUESTO È FONDAMENTALE
+  return;
+}
       if (!res.ok) {
-        throw new Error(data?.error || "Errore generazione talking video");
-      }
+        if (data?.error === "NO_CREDITS") {
+    openPaywall();
+    return;
+  }
 
+  if (data?.error === "PRO_REQUIRED") {
+    openPaywall();
+    return;
+  }
+
+  Alert.alert(
+    "Errore",
+    "Qualcosa è andato storto. Riprova tra poco."
+  );
+  return;
+}
       if (!data?.videoUrl) {
         throw new Error("Backend non ha restituito videoUrl");
       }
@@ -1341,6 +1407,7 @@ try {
     setSavingToProjects(false);
   }
 };
+
 /*-----------GENERATE TALKING PHOTO ---------- */
   const generateTalkingPhoto = async () => {
     //if (!isPro) {
