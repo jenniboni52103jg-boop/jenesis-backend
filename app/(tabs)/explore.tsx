@@ -66,7 +66,7 @@ const [credits, setCredits] = useState(0);
 const [isUnlimited, setIsUnlimited] = useState(false);
 const [showPaywall, setShowPaywall] = useState(false);
 
-const isPro = false;// cancella quando trovo chiave revenucat
+const isPro = true;// cancella quando trovo chiave revenucat
 
 const handleBuyCredits = async () => {
   try {
@@ -109,7 +109,7 @@ const COST = hasFreeTrial ? 60 : 0;
   const [images, setImages] = useState<string[]>([]);
 
   const router = useRouter();
-  const API_URL = "https://gaming-world-output-crimes.trycloudflare.com";
+  const API_URL = "https://brunette-items-provinces-reaches.trycloudflare.com";
   const PROJECTS_KEY = "projects";
 
   const [calcioModalOpen, setCalcioModalOpen] = React.useState(false);
@@ -272,88 +272,6 @@ const pickStylePhoto = async () => {
     setStylePhotoFileName(asset.fileName ?? `style-${Date.now()}.jpg`);
   }
 };
-
-/*-------------------- funione per collegare fronted e backend a render ---------------------*/
-async function generatePhotos(imageUri, templateKey) {
-  try {
-    setLoading(true);
-
-    const formData = new FormData();
-
-  formData.append("image", {
-  uri: imageUri,
-  type: "image/jpeg",
-  name: "photo.jpg",
-} as any);
-
-    formData.append("templateKey", templateKey);
-
-    const res = await fetch(
-      "https://jenesis-backend-1.onrender.com/style-cards/start",
-      {
-        method: "POST",
-        body: formData,
-      }
-    );
-    if (!res.ok) {
-  throw new Error(`HTTP ${res.status}`);
-}
-
-    const data = await res.json();
-
-    checkStatus(data.jobId);
-
-  } catch (e) {
-    console.log("ERRORE:", e);
-    setLoading(false);
-  }
-}
-/*-------------- status per render ----------*/
-async function checkStatus(jobId: string, attempts = 0) {
-  try {
-
-    // 🔴 LIMITE ANTI-LOOP
-    if (attempts > 20) {
-      setLoading(false);
-      Alert.alert("Errore", "Tempo scaduto, riprova");
-      return;
-    }
-
-    const res = await fetch(
-      `https://jenesis-backend-1.onrender.com/style-cards/status/${jobId}`
-    );
-
-    if (!res.ok) {
-      throw new Error(`HTTP ${res.status}`);
-    }
-
-    const data = await res.json();
-
-    // 🔴 FIX JOB NON TROVATO
-    if (data?.error) {
-      throw new Error(data.error);
-    }
-
-    if (data.status === "complete") {
-      setImages(data.images);
-      setLoading(false);
-
-    } else if (data.status === "processing") {
-
-      setTimeout(() => {
-        checkStatus(jobId, attempts + 1);
-      }, 2000);
-
-    } else {
-      throw new Error("Stato sconosciuto");
-    }
-
-  } catch (e: any) {
-    console.log("ERRORE STATUS:", e);
-    setLoading(false);
-    Alert.alert("Errore", e?.message || "Errore generazione");
-  }
-}
 
 /*-------------- STORAGE ----------*/
 
@@ -631,36 +549,41 @@ const testConnection = async () => {
 
 /* ===== FIX GENERATE STYLE CARDS  AI PHOTO ===== */
 async function generateStylePhotos() {
-  
+  if (!isPro) {
+  setShowPaywall(true); // oppure navigation al paywall
+  return;
+}
+  console.log("HAS FREE TRIAL:", hasFreeTrial);
+  console.log("CREDITS ATTUALI:", credits);
+
+  // 🔴 VALIDAZIONE
   if (!selectedStyleCard || !stylePhotoUri) {
     Alert.alert("Manca la foto", "Carica una foto per continuare.");
     return;
   }
 
-// 💳 CREDITI / TRIAL / UNLIMITED
+  // 💳 CREDITI / TRIAL / UNLIMITED
 if (!isUnlimited) {
 
-  // 🎁 FREE TRIAL (1 volta)
   if (!hasFreeTrial) {
     console.log("🎁 USA FREE TRIAL");
     await AsyncStorage.setItem("freeTrialUsed", "true");
     setHasFreeTrial(true);
-  } else {
-
-    // 💎 CREDITI
-    //if (credits < 60) {
-     // console.log("❌ NO CREDITI");
-      //setShowPaywall(true);
-     // Alert.alert("Crediti insufficienti");
-     // return;
-    //}
+  } 
+  else {
+    if (credits < 60) {
+      console.log("❌ NO CREDITI");
+      setShowPaywall(true);
+      Alert.alert("Crediti insufficienti");
+      return;
+    }
 
     console.log("💎 SCALO CREDITI");
     await updateCredits(credits - 60);
   }
 
 } else {
-  console.log("🚀 UNLIMITED USER");
+  console.log("🚀 UNLIMITED USER - NO CREDITI SCALATI");
 }
 
   // 🚀 START GENERAZIONE
@@ -668,81 +591,98 @@ if (!isUnlimited) {
   setProgressText("Inviando foto al server...");
 
   try {
-    // 🔥 UPLOAD
-    const formData = new FormData();
-
-    formData.append("image", {
-      uri: stylePhotoUri,
-      type: "image/jpeg",
-      name: "photo.jpg",
-    } as any);
-
-    formData.append("templateKey", selectedStyleCard.templateKey);
-
-    const res = await fetch(
-      "https://jenesis-backend-1.onrender.com/style-cards/start",
+    // 🚀 START JOB
+    const uploadResult = await FileSystem.uploadAsync(
+      `${API_URL}/style-cards/start`,
+      stylePhotoUri,
       {
-        method: "POST",
-        body: formData,
+        httpMethod: "POST",
+        uploadType: FileSystem.FileSystemUploadType.MULTIPART,
+        fieldName: "image",
+        mimeType: stylePhotoMimeType || "image/jpeg",
+        parameters: {
+          templateKey: selectedStyleCard.templateKey,
+        },
+        headers: {
+          "ngrok-skip-browser-warning": "true",
+        },
       }
     );
-    if (!res.ok) {
-  throw new Error(`HTTP ${res.status}`);
-}
 
-    const data = await res.json();
+    if (uploadResult.status < 200 || uploadResult.status >= 300) {
+      throw new Error(`Errore Server: ${uploadResult.status}`);
+    }
 
-// 🔴 CONTROLLO JOB ID (QUI!)
-if (!data?.jobId) {
-  throw new Error("Job ID mancante");
-}
+    let data: any = {};
+    try {
+      data = JSON.parse(uploadResult.body);
+    } catch {
+      throw new Error("Risposta server non valida");
+    }
 
-const jobId = data.jobId;
-console.log("JOB ID:", jobId);
+    const jobId = data.jobId || data.id || data.data?.jobId;
 
     if (!jobId) {
+      console.log("ERRORE JOBID:", data);
       throw new Error("Job ID mancante");
-
     }
 
     // 🔁 POLLING
     let finalImages: string[] = [];
-
     let attempts = 0;
+    const MAX_ATTEMPTS = 50;
 
-const getIAStatusMessage = (attempts: number) => {
-  if (attempts <= 2) return "📡 Inviando i dati...";
-  if (attempts <= 5) return "⚙️ Caricamento modelli IA...";
-  if (attempts <= 8) return "🧠 Analisi volto...";
-  if (attempts <= 12) return "🎨 Applicazione stile...";
-  if (attempts <= 15) return "✨ Rifinitura...";
-  return "🚀 Quasi pronto...";
-};
+    const getIAStatusMessage = (attempts: number) => {
+      if (attempts <= 3) return "Inviando i dati ai server IA...";
+      if (attempts <= 10) return "Caricamento modelli...";
+      if (attempts <= 20) return "Analisi volto...";
+      if (attempts <= 30) return "Applicazione stile...";
+      if (attempts <= 40) return "Rifinitura...";
+      return "Quasi pronto...";
+    };
 
-    while (true) {
+    while (attempts < MAX_ATTEMPTS) {
       attempts++;
-      if (attempts > 20) {
-      throw new Error("Timeout generazione");
-}
-      const delay = attempts < 5 ? 800 : 1500;
-      await new Promise((r) => setTimeout(r, delay));
 
       setProgressText(getIAStatusMessage(attempts));
 
+      await new Promise((r) => setTimeout(r, 2000));
+
       const statusRes = await fetch(
-        `https://jenesis-backend-1.onrender.com/style-cards/status/${jobId}`
+        `${API_URL}/style-cards/status/${jobId}`,
+        {
+          method: "GET",
+          headers: {
+            "ngrok-skip-browser-warning": "true",
+          },
+        }
       );
 
+      if (!statusRes.ok) {
+        console.log("⚠️ status non ok:", statusRes.status);
+        continue;
+      }
+
       const statusData = await statusRes.json();
+      console.log("📡 STATUS:", statusData);
 
-      console.log("STATUS:", statusData);
+      if (
+        statusData.status === "complete" ||
+        statusData.status === "completed"
+      ) {
+        const output =
+          statusData.images ||
+          statusData.output ||
+          statusData.result ||
+          statusData.url ||
+          statusData.data?.images;
 
-      if (statusData.error) {
-      throw new Error(statusData.error);
-}
+        if (Array.isArray(output)) {
+          finalImages = output.filter(Boolean);
+        } else if (typeof output === "string" && output.length > 0) {
+          finalImages = [output];
+        }
 
-      if (statusData.status === "complete") {
-        finalImages = statusData.images || [];
         break;
       }
     }
@@ -751,21 +691,24 @@ const getIAStatusMessage = (attempts: number) => {
       throw new Error("Nessuna immagine ricevuta");
     }
 
-    // 🔥 MOSTRA SUBITO IN UI
-    setImages(finalImages);
+     //💾 SALVATAGGIO
+    const localFiles = await Promise.all(
+      finalImages.map((url, i) =>
+       dataUriToFileUri(url, `style-${Date.now()}-${i}.jpg`)
+      )
+    );
 
-    // 💾 SALVA
     await saveProjectToStorage({
       title: selectedStyleCard.title,
       mode: "style",
       createdAt: Date.now(),
       userPhotoUri: stylePhotoUri,
-      outputs: finalImages.map((img, i) => ({
-        scene: `${selectedStyleCard.templateKey}-${i}`,
-        status: "done",
-        prompt: selectedStyleCard.title,
-        imageUrl: img,
-      })),
+      outputs: finalImages.map((base64, i) => ({
+  scene: `${selectedStyleCard.templateKey}-${i}`,
+  status: "done",
+  prompt: selectedStyleCard.title,
+  imageUrl: base64, // 🔥 FIX
+})),
     });
 
     setProgressText("Completato!");
@@ -1293,17 +1236,6 @@ const getIAStatusMessage = (attempts: number) => {
                     {isGenerating ? "Creazione…" : "Crea foto"}
                   </Text>
                 </Pressable>
-                {images.length > 0 && (
-  <ScrollView horizontal style={{ marginTop: 10 }}>
-    {images.map((img, i) => (
-      <Image
-        key={i}
-        source={{ uri: img }}
-        style={{ width: 120, height: 120, marginRight: 10 }}
-      />
-    ))}
-  </ScrollView>
-)}
 
                 {(isGenerating || !!progressText) && (
                   <View
