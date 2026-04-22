@@ -1,4 +1,5 @@
 import * as fal from "@fal-ai/serverless-client";
+import { v2 as cloudinary } from "cloudinary";
 import RunwayML from "@runwayml/sdk";
 import cors from "cors";
 import crypto from "crypto";
@@ -35,8 +36,6 @@ process.env.FAL_KEY = process.env.FAL_KEY || "";
 fal.config({
   credentials: process.env.FAL_KEY,
 });
-
-import { v2 as cloudinary } from "cloudinary";
 
 cloudinary.config({
   cloud_name: process.env.CLOUD_NAME,
@@ -1697,16 +1696,6 @@ return res.json({
 /* ================== RUNWAY IMAGE → VIDEO ================== */
 app.post("/api/runway/image-to-video", upload.single("image"), async (req: any, res) => {
   try {
-
-    // 🚫 BLOCCO RUNWAY (DEBUG MODE)
-
-  return res.json({
-
-    videoUrl: "https://test-video.mp4",
-
-    debug: "RUNWAY DISABILITATO"
-
-  });
   
     console.log("IS PREMIUM:", req.body.isPremium);
 
@@ -1794,9 +1783,10 @@ app.post("/api/runway/image-to-video", upload.single("image"), async (req: any, 
   ? null
   : "drawtext=text='JenesisAI':fontcolor=white@0.5:fontsize=40:x=(w-text_w)/2:y=h-60:shadowcolor=black:shadowx=2:shadowy=2";
 
+
      //🎬 FFMPEG (QUALITÀ REALE)
    await new Promise((resolve, reject) => {
-  const command = ffmpeg(processedInput)
+   const command = ffmpeg(inputPath)
     .outputOptions([
       "-c:v libx264",
       isUltra ? "-crf 16" : "-crf 23",
@@ -1981,8 +1971,13 @@ if (!voiceId) {
    try { fs.unlinkSync(videoPath); } catch {}
    try { fs.unlinkSync(audioPath); } catch {}
 
-    const finalUrl = `${getPublicBaseUrl(req)}/videos/${path.basename(outputPath)}`; 
-    console.log("✅ FINAL VIDEO URL:", finalUrl);
+    // upload su Cloudinary
+const uploadRes = await cloudinary.uploader.upload(outputPath, {
+  resource_type: "video",
+});
+   const finalUrl = uploadRes.secure_url;
+   try { fs.unlinkSync(outputPath); } catch {}
+
     return res.json({ videoUrl: finalUrl });
   } catch (err: any) {
     console.error(err);
