@@ -12,7 +12,7 @@ export default function TabsLayout() {
       try {
         await Purchases.configure({
           apiKey: Platform.select({
-            ios: "appl_KVREdrrSHPaulxZHkXRIekUIhZA", // 🔥 METTI LA TUA VERA
+            ios: "test_GpZKHSpWbTLdDBVsjixIYyiarUo", // 🔥 METTI LA TUA VERA
           })!,
         });
 
