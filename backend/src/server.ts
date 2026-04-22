@@ -24,11 +24,12 @@ dotenv.config({ path: "../.env" });
 if (!ffmpegPath) {
   throw new Error("FFMPEG NOT FOUND");
 }
-ffmpeg.setFfmpegPath(ffmpegPath);
+
+ffmpeg.setFfmpegPath(ffmpegPath as string);
 
 console.log("REPLICATE KEY:", process.env.REPLICATE_API_KEY);
 console.log("FAL KEY LENGTH:", process.env.FAL_KEY?.length);
-console.log("FFMPEG PATH:", "/usr/bin/ffmpeg");
+//console.log("FFMPEG PATH:", "/usr/bin/ffmpeg");
 console.log("FFMPEG PATH:", ffmpegPath);
 
 process.env.FAL_KEY = process.env.FAL_KEY || "";
@@ -1816,61 +1817,26 @@ app.post("/api/runway/image-to-video", upload.single("image"), async (req: any, 
       taskId: task?.id ?? null,
     });
 
-  } catch (err: any) {
-  console.error("💥 RUNWAY ERROR:", err);
+  } 
+  catch (err: any) {
+  console.log("💥 RUNWAY ERROR:", err);
 
-  // 🔥 gestione intelligente errori
-let errorType = "GENERIC";
+  const msg =
+    err?.error?.error || // ← QUESTO È QUELLO GIUSTO
+    err?.message ||
+    "";
 
-if (err?.message?.includes("credit") || err?.message?.includes("quota")) {
-  errorType = "NO_CREDITS";
-}
-
-res.status(500).json({
-  error: errorType,
-  message: err?.message,
-});
-}
-});
-
-/* ================== HEDRA VOICES ================== */
-app.get("/api/hedra/voices", async (_req, res) => {
-  try {
-    const apiKey = requireEnv("HEDRA_API_KEY");
-
-    const resp = await fetch("https://api.hedra.com/web-app/public/voices", {
-      headers: {
-        "X-API-Key": apiKey,
-      },
+  if (msg.includes("credits")) {
+    return res.status(402).json({
+      error: "NO_CREDITS",
+      message: "Crediti esauriti"
     });
-
-    const text = await resp.text();
-    const data = safeJsonParse(text);
-
-    if (!resp.ok) {
-      console.log("❌ Hedra voices raw error:", text);
-      return res.status(resp.status).json({
-        error:
-          data?.messages?.[0] ||
-          data?.message ||
-          `Hedra voices error ${resp.status}`,
-      });
-    }
-
-    const voices = Array.isArray(data)
-      ? data.map((v: any) => ({
-          id: v.id,
-          name: v.name,
-          preview_url: v.asset?.preview_url || null,
-        }))
-      : [];
-
-    return res.json({ voices });
-
-  } catch (err: any) {
-    console.error("❌ Hedra voices error:", err);
-    return res.status(500).json({ error: err?.message });
   }
+
+  return res.status(500).json({
+    error: "GENERATION_FAILED",
+  });
+}
 });
 
 /* -------------------NUOVA ROUTE per image-video--------------*/
@@ -2013,6 +1979,7 @@ if (!voiceId) {
     return res.status(500).json({ error: err.message });
   }
 });
+
 /* ================== TALKING PHOTO ================== */
 app.post("/generate-talking-photo", async (req, res) => {
   try {
@@ -2138,6 +2105,47 @@ app.post("/generate-talking-photo", async (req, res) => {
     return res.status(500).json({ error: stringifyUnknownError(err) });
   }
 })
+
+/* ================== HEDRA VOICES ================== */
+app.get("/api/hedra/voices", async (_req, res) => {
+  try {
+    const apiKey = requireEnv("HEDRA_API_KEY");
+
+    const resp = await fetch("https://api.hedra.com/web-app/public/voices", {
+      headers: {
+        "X-API-Key": apiKey,
+      },
+    });
+
+    const text = await resp.text();
+    const data = safeJsonParse(text);
+
+    if (!resp.ok) {
+      console.log("❌ Hedra voices raw error:", text);
+      return res.status(resp.status).json({
+        error:
+          data?.messages?.[0] ||
+          data?.message ||
+          `Hedra voices error ${resp.status}`,
+      });
+    }
+
+    const voices = Array.isArray(data)
+      ? data.map((v: any) => ({
+          id: v.id,
+          name: v.name,
+          preview_url: v.asset?.preview_url || null,
+        }))
+      : [];
+
+    return res.json({ voices });
+
+  } catch (err: any) {
+    console.error("❌ Hedra voices error:", err);
+    return res.status(500).json({ error: err?.message });
+  }
+});
+
 /* ================== ROUTE AVATAR ================== */
 app.post("/generate-avatar", async (req, res) => {
   try {
