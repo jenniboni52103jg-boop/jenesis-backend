@@ -1876,22 +1876,30 @@ if (!voiceId) {
     const dataUri = `data:${req.file.mimetype};base64,${req.file.buffer.toString("base64")}`;
 
     //const videoUrl = "https://sample-videos.com/video123/mp4/720/big_buck_bunny_720p_1mb.mp4";
-    const videoUrl = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
 
     //const runwayTask = await runway.imageToVideo.create({
-     // model: "gen4.5",
-     // promptImage: dataUri,
+      //model: "gen4.5",
+      //promptImage: dataUri,
       //promptText: prompt,
       //ratio: "720:1280",
-    //  duration: 5,
-   // }).waitForTaskOutput();
+      //duration: 5,
+    //}).waitForTaskOutput();
+    const runwayTask = await runway.imageToVideo.create({
+  model: "gen4.5",
+  promptImage: dataUri,
+  promptText: prompt,
+  ratio: "720:1280",
+  duration: 5,
+});
 
-    //const videoUrl =
-      //(Array.isArray((runwayTask as any).output)
-      //  ? ((runwayTask as any).output[0]?.url || (runwayTask as any).output[0])
-        //: null) ||
-      //(runwayTask as any).videoUrl ||
-      //null;
+console.log("RUNWAY TASK ID:", runwayTask.id);
+
+    const videoUrl =
+      (Array.isArray((runwayTask as any).output)
+        ? ((runwayTask as any).output[0]?.url || (runwayTask as any).output[0])
+        : null) ||
+      (runwayTask as any).videoUrl ||
+      null;
 
     if (!videoUrl) {
       throw new Error("Runway video generation failed");
