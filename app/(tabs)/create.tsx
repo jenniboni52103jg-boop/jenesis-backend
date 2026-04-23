@@ -1250,8 +1250,8 @@ if (addVoice && !useRecordedAudio && !selectedVoiceExists) {
       "1:1": "1024:1024",
       "3:4": "768:1024",
 };
-      form.append("quality", quality);
-      form.append("ratio", ratioMap[textRatio]);
+      form.append("quality", quality || "standard");
+      form.append("ratio", ratioMap[textRatio] || "720:1280");
       form.append("duration", "5");
 
       form.append(
@@ -1263,9 +1263,6 @@ if (addVoice && !useRecordedAudio && !selectedVoiceExists) {
         } as any
       );
 
-      form.append("isPremium", isPremium ? "true" : "false");
-      //form.append("isPremium", "true");
-
       const res = await fetch(`${API_URL}/api/runway/image-to-video`, {
         method: "POST",
         headers: {
@@ -1274,13 +1271,20 @@ if (addVoice && !useRecordedAudio && !selectedVoiceExists) {
         body: form,
       });
 
+
+const text = await res.text();
+console.log("🔥 RAW BACKEND:", text);
+
 let data;
 
 try {
-  data = await res.json();
+  data = JSON.parse(text);
 } catch (e) {
-  throw new Error("Risposta backend non valida (probabile timeout)");
+  Alert.alert("Errore", "Risposta server non valida");
+  return;
 }
+
+console.log("✅ DATA:", data);
 
       if (!res.ok) {
   if (data?.error === "PRO_REQUIRED") {
@@ -1340,6 +1344,7 @@ if (!useRecordedAudio) {
       console.log("SPEECH:", speechText);
       console.log("USE RECORDED AUDIO:", useRecordedAudio);
 
+
       const res = await fetch(`${API_URL}/generate-motion-speaking-video`, {
         method: "POST",
         headers: {
@@ -1359,16 +1364,17 @@ if (!useRecordedAudio) {
  // Alert.alert("Errore", "Errore server (voice/video)");
  // return;
 //}
-let text = await res.text();
-console.log("🔥 RAW BACKEND:", text);
+
+const text = await res.text();
 
 let data;
 
 try {
   data = JSON.parse(text);
+  console.log("✅ DATA:", data);
 } catch (e) {
- Alert.alert("Errore", "Risposta server non valida");
-console.log("❌ RAW BACKEND:", text); // 👈 QUESTO È FONDAMENTALE
+  console.log("❌ RAW BACKEND:", text);
+  Alert.alert("Errore", "Server non ha risposto correttamente");
   return;
 }
       if (!res.ok) {
