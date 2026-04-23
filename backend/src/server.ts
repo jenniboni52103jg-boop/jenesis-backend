@@ -54,6 +54,8 @@ const ROOT_DIR = process.cwd();
 const TEMP_DIR = path.join(ROOT_DIR, "temp");
 const VIDEOS_DIR = path.join(ROOT_DIR, "videos");
 
+app.use("/videos", express.static(VIDEOS_DIR));
+
 if (!fs.existsSync(TEMP_DIR)) fs.mkdirSync(TEMP_DIR, { recursive: true });
 if (!fs.existsSync(VIDEOS_DIR)) fs.mkdirSync(VIDEOS_DIR, { recursive: true });
 
@@ -1842,6 +1844,8 @@ app.post("/api/runway/image-to-video", upload.single("image"), async (req: any, 
 /* -------------------NUOVA ROUTE per image-video--------------*/
 app.post("/generate-motion-speaking-video", upload.single("image"), async (req: any, res) => {
   try {
+    
+  // 👇
     console.log("BODY:", req.body);
 
     const isPremium = req.body?.isPremium === "true" || req.body?.isPremium === true;
@@ -1871,20 +1875,22 @@ if (!voiceId) {
     /* STEP 1 — Runway motion */
     const dataUri = `data:${req.file.mimetype};base64,${req.file.buffer.toString("base64")}`;
 
-    const runwayTask = await runway.imageToVideo.create({
-      model: "gen4.5",
-      promptImage: dataUri,
-      promptText: prompt,
-      ratio: "720:1280",
-      duration: 5,
-    }).waitForTaskOutput();
+    const videoUrl = "https://sample-videos.com/video123/mp4/720/big_buck_bunny_720p_1mb.mp4";
 
-    const videoUrl =
-      (Array.isArray((runwayTask as any).output)
-        ? ((runwayTask as any).output[0]?.url || (runwayTask as any).output[0])
-        : null) ||
-      (runwayTask as any).videoUrl ||
-      null;
+    //const runwayTask = await runway.imageToVideo.create({
+     // model: "gen4.5",
+     // promptImage: dataUri,
+      //promptText: prompt,
+      //ratio: "720:1280",
+    //  duration: 5,
+   // }).waitForTaskOutput();
+
+    //const videoUrl =
+      //(Array.isArray((runwayTask as any).output)
+      //  ? ((runwayTask as any).output[0]?.url || (runwayTask as any).output[0])
+        //: null) ||
+      //(runwayTask as any).videoUrl ||
+      //null;
 
     if (!videoUrl) {
       throw new Error("Runway video generation failed");
@@ -1936,7 +1942,20 @@ if (!voiceId) {
     const outputPath = path.join(VIDEOS_DIR, `final_${Date.now()}.mp4`);
 
     const videoBuffer = await fetch(videoUrl).then((r) => r.buffer());
-    const audioBuffer = await fetch(audioUrl).then((r) => r.buffer());
+    //const audioBuffer = await fetch(audioUrl).then((r) => r.buffer());
+    const audioBuffer = await fetch(audioUrl, {
+  headers: {
+    "User-Agent": "Mozilla/5.0",
+    "Accept": "*/*",
+  },
+  redirect: "follow"
+}).then(async (r) => {
+  if (!r.ok) {
+    console.log("❌ AUDIO FETCH STATUS:", r.status);
+    throw new Error("Audio download failed");
+  }
+  return r.buffer();
+});
 
     fs.writeFileSync(videoPath, videoBuffer);
     fs.writeFileSync(audioPath, audioBuffer);
@@ -1978,10 +1997,20 @@ const uploadRes = await cloudinary.uploader.upload(outputPath, {
    const finalUrl = uploadRes.secure_url;
    try { fs.unlinkSync(outputPath); } catch {}
 
-    return res.json({ videoUrl: finalUrl });
+   console.log("FINAL RESPONSE:", finalUrl);
+
+return res.json({
+  success: true,
+  videoUrl: finalUrl,
+});    
+
   } catch (err: any) {
     console.error(err);
-    return res.status(500).json({ error: err.message });
+    //return res.status(500).json({ error: err.message });
+    return res.status(500).json({
+  success: false,
+  error: err?.message || "SERVER_ERROR",
+});
   }
 });
 
