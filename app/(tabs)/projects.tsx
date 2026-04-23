@@ -25,7 +25,7 @@ import {
 /* ================= STORAGE + TYPES ================= */
 
 export const PROJECTS_KEY = "projects";
-const API_URL = "https://brunette-items-provinces-reaches.trycloudflare.com";
+const API_URL = "https://jenesis-backend-1.onrender.com";
 
 type OutputItem = {
   scene: string;
