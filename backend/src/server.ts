@@ -1,6 +1,6 @@
 import * as fal from "@fal-ai/serverless-client";
-import { v2 as cloudinary } from "cloudinary";
 import RunwayML from "@runwayml/sdk";
+import { v2 as cloudinary } from "cloudinary";
 import cors from "cors";
 import crypto from "crypto";
 import dotenv from "dotenv";
@@ -1875,7 +1875,8 @@ if (!voiceId) {
     /* STEP 1 — Runway motion */
     const dataUri = `data:${req.file.mimetype};base64,${req.file.buffer.toString("base64")}`;
 
-    const videoUrl = "https://sample-videos.com/video123/mp4/720/big_buck_bunny_720p_1mb.mp4";
+    //const videoUrl = "https://sample-videos.com/video123/mp4/720/big_buck_bunny_720p_1mb.mp4";
+    const videoUrl = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
 
     //const runwayTask = await runway.imageToVideo.create({
      // model: "gen4.5",
@@ -1941,7 +1942,7 @@ if (!voiceId) {
     const audioPath = path.join(TEMP_DIR, `audio_${Date.now()}.mp3`);
     const outputPath = path.join(VIDEOS_DIR, `final_${Date.now()}.mp4`);
 
-    const videoBuffer = await fetch(videoUrl).then((r) => r.buffer());
+    //const videoBuffer = await fetch(videoUrl).then((r) => r.buffer());
     //const audioBuffer = await fetch(audioUrl).then((r) => r.buffer());
     const audioBuffer = await fetch(audioUrl, {
   headers: {
@@ -1957,7 +1958,7 @@ if (!voiceId) {
   return r.buffer();
 });
 
-    fs.writeFileSync(videoPath, videoBuffer);
+    //fs.writeFileSync(videoPath, videoBuffer);
     fs.writeFileSync(audioPath, audioBuffer);
     
     const filters = isPremium
@@ -1979,7 +1980,7 @@ if (!voiceId) {
     ];
     /* STEP 4 — merge audio + video */
     await new Promise((resolve, reject) => {
-      ffmpeg(videoPath)
+      ffmpeg(videoUrl)
         .input(audioPath)
         .videoFilters(filters)
         .outputOptions("-shortest")
