@@ -1,5 +1,6 @@
 import Purchases from "react-native-purchases";
 
+const API_URL = "https://jenesis-backend-1.onrender.com";
 /* ================= INIT ================= */
 export async function initRevenueCat() {
   try {
@@ -30,15 +31,41 @@ export async function getOffers() {
 }
 
 /* ================= BUY PACKAGE ================= */
-export async function buyPackage(pkg: any) {
+//export async function buyPackage(pkg: any) {
+  //try {
+    //const { customerInfo } = await Purchases.purchasePackage(pkg);
+
+    //if (customerInfo.entitlements.active["pro"]) {
+      //console.log("🔥 UTENTE PREMIUM ATTIVO");
+    //}
+
+   // return customerInfo;
+  //} catch (e: any) {
+    //if (!e.userCancelled) {
+      //console.log("❌ purchase error", e);
+    //}
+    //return null;
+  //}
+//}
+export async function buyPackage(pkg: any, userId: string) {
   try {
     const { customerInfo } = await Purchases.purchasePackage(pkg);
 
-    if (customerInfo.entitlements.active["pro"]) {
-      console.log("🔥 UTENTE PREMIUM ATTIVO");
-    }
+    const productId = pkg?.product?.identifier;
+
+    await fetch(`${API_URL}/confirm-purchase`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        productId,
+        userId,
+      }),
+    });
 
     return customerInfo;
+
   } catch (e: any) {
     if (!e.userCancelled) {
       console.log("❌ purchase error", e);
@@ -46,7 +73,6 @@ export async function buyPackage(pkg: any) {
     return null;
   }
 }
-
 /* ================= QUICK BUY (DEFAULT) ================= */
 export async function purchasePro() {
   try {

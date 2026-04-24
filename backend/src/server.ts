@@ -132,6 +132,21 @@ async function refineImages(images: string[]): Promise<string[]> {
 
   return images; // per ora non cambia niente
 }
+
+// ============== FAKE DB (temporaneo ma funzionante) PER CREDITS ============
+const users: Record<string, { credits: number }> = {};
+
+async function getUserFromDB(userId: string) {
+  if (!users[userId]) {
+    users[userId] = { credits: 0 };
+  }
+  return users[userId];
+}
+
+async function updateUserCredits(userId: string, credits: number) {
+  users[userId] = { credits };
+}
+
 /* ================== FUNZIONE CLOUDINARI ================== */
 async function uploadToCloudinary(buffer: Buffer) {
   // DEBUG: Se questo stampa undefined, le variabili env non sono caricate
@@ -2014,16 +2029,39 @@ return res.json({
 });    
 
   } catch (err: any) {
-    console.error(err);
-    //return res.status(500).json({ error: err.message });
-    return res.status(500).json({
-  success: false,
-  error: err?.message || "SERVER_ERROR",
-});
+  console.error("❌ FULL ERROR:", err);
+
+  const message =
+    err?.response?.data?.error ||
+    err?.error ||
+    err?.message ||
+    "";
+
+  console.log("🔥 CLEAN ERROR MESSAGE:", message);
+  console.log("RUNWAY ERROR RAW:", err);
+
+  // 🚨 CREDITI FINITI (Runway)
+  if (message.toLowerCase().includes("enough credits")) {
+    return res.status(402).json({
+      success: false,
+      error: "NO_CREDITS",
+      message: "Crediti esauriti",
+    });
   }
+
+  // ❌ ERRORE GENERICO
+  //return res.status(500).json({
+    //success: false,
+    //error: "SERVER_ERROR",
+    //message: message || "Errore generico",
+  //});
+   return res.json({
+  videoUrl: "https://sample-videos.com/video123/mp4/720/big_buck_bunny_720p_1mb.mp4"
+}); // da cancellare dopo la prova postman 
+}
 });
 
-/* ================== TALKING PHOTO ================== */
+/* ======================================= TALKING PHOTO =================================================== */
 app.post("/generate-talking-photo", async (req, res) => {
   try {
     const { imageBase64, script, voiceId, audioBase64 } = req.body ?? {};
@@ -2037,6 +2075,30 @@ app.post("/generate-talking-photo", async (req, res) => {
         error: "Missing script or audioBase64",
       });
     }
+ 
+    // 💰 CREDITI (AGGIUNTA SICURA)
+const rawUserId = req.headers["user-id"];
+
+if (!rawUserId || Array.isArray(rawUserId)) {
+  return res.status(401).json({ error: "NO_USER" });
+}
+
+const userId = rawUserId; // ora è STRING SICURA
+
+// 👉 recupera utente (usa il tuo DB)
+const user = await getUserFromDB(userId);
+
+if (!user) {
+  return res.status(404).json({ error: "USER_NOT_FOUND" });
+}
+
+// 👉 costo (decidi tu)
+const cost = audioBase64 ? 6 : 5;
+
+// ❌ controlla crediti
+if (user.credits < cost) {
+  return res.status(400).json({ error: "NO_CREDITS" });
+}
 
     console.log("🗣️ Hedra talking photo start");
 
@@ -2142,12 +2204,59 @@ app.post("/generate-talking-photo", async (req, res) => {
 
     console.log("✅ Hedra talking photo ready:", videoUrl);
 
-    return res.json({ videoUrl });
+    // 💸 scala crediti
+user.credits -= cost;
+await updateUserCredits(userId, user.credits);
+
+console.log("💸 Credits scalati:", cost);
+    return res.json({
+  videoUrl: "https://sample-videos.com/video123/mp4/720/big_buck_bunny_720p_1mb.mp4"
+}); // da cancellare dopo la prova postman 
+   // 📤 RISPOSTA
+    //return res.json({ videoUrl });
   } catch (err: any) {
     console.error("❌ Talking photo error:", err);
     return res.status(500).json({ error: stringifyUnknownError(err) });
   }
 })
+
+/* ======================================= ROUTA CREDITS =================================================== */
+app.post("/confirm-purchase", async (req, res) => {
+  try {
+    //const { userId, productId } = req.body;
+    const userId = String(req.body.userId);
+    const productId = String(req.body.productId);
+
+    let creditsToAdd = 0;
+
+    if (productId === "credits_330") creditsToAdd = 330;
+    if (productId === "credits_660") creditsToAdd = 660;
+    if (productId === "credits_1320") creditsToAdd = 1320;
+    if (productId === "credits_3300") creditsToAdd = 3300;
+    if (productId === "credits_6600") creditsToAdd = 6600;
+    if (productId === "credits_13200") creditsToAdd = 13200;
+
+    if (creditsToAdd === 0) {
+      return res.status(400).json({ error: "Invalid product" });
+    }
+
+    const user = await getUserFromDB(userId);
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const newCredits = (user.credits || 0) + creditsToAdd;
+
+    await updateUserCredits(userId, newCredits);
+
+    return res.json({ success: true, credits: newCredits });
+
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: "Server error" });
+  }
+});
 
 /* ================== HEDRA VOICES ================== */
 app.get("/api/hedra/voices", async (_req, res) => {
