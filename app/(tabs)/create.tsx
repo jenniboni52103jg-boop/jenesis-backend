@@ -1352,7 +1352,7 @@ if (!useRecordedAudio) {
         },
         body: form,
       });
-
+console.log("STATUS:", res.status);
       //const data = await res.json();
       //let data;
 
@@ -1458,11 +1458,29 @@ if (talkingScript.length > maxChars) {
       return;
     }
 
-    try {
+   // 1️⃣ calcoli costo
+          const cost =
+  duration === 5
+    ? CREDIT_COSTS.talking.short
+    : CREDIT_COSTS.talking.long;
+
+   // 2️⃣ SCALI CREDITI PRIMA
+      //if (!(await spendCredits(cost))) return;
+      if (!(await spendCredits(cost))) {
+  Alert.alert(
+    "Crediti insufficienti",
+    "Acquista crediti per continuare"
+  );
+  setShowPaywall(true);
+  return;
+}
+   
+  try {
       setTalkingLoading(true);
       setSavingToProjects(true);
       setSavedToProjects(false);
 
+   // 3️⃣ POI CHIAMI IL BACKEND   
       const res = await fetch(`${API_URL}/generate-talking-photo`, {
         method: "POST",
         headers: {
@@ -1478,41 +1496,52 @@ if (talkingScript.length > maxChars) {
           isPremium: isPremium, // 👈 
         }),
       });
+     
+      // 4️⃣ parsing
+      const data = await res.json();
 
-      const text = await res.text();
+console.log("DATA:", data);
+     // const text = await res.text();
 
-let data;
-try {
-  data = JSON.parse(text);
-} catch (e) {
-  console.log("❌ NOT JSON:", text);
-  throw new Error("Server returned invalid response");
-}
+//let data;
+//try {
+//  data = JSON.parse(text);
+//} catch (e) {                  //a quanto pare questo non serve piu
+  //console.log("❌ NOT JSON:", text);
+  //throw new Error("Server returned invalid response");
+//}
         if (!res.ok) {
+
+  if (data?.error === "NO_CREDITS") {
+    Alert.alert(
+      "Crediti finiti",
+      "Acquista altri crediti per continuare",
+      [
+        { text: "Annulla" },
+        { text: "Compra", onPress: () => setShowPaywall(true) }
+      ]
+    );
+    return;
+  }
+
   if (data?.error === "PRO_REQUIRED") {
     setShowPaywall(true);
     return;
   }
-        throw new Error(data?.error || "Errore generazione talking photo");
-      }
+
+  throw new Error(data?.error || "Errore generazione talking photo");
+}
 
       if (!data?.videoUrl) {
         throw new Error("Backend non ha restituito videoUrl");
       }
-     
-       const cost =
-  duration === 5
-    ? CREDIT_COSTS.talking.short
-    : CREDIT_COSTS.talking.long;
-
-if (!(await spendCredits(cost))) return;
 
       await saveTalkingPhotoToProjects(data.videoUrl, talkingImage);
 
       setSavedToProjects(true);
       setTimeout(() => setSavedToProjects(false), 2500);
     } catch (e: any) {
-      Alert.alert("Error", e?.message || "Something went wrong");
+    Alert.alert("Error", e?.message || "Something went wrong");
     } finally {
       setTalkingLoading(false);
       setSavingToProjects(false);
