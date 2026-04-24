@@ -2091,6 +2091,12 @@ const users = {
   test123: { credits: 100 }
 };
 
+const user = users[userId];
+
+if (!user) {
+  return res.status(404).json({ error: "USER_NOT_FOUND" });
+}
+
 //if (!user) {
  // return res.status(404).json({ error: "USER_NOT_FOUND" });
 //}
@@ -2099,9 +2105,9 @@ const users = {
 const cost = audioBase64 ? 6 : 5;
 
 // ❌ controlla crediti
-//if (user.credits < cost) {
- // return res.status(400).json({ error: "NO_CREDITS" });
-//}
+if (user.credits < cost) {
+  return res.status(400).json({ error: "NO_CREDITS" });
+}
 
 
     console.log("🗣️ Hedra talking photo start");
@@ -2209,7 +2215,7 @@ const cost = audioBase64 ? 6 : 5;
     console.log("✅ Hedra talking photo ready:", videoUrl);
 
     // 💸 scala crediti
-//user.credits -= cost;
+user.credits -= cost;
 //await updateUserCredits(userId, user.credits);
 
 console.log("💸 Credits scalati:", cost);
