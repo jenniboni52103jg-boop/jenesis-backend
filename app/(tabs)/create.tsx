@@ -1,11 +1,11 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect } from "@react-navigation/native";
-import * as MediaLibrary from "expo-media-library";
 import { Asset } from "expo-asset";
 import { Audio } from "expo-av";
 import * as FileSystem from "expo-file-system/legacy";
 import * as ImagePicker from "expo-image-picker";
 import { LinearGradient } from "expo-linear-gradient";
+import * as MediaLibrary from "expo-media-library";
 import { useRouter } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
@@ -13,10 +13,12 @@ import {
   StyleSheet,
   Text, TextInput, TouchableOpacity, TouchableWithoutFeedback, View
 } from "react-native";
+import Purchases from "react-native-purchases";
 import { CREDIT_COSTS } from "../constants/credits";
 import { useCredits } from "../contexts/CreditsContext";
 import { checkPremium } from "../services/revenuecat";
 import { addProjectToProjects } from "./projects";
+
 
 const API_URL = "https://jenesis-backend-1.onrender.com";
 
@@ -66,10 +68,14 @@ const saveImageVideoToProjects = async (videoUrl, ratio, image) => {
 };
 
 export default function CreateScreen() {
+ 
+async function checkPro() {
+  const info = await Purchases.getCustomerInfo();
+  setIsPremium(!!info.entitlements.active["pro"]);
+}
+
   const { credits, setCredits } = useCredits();
   const [showPaywall, setShowPaywall] = useState(false);
-
-  const isPro = true;// DA CANCELLARE DOPO CHE INSERISCO LA CHIAVE REVENUCAT
 
   const [modalType, setModalType] = useState<
     null | "text" | "image" | "talking" | "avatar" | "effects"
@@ -122,6 +128,8 @@ const checkUser = async () => {
 
   loadPremium();
 }, []);
+ 
+console.log("IS PREMIUM:", isPremium);
 
   const [savingToProjects, setSavingToProjects] = useState(false);
   const [savedToProjects, setSavedToProjects] = useState(false);
@@ -1414,7 +1422,7 @@ try {
   }
 };
 
-/*-----------GENERATE TALKING PHOTO ---------- */
+/*--------------------------------GENERATE TALKING PHOTO-------------------------------------- */
   const generateTalkingPhoto = async () => {
     //if (!isPro) {
   //setShowPaywall(true); // oppure navigation al paywall
@@ -1426,6 +1434,12 @@ try {
   setShowPaywall(true);
   return;
 }
+
+// 👇 QUI
+  if (duration === 15 && !isPremium) {
+    setShowPaywall(true);
+    return;
+  }
 
     if (!talkingImage || !talkingImageBase64) {
       Alert.alert("Error", "Upload your photo first");
@@ -1486,6 +1500,7 @@ if (talkingScript.length > maxChars) {
         headers: {
           "Content-Type": "application/json",
           "ngrok-skip-browser-warning": "true",
+           "user-id": "test123", // O l'id dinamico dell'utente
         },
         body: JSON.stringify({
           imageBase64: talkingImageBase64,
@@ -1498,18 +1513,38 @@ if (talkingScript.length > maxChars) {
       });
      
       // 4️⃣ parsing
-      const data = await res.json();
+     // const data = await res.json();
+//console.log("DATA:", data);
+     // const text = await res.text();
+    // let data;
+
+//try {
+  //const text = await res.text();
+  //console.log("RESPONSE RAW:", text);
+
+  //data = JSON.parse(text);
+//} catch (e) {
+ // console.log("❌ NOT JSON");
+  //throw new Error("Server response non valida");
+//}
+
+//console.log("DATA:", data);
+const text = await res.text();
+console.log("ECCO COSA RISPONDE IL SERVER:", text);
+
+// 1. DICHIARA LA VARIABILE QUI FUORI
+let data; 
+
+try {
+  // 2. ASSEGNA IL VALORE (senza 'const' o 'let' davanti)
+  data = JSON.parse(text);
+} catch (e) {
+  console.log("❌ Errore parsing JSON:", e);
+  throw new Error("Il server ha risposto con HTML invece di JSON. Controlla i log del backend.");
+}
 
 console.log("DATA:", data);
-     // const text = await res.text();
 
-//let data;
-//try {
-//  data = JSON.parse(text);
-//} catch (e) {                  //a quanto pare questo non serve piu
-  //console.log("❌ NOT JSON:", text);
-  //throw new Error("Server returned invalid response");
-//}
         if (!res.ok) {
 
   if (data?.error === "NO_CREDITS") {
@@ -2154,6 +2189,7 @@ setTimeout(() => setSavedToProjects(false), 2500);
 </TouchableOpacity>
 
   <TouchableOpacity
+  disabled={!isPremium}
     onPress={() => {
       if (!isPremium) {
        openPaywall();
@@ -2169,7 +2205,7 @@ setTimeout(() => setSavedToProjects(false), 2500);
     }}
   >
     <Text style={{ color: "white" }}>
-    🔒 Long (15s PRO)
+    {isPremium ? "Long (15s)" : "🔒 Long (15s PRO)"}
     </Text>
   </TouchableOpacity>
 

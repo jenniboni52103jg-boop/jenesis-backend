@@ -18,7 +18,35 @@ import sharp from "sharp";
 import { CALCIO_ARCHETYPES_MAP, CalcioSceneKey } from "./calcioCards";
 import { getCouplePrompt, restyleCalcioImage, restyleImage, restyleStyleCardImage } from "./restyle";
 dotenv.config({ path: "../.env" });
+import os from "os";
 
+
+async function applyWatermarkToVideo(videoUrl: string): Promise<Buffer> {
+const tempInput = path.join(os.tmpdir(), `input_${Date.now()}.mp4`);
+const tempOutput = path.join(os.tmpdir(), `output_${Date.now()}.mp4`);
+
+  const res = await fetch(videoUrl);
+  const buffer = await res.buffer();
+  fs.writeFileSync(tempInput, buffer);
+
+  await new Promise((resolve, reject) => {
+    ffmpeg(tempInput)
+      .videoFilter(
+        "drawtext=text='Jenesis AI':fontcolor=white:fontsize=28:x=W-tw-20:y=H-th-20"
+      )
+      .output(tempOutput)
+      .on("end", resolve)
+      .on("error", reject)
+      .run();
+  });
+
+  const finalBuffer = fs.readFileSync(tempOutput);
+
+  fs.unlinkSync(tempInput);
+  fs.unlinkSync(tempOutput);
+
+  return finalBuffer;
+}
 
 // usa il binario di sistema
 //if (!ffmpegPath) {
@@ -2064,7 +2092,7 @@ return res.json({
 /* ======================================= TALKING PHOTO =================================================== */
 app.post("/generate-talking-photo", async (req, res) => {
   try {
-    const { imageBase64, script, voiceId, audioBase64 } = req.body ?? {};
+    const { imageBase64, script, voiceId, audioBase64, isPremium } = req.body ?? {};
 
     if (!imageBase64) {
       return res.status(400).json({ error: "Missing image" });
@@ -2212,22 +2240,38 @@ if (user.credits < cost) {
       throw new Error("Hedra non ha restituito videoUrl");
     }
 
+
     console.log("✅ Hedra talking photo ready:", videoUrl);
 
-    // 💸 scala crediti
+    // 💧 WATERMARK QUI (GIUSTO)
+let finalVideoUrl = videoUrl;
+
+if (!isPremium) {
+  console.log("🚫 Applying watermark...");
+
+  //const watermarkedBuffer = await applyWatermarkToVideo(videoUrl);
+
+ // finalVideoUrl = await uploadToCloudinary(watermarkedBuffer);
+}
+
+// 💸 scala crediti
 user.credits -= cost;
-//await updateUserCredits(userId, user.credits);
 
 console.log("💸 Credits scalati:", cost);
-    return res.json({
-  videoUrl: "https://sample-videos.com/video123/mp4/720/big_buck_bunny_720p_1mb.mp4"
-}); // da cancellare dopo la prova postman 
-   // 📤 RISPOSTA
-    //return res.json({ videoUrl });
-  } catch (err: any) {
-    console.error("❌ Talking photo error:", err);
-    return res.status(500).json({ error: stringifyUnknownError(err) });
-  }
+
+// 📤 RISPOSTA
+return res.json({ videoUrl: finalVideoUrl });
+
+  } // catch (err: any) {
+    //console.error("❌ Talking photo error:", err);
+
+    
+   // return res.status(500).json({ error: stringifyUnknownError(err) });
+ // }
+  catch (err) {
+  console.error("❌ Errore:", err);
+  return res.status(500).json({ error: err.message || "Errore interno" });
+}
 })
 
 /* ======================================= ROUTA CREDITS =================================================== */
