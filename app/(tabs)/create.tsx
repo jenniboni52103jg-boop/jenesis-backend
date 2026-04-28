@@ -1495,11 +1495,10 @@ if (talkingScript.length > maxChars) {
       setSavingToProjects(true);
       setSavedToProjects(false);
 
-   const res = await fetch(`${API_URL}/test`, {
+ const res = await fetch(`${API_URL}/generate-talking-photo`, {
   method: "POST",
   headers: {
     "Content-Type": "application/json",
-    "user-id": "test123",
   },
   body: JSON.stringify({
     imageBase64: talkingImageBase64,
@@ -1520,7 +1519,7 @@ try {
   data = JSON.parse(text);
 } catch (e) {
   console.log("❌ NON È JSON");
-  throw new Error("Server ha risposto HTML");
+  throw new Error("Server NON restituisce JSON");
 }
 
 console.log("✅ DATA:", data);
