@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
-    "build": "tsc && cp -r src/assets dist/assets",
+    "build": "tsc",
     "start": "node dist/index.js"
   },
   "dependencies": {
