@@ -1432,42 +1432,11 @@ try {
   //setShowPaywall(true); // oppure navigation al paywall
   //return;
 //}
-const generateTalkingPhoto = async () => {
-  try {
-    console.log("🚀 START");
+app.post("/generate-talking-photo", async (req, res) => {
+  console.log("🔥🔥🔥 SONO QUI DENTRO");
+  return res.json({ ok: true });
+});
 
-    // ✅ STEP 1
-    console.log("STEP 1: upload");
-    const uploadRes = await fetch("...");
-
-    const uploadText = await uploadRes.text();
-    console.log("UPLOAD RAW:", uploadText);
-
-    // ✅ STEP 2
-    console.log("STEP 2: create asset");
-    const assetRes = await fetch("...");
-
-    const assetText = await assetRes.text();
-    console.log("ASSET RAW:", assetText);
-
-    // ✅ STEP 3
-    console.log("STEP 3: audio");
-    const audioRes = await fetch("...");
-
-    const audioText = await audioRes.text();
-    console.log("AUDIO RAW:", audioText);
-
-    // ✅ STEP 4
-    console.log("STEP 4: video");
-    const videoRes = await fetch("...");
-
-    const videoText = await videoRes.text();
-    console.log("VIDEO RAW:", videoText);
-
-  } catch (e) {
-    console.log("❌ ERRORE:", e);
-  }
-};
    // 👇 METTILO QUI
     const access = await checkAccess("talking");
     if (!access.ok) {
