@@ -18,7 +18,11 @@ import { CREDIT_COSTS } from "../constants/credits";
 import { useCredits } from "../contexts/CreditsContext";
 import { checkPremium } from "../services/revenuecat";
 import { addProjectToProjects } from "./projects";
+import express from "express";
 
+const app = express();
+
+app.use(express.json({ limit: "50mb" })); // 👈 QUESTO È FONDAMENTALE
 
 const API_URL = "https://jenesis-backend-1.onrender.com";
 
@@ -1428,6 +1432,42 @@ try {
   //setShowPaywall(true); // oppure navigation al paywall
   //return;
 //}
+const generateTalkingPhoto = async () => {
+  try {
+    console.log("🚀 START");
+
+    // ✅ STEP 1
+    console.log("STEP 1: upload");
+    const uploadRes = await fetch("...");
+
+    const uploadText = await uploadRes.text();
+    console.log("UPLOAD RAW:", uploadText);
+
+    // ✅ STEP 2
+    console.log("STEP 2: create asset");
+    const assetRes = await fetch("...");
+
+    const assetText = await assetRes.text();
+    console.log("ASSET RAW:", assetText);
+
+    // ✅ STEP 3
+    console.log("STEP 3: audio");
+    const audioRes = await fetch("...");
+
+    const audioText = await audioRes.text();
+    console.log("AUDIO RAW:", audioText);
+
+    // ✅ STEP 4
+    console.log("STEP 4: video");
+    const videoRes = await fetch("...");
+
+    const videoText = await videoRes.text();
+    console.log("VIDEO RAW:", videoText);
+
+  } catch (e) {
+    console.log("❌ ERRORE:", e);
+  }
+};
    // 👇 METTILO QUI
     const access = await checkAccess("talking");
     if (!access.ok) {
@@ -1494,56 +1534,35 @@ if (talkingScript.length > maxChars) {
       setSavingToProjects(true);
       setSavedToProjects(false);
 
-   // 3️⃣ POI CHIAMI IL BACKEND   
-      const res = await fetch(`${API_URL}/generate-talking-photo`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "ngrok-skip-browser-warning": "true",
-           "user-id": "test123", // O l'id dinamico dell'utente
-        },
-        body: JSON.stringify({
-          imageBase64: talkingImageBase64,
-          script: talkingScript,
-          voiceId: selectedHedraVoice,
-          ratio: "720:1280",
-          duration,            // 👈 AGGIUNGI QUESTO
-          isPremium: isPremium, // 👈 
-        }),
-      });
-     
-      // 4️⃣ parsing
-     // const data = await res.json();
-//console.log("DATA:", data);
-     // const text = await res.text();
-    // let data;
+   const res = await fetch(`${API_URL}/generate-talking-photo`, {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    "user-id": "test123",
+  },
+  body: JSON.stringify({
+    imageBase64: talkingImageBase64,
+    script: talkingScript,
+    voiceId: selectedHedraVoice,
+    ratio: "720:1280",
+    duration,
+    isPremium,
+  }),
+});
 
-//try {
-  //const text = await res.text();
-  //console.log("RESPONSE RAW:", text);
-
-  //data = JSON.parse(text);
-//} catch (e) {
- // console.log("❌ NOT JSON");
-  //throw new Error("Server response non valida");
-//}
-
-//console.log("DATA:", data);
 const text = await res.text();
-console.log("ECCO COSA RISPONDE IL SERVER:", text);
+console.log("🔥 RAW RESPONSE:", text);
 
-// 1. DICHIARA LA VARIABILE QUI FUORI
-let data; 
+let data;
 
 try {
-  // 2. ASSEGNA IL VALORE (senza 'const' o 'let' davanti)
   data = JSON.parse(text);
 } catch (e) {
-  console.log("❌ Errore parsing JSON:", e);
-  throw new Error("Il server ha risposto con HTML invece di JSON. Controlla i log del backend.");
+  console.log("❌ NON È JSON");
+  throw new Error("Server ha risposto HTML");
 }
 
-console.log("DATA:", data);
+console.log("✅ DATA:", data);
 
         if (!res.ok) {
 
