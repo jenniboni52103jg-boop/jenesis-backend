@@ -1495,7 +1495,7 @@ if (talkingScript.length > maxChars) {
       setSavingToProjects(true);
       setSavedToProjects(false);
 
-   const res = await fetch(`${API_URL}/generate-talking-photo`, {
+   const res = await fetch(`${API_URL}/test`, {
   method: "POST",
   headers: {
     "Content-Type": "application/json",
@@ -1512,7 +1512,7 @@ if (talkingScript.length > maxChars) {
 });
 
 const text = await res.text();
-console.log("🔥 RAW RESPONSE:", text);
+console.log("🔥 TEST RESPONSE:", text);
 
 let data;
 
