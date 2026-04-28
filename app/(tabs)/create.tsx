@@ -18,11 +18,7 @@ import { CREDIT_COSTS } from "../constants/credits";
 import { useCredits } from "../contexts/CreditsContext";
 import { checkPremium } from "../services/revenuecat";
 import { addProjectToProjects } from "./projects";
-import express from "express";
 
-const app = express();
-
-app.use(express.json({ limit: "50mb" })); // 👈 QUESTO È FONDAMENTALE
 
 const API_URL = "https://jenesis-backend-1.onrender.com";
 
@@ -1432,10 +1428,6 @@ try {
   //setShowPaywall(true); // oppure navigation al paywall
   //return;
 //}
-app.post("/generate-talking-photo", async (req, res) => {
-  console.log("🔥🔥🔥 SONO QUI DENTRO");
-  return res.json({ ok: true });
-});
 
    // 👇 METTILO QUI
     const access = await checkAccess("talking");
