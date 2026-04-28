@@ -75,9 +75,6 @@ cloudinary.config({
 });
 
 const app = express();
-app.use(cors()); // 🔥 PRIMA
-app.use(express.json({ limit: "50mb" }));
-app.use(express.urlencoded({ extended: true }));
 
 app.get('/', (req, res) => {
   res.send('Server attivo 🚀');
@@ -372,7 +369,7 @@ async function applyWatermarkToBuffer(imageBuffer: Buffer): Promise<Buffer> {
 
 // ---------------- SWAPFACE per photo ai ----------------
 async function swapFace(templatePath: string, userBuffer: Buffer) {
-  process.env.FAL_KEY = "8ee7f096-30f2-46b2-8e20-2108740cec98:271e1e9b6c13ad1f49426b699bdd565f";
+  process.env.FAL_KEY = requireEnv("FAL_KEY");
 
   try {
     console.log("📸 Caricamento immagini...");
@@ -2001,7 +1998,7 @@ console.log("RUNWAY TASK ID:", runwayTask.id);
     const audioPath = path.join(TEMP_DIR, `audio_${Date.now()}.mp3`);
     const outputPath = path.join(VIDEOS_DIR, `final_${Date.now()}.mp4`);
 
-    //const videoBuffer = await fetch(videoUrl).then((r) => r.buffer());
+    const videoBuffer = await fetch(videoUrl).then((r) => r.buffer());
     //const audioBuffer = await fetch(audioUrl).then((r) => r.buffer());
     const audioBuffer = await fetch(audioUrl, {
   headers: {
@@ -2263,9 +2260,8 @@ let finalVideoUrl = videoUrl;
 if (!isPremium) {
   console.log("🚫 Applying watermark...");
 
-  //const watermarkedBuffer = await applyWatermarkToVideo(videoUrl);
-
- // finalVideoUrl = await uploadToCloudinary(watermarkedBuffer);
+  const watermarkedBuffer = await applyWatermarkToVideo(videoUrl);
+  finalVideoUrl = await uploadToCloudinary(watermarkedBuffer);
 }
 
 // 💸 scala crediti
@@ -2274,10 +2270,9 @@ user.credits -= cost;
 console.log("💸 Credits scalati:", cost);
 
 // 📤 RISPOSTA
-//return res.json({ videoUrl: finalVideoUrl });
- return res.json({ ok: true });
-
-  } // catch (err: any) {
+return res.json({ videoUrl: finalVideoUrl });
+ //return res.json({ ok: true });
+ } // catch (err: any) {
     //console.error("❌ Talking photo error:", err);
 
     
