@@ -75,7 +75,10 @@ cloudinary.config({
 });
 
 const app = express();
-app.use(express.json({ limit: "50mb" })); // 👈 QUESTO È FONDAMENTALE
+app.use(cors()); // 🔥 PRIMA
+app.use(express.json({ limit: "50mb" }));
+app.use(express.urlencoded({ extended: true }));
+
 app.get('/', (req, res) => {
   res.send('Server attivo 🚀');
 });
@@ -2094,6 +2097,10 @@ return res.json({
 }
 });
 
+/* ======================================= routa prova =================================================== */
+app.get("/test", (req, res) => {
+  res.json({ ok: true });
+});
 /* ======================================= TALKING PHOTO =================================================== */
 app.post("/generate-talking-photo", async (req, res) => {
   try {
