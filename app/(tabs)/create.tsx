@@ -1518,8 +1518,9 @@ let data;
 try {
   data = JSON.parse(text);
 } catch (e) {
-  console.log("❌ NON È JSON");
-  throw new Error("Server NON restituisce JSON");
+  console.log("❌ RISPOSTA SERVER:", text);
+  Alert.alert("Errore server", "Crediti finiti o server down");
+  return;
 }
 
 console.log("✅ DATA:", data);
