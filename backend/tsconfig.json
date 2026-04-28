@@ -1,10 +1,12 @@
 {
   "compilerOptions": {
     "target": "ES2021",
-    "module": "nodenext",
+    "lib": ["ES2021"],
+    //"module": "nodenext",
+    "module": "commonjs",
     //"module": "esnext",
    // "moduleResolution": "bundler",
-    "moduleResolution": "nodenext",
+    //"moduleResolution": "nodenext",
     "rootDir": "src",
     "outDir": "dist",
     "esModuleInterop": true,
@@ -13,7 +15,7 @@
     "resolveJsonModule": true
   },
   "include": [
-    "src"
+    "src/**/*.ts"
   ],
-  "extends": "expo/tsconfig.base"
+ // "extends": "expo/tsconfig.base"
 }

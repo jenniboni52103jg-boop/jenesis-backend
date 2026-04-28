@@ -937,7 +937,7 @@ async function hedraPollGenerationResult(generationId: string) {
 
     console.log(`Hedra poll [${i + 1}/120]:`, data?.status || "no-status");
     console.log("👉 HEDRA HIT");
-    
+
 
     if (!resp.ok) {
       console.log("❌ Hedra polling raw body:", text);
@@ -3012,3 +3012,4 @@ const PORT = Number(process.env.PORT) || 4000;
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`✅ Server avviato su porta ${PORT}`);
 });
+export {};
