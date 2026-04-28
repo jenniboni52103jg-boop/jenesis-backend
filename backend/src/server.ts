@@ -13,12 +13,12 @@ import fs from "fs";
 import heicConvert from "heic-convert";
 import multer from "multer";
 import fetch from "node-fetch";
+import os from "os";
 import path from "path";
 import sharp from "sharp";
 import { CALCIO_ARCHETYPES_MAP, CalcioSceneKey } from "./calcioCards";
 import { getCouplePrompt, restyleCalcioImage, restyleImage, restyleStyleCardImage } from "./restyle";
 dotenv.config({ path: "../.env" });
-import os from "os";
 
 
 async function applyWatermarkToVideo(videoUrl: string): Promise<Buffer> {
@@ -75,6 +75,7 @@ cloudinary.config({
 });
 
 const app = express();
+app.use(express.json({ limit: "50mb" })); // 👈 QUESTO È FONDAMENTALE
 app.get('/', (req, res) => {
   res.send('Server attivo 🚀');
 });
@@ -2095,7 +2096,21 @@ return res.json({
 
 /* ======================================= TALKING PHOTO =================================================== */
 app.post("/generate-talking-photo", async (req, res) => {
+  
   try {
+
+    app.post("/generate-talking-photo", async (req, res) => {
+  try {
+    console.log("🔥🔥🔥 SONO QUI DENTRO");
+
+    return res.json({ ok: true });
+
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: "SERVER_ERROR" });
+  }
+});
+
     const { imageBase64, script, voiceId, audioBase64, isPremium } = req.body ?? {};
 
     if (!imageBase64) {
@@ -3012,4 +3027,4 @@ const PORT = Number(process.env.PORT) || 4000;
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`✅ Server avviato su porta ${PORT}`);
 });
-export {};
+export { };
