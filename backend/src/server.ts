@@ -60,6 +60,8 @@ console.log("FAL KEY LENGTH:", process.env.FAL_KEY?.length);
 console.log("FFMPEG USATO:", "/usr/bin/ffmpeg");
 //console.log("FFMPEG PATH:", ffmpegPath);
 
+console.log("🔥 NUOVA VERSIONE SERVER");
+
 process.env.FAL_KEY = process.env.FAL_KEY || "";
 fal.config({
   credentials: process.env.FAL_KEY,
@@ -703,8 +705,8 @@ async function transformImageWithStyle(opts: {
 
   return Buffer.from(base64, "base64");
 }
-/* ================== HEDRA CORE ================== */
 
+/* ================== HEDRA CORE ================== */
 async function hedraCreateAsset(opts: {
   name: string;
   type: "image" | "audio";
@@ -934,6 +936,8 @@ async function hedraPollGenerationResult(generationId: string) {
     const data = safeJsonParse(text);
 
     console.log(`Hedra poll [${i + 1}/120]:`, data?.status || "no-status");
+    console.log("👉 HEDRA HIT");
+    
 
     if (!resp.ok) {
       console.log("❌ Hedra polling raw body:", text);
