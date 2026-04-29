@@ -2119,7 +2119,7 @@ app.post("/generate-talking-photo", async (req, res) => {
 const rawUserId = req.headers["user-id"];
 
 if (!rawUserId || Array.isArray(rawUserId)) {
-  return res.status(401).json({ error: "NO_USER" });
+  return res.status(401).json({ error: "NO_USER", message: "User ID mancante" });
 }
 
 const userId = rawUserId; // ora è STRING SICURA
