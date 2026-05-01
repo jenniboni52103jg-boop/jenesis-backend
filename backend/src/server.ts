@@ -13,13 +13,14 @@ import fs from "fs";
 import heicConvert from "heic-convert";
 import multer from "multer";
 import fetch from "node-fetch";
+import os from "os";
 import path from "path";
 import sharp from "sharp";
 import { CALCIO_ARCHETYPES_MAP, CalcioSceneKey } from "./calcioCards";
 import { getCouplePrompt, restyleCalcioImage, restyleImage, restyleStyleCardImage } from "./restyle";
 dotenv.config({ path: "../.env" });
-import os from "os";
-
+//const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 async function applyWatermarkToVideo(videoUrl: string): Promise<Buffer> {
 const tempInput = path.join(os.tmpdir(), `input_${Date.now()}.mp4`);
@@ -75,6 +76,19 @@ cloudinary.config({
 });
 
 const app = express();
+
+// 1. CONFIGURAZIONE MIDDLEWARE (Mettili qui!)
+// Serve per gestire i dati inviati come JSON (es. le stringhe Base64 pesanti)
+app.use(express.json({ limit: '50mb' })); 
+// Serve per gestire i dati inviati tramite form HTML o URL-encoded
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
+
+// 2. CONFIGURAZIONE STORAGE (Multer)
+const storage = multer.memoryStorage();
+//const upload = multer({ storage: storage });
+
+// 4. AVVIO SERVER
+app.listen(3000, () => console.log("Server running on port 3000"));
 
 app.get('/', (req, res) => {
   res.send('Server attivo 🚀');
@@ -1889,137 +1903,92 @@ app.post("/api/runway/image-to-video", upload.single("image"), async (req: any, 
 }
 });
 
-/* -------------------NUOVA ROUTE per image-video--------------*/
+/* ------------------- NUOVA ROUTE: GENERATE MOTION SPEAKING VIDEO ------------------- */
 app.post("/generate-motion-speaking-video", upload.single("image"), async (req: any, res) => {
   try {
-    
-  // 👇
-    console.log("BODY:", req.body);
+    console.log("--- INIZIO PROCESSO VIDEO ---");
+    console.log("BODY RICEVUTO:", req.body);
 
+    // 1. Estrazione e Validazione Input
     const isPremium = req.body?.isPremium === "true" || req.body?.isPremium === true;
-    const prompt = String(req.body?.actionPrompt || "Animate naturally");
+    const prompt = String(req.body?.actionPrompt || "Animate naturally, cinematic movement");
     const speech = String(req.body?.speechText || "");
     const voiceId = String(req.body?.voiceId || "");
-    
-    console.log("VOICE ID:", voiceId);
-    console.log("SPEECH:", speech);
-    
+
     if (!speech || speech.trim().length < 2) {
-  return res.status(400).json({
-    error: "speechText vuoto"
-  });
-}
-
-if (!voiceId) {
-  return res.status(400).json({
-    error: "voiceId mancante"
-  });
-}
-
-    if (!req.file?.buffer) {
-      return res.status(400).json({ error: "Missing image" });
+      return res.status(400).json({ error: "Il testo del parlato (speechText) è troppo breve o mancante." });
     }
 
-    /* STEP 1 — Runway motion */
+    if (!voiceId) {
+      return res.status(400).json({ error: "voiceId mancante." });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({ error: "File immagine non ricevuto dal server." });
+    }
+
+    // 2. Preparazione Immagine (Base64 per Runway)
     const dataUri = `data:${req.file.mimetype};base64,${req.file.buffer.toString("base64")}`;
 
-    //const videoUrl = "https://sample-videos.com/video123/mp4/720/big_buck_bunny_720p_1mb.mp4";
-
-    //const runwayTask = await runway.imageToVideo.create({
-      //model: "gen4.5",
-      //promptImage: dataUri,
-      //promptText: prompt,
-      //ratio: "720:1280",
-      //duration: 5,
-    //}).waitForTaskOutput();
+    /* STEP 1 — Runway Gen-4.5: Generazione Movimento */
+    console.log("🚀 Chiamata a Runway...");
     const runwayTask = await runway.imageToVideo.create({
-  model: "gen4.5",
-  promptImage: dataUri,
-  promptText: prompt,
-  ratio: "720:1280",
-  duration: 5,
-});
+      model: "gen4.5",
+      promptImage: dataUri,
+      promptText: prompt,
+      ratio: "720:1280",
+      duration: 5,
+    }).waitForTaskOutput(); // Fondamentale: attende che il video sia pronto
 
-console.log("RUNWAY TASK ID:", runwayTask.id);
+    console.log("RUNWAY TASK COMPLETATO:", runwayTask.id);
 
-    const videoUrl =
-      (Array.isArray((runwayTask as any).output)
-        ? ((runwayTask as any).output[0]?.url || (runwayTask as any).output[0])
-        : null) ||
-      (runwayTask as any).videoUrl ||
-      null;
+    const videoUrl = Array.isArray(runwayTask.output) 
+      ? runwayTask.output[0] 
+      : (runwayTask as any).videoUrl;
 
     if (!videoUrl) {
-      throw new Error("Runway video generation failed");
+      throw new Error("Runway non ha restituito un URL video valido.");
     }
 
-    /* STEP 2 — Hedra voice */
+    /* STEP 2 — Hedra: Generazione Voce */
+    console.log("🎙️ Chiamata a Hedra per l'audio...");
     const audioGenId = await hedraGenerateAudio({
       text: speech,
       voiceId,
     });
 
     const audioResult = await hedraPollGenerationResult(audioGenId);
+    
+    // Fallback multipli per recuperare l'URL audio da Hedra
+    let audioUrl = audioResult?.url || audioResult?.audio_url || audioResult?.download_url || 
+                   audioResult?.asset?.url || audioResult?.result?.url;
 
-    console.log("✅ HEDRA AUDIO RESULT:");
-    console.log(JSON.stringify(audioResult, null, 2));
-
-    let audioUrl =
-      audioResult?.url ||
-      audioResult?.audio_url ||
-      audioResult?.download_url ||
-      audioResult?.streaming_url ||
-      audioResult?.asset?.url ||
-      audioResult?.asset?.download_url ||
-      audioResult?.result?.url ||
-      null;
-
-    if (!audioUrl) {
-      const audioAssetId =
-        audioResult?.asset_id ||
-        audioResult?.asset?.id ||
-        null;
-
-      if (!audioAssetId) {
-        throw new Error("Audio generation failed: no audioUrl and no asset_id");
-      }
-
-      audioUrl = await hedraGetAssetDownloadUrl(audioAssetId);
-
-      if (!audioUrl) {
-        throw new Error("Audio generation failed: Hedra did not return audioUrl");
-      }
-
-      console.log("✅ HEDRA AUDIO FALLBACK URL:", audioUrl);
+    if (!audioUrl && (audioResult?.asset_id || audioResult?.asset?.id)) {
+      const assetId = audioResult?.asset_id || audioResult?.asset?.id;
+      audioUrl = await hedraGetAssetDownloadUrl(assetId);
     }
 
-    /* STEP 3 — download video + audio */
-    const videoPath = path.join(TEMP_DIR, `video_${Date.now()}.mp4`);
+    if (!audioUrl) {
+      throw new Error("Impossibile recuperare l'URL audio da Hedra.");
+    }
+
+    /* STEP 3 — Download Audio e Processing */
     const audioPath = path.join(TEMP_DIR, `audio_${Date.now()}.mp3`);
     const outputPath = path.join(VIDEOS_DIR, `final_${Date.now()}.mp4`);
 
-    const videoBuffer = await fetch(videoUrl).then((r) => r.buffer());
-    //const audioBuffer = await fetch(audioUrl).then((r) => r.buffer());
-    const audioBuffer = await fetch(audioUrl, {
-  headers: {
-    "User-Agent": "Mozilla/5.0",
-    "Accept": "*/*",
-  },
-  redirect: "follow"
-}).then(async (r) => {
-  if (!r.ok) {
-    console.log("❌ AUDIO FETCH STATUS:", r.status);
-    throw new Error("Audio download failed");
-  }
-  return r.buffer();
-});
+    const audioResponse = await fetch(audioUrl, {
+      headers: { "User-Agent": "Mozilla/5.0" },
+      redirect: "follow"
+    });
 
-    //fs.writeFileSync(videoPath, videoBuffer);
+    if (!audioResponse.ok) throw new Error("Download audio fallito");
+    const audioBuffer = await audioResponse.buffer();
     fs.writeFileSync(audioPath, audioBuffer);
+
+    /* STEP 4 — FFmpeg: Merge Audio + Video + Watermark */
+    console.log("🎬 Avvio FFmpeg (Merge)...");
     
-    const filters = isPremium
-  ? []
-  : [
+    const filters = isPremium ? [] : [
       {
         filter: "drawtext",
         options: {
@@ -2034,64 +2003,59 @@ console.log("RUNWAY TASK ID:", runwayTask.id);
         },
       },
     ];
-    /* STEP 4 — merge audio + video */
+
     await new Promise((resolve, reject) => {
-      ffmpeg(videoUrl)
+      ffmpeg(videoUrl) // Usa direttamente l'URL di Runway
         .input(audioPath)
         .videoFilters(filters)
-        .outputOptions("-shortest")
-        .save(outputPath)
+        .outputOptions("-shortest") // Taglia il video/audio alla durata del più corto
         .on("end", resolve)
-        .on("error", reject);
+        .on("error", (err) => {
+          console.error("FFmpeg Error:", err);
+          reject(err);
+        })
+        .save(outputPath);
     });
-   try { fs.unlinkSync(videoPath); } catch {}
-   try { fs.unlinkSync(audioPath); } catch {}
 
-    // upload su Cloudinary
-const uploadRes = await cloudinary.uploader.upload(outputPath, {
-  resource_type: "video",
-});
-   const finalUrl = uploadRes.secure_url;
-   try { fs.unlinkSync(outputPath); } catch {}
+    /* STEP 5 — Upload finale su Cloudinary */
+    console.log("☁️ Upload su Cloudinary...");
+    const uploadRes = await cloudinary.uploader.upload(outputPath, {
+      resource_type: "video",
+      folder: "generated_avatars"
+    });
 
-   console.log("FINAL RESPONSE:", finalUrl);
+    // Pulizia file temporanei
+    try { fs.unlinkSync(audioPath); fs.unlinkSync(outputPath); } catch (e) {}
 
-return res.json({
-  success: true,
-  videoUrl: finalUrl,
-});    
+    console.log("✅ PROCESSO COMPLETATO. URL:", uploadRes.secure_url);
+
+    return res.json({
+      success: true,
+      videoUrl: uploadRes.secure_url,
+    });
 
   } catch (err: any) {
-  console.error("❌ FULL ERROR:", err);
+    console.error("❌ ERRORE CRITICO ROUTE:");
+    const errMsg = err?.response?.data?.error || err?.message || "Internal Server Error";
+    console.log(errMsg);
 
-  const message =
-    err?.response?.data?.error ||
-    err?.error ||
-    err?.message ||
-    "";
+    // Gestione Crediti
+    if (errMsg.toLowerCase().includes("enough credits")) {
+      return res.status(402).json({
+        success: false,
+        error: "NO_CREDITS",
+        message: "Crediti Runway/Hedra esauriti.",
+      });
+    }
 
-  console.log("🔥 CLEAN ERROR MESSAGE:", message);
-  console.log("RUNWAY ERROR RAW:", err);
-
-  // 🚨 CREDITI FINITI (Runway)
-  if (message.toLowerCase().includes("enough credits")) {
-    return res.status(402).json({
+    // Risposta di emergenza per debug o fallback
+    return res.status(500).json({
       success: false,
-      error: "NO_CREDITS",
-      message: "Crediti esauriti",
+      error: "SERVER_ERROR",
+      message: errMsg,
+      // videoUrl: "https://sample-videos.com/video123/mp4/720/big_buck_bunny_720p_1mb.mp4" // Solo per test
     });
   }
-
-  // ❌ ERRORE GENERICO
-  //return res.status(500).json({
-    //success: false,
-    //error: "SERVER_ERROR",
-    //message: message || "Errore generico",
-  //});
-   return res.json({
-  videoUrl: "https://sample-videos.com/video123/mp4/720/big_buck_bunny_720p_1mb.mp4"
-}); // da cancellare dopo la prova postman 
-}
 });
 
 /* ======================================= routa prova =================================================== */
@@ -2116,37 +2080,37 @@ app.post("/generate-talking-photo", async (req, res) => {
     }
  
     // 💰 CREDITI (AGGIUNTA SICURA)
-const rawUserId = req.headers["user-id"];
+//const rawUserId = req.headers["user-id"];
 
-if (!rawUserId || Array.isArray(rawUserId)) {
-  return res.status(401).json({ error: "NO_USER", message: "User ID mancante" });
-}
+//if (!rawUserId || Array.isArray(rawUserId)) {
+ // return res.status(401).json({ error: "NO_USER", message: "User ID mancante" });
+//}
 
-const userId = rawUserId; // ora è STRING SICURA
+//const userId = rawUserId; // ora è STRING SICURA
 
 // 👉 recupera utente (usa il tuo DB)
 //const user = await getUserFromDB(userId);
-const users = {
-  test123: { credits: 100 }
-};
+//const users = {
+ // test123: { credits: 100 }
+//};
 
-const user = users[userId];
+//const user = users[userId];
 
-if (!user) {
-  return res.status(404).json({ error: "USER_NOT_FOUND" });
-}
+//if (!user) {
+ // return res.status(404).json({ error: "USER_NOT_FOUND" });
+//}
 
 //if (!user) {
  // return res.status(404).json({ error: "USER_NOT_FOUND" });
 //}
 
 // 👉 costo (decidi tu)
-const cost = audioBase64 ? 6 : 5;
+//const cost = audioBase64 ? 6 : 5;
 
 // ❌ controlla crediti
-if (user.credits < cost) {
-  return res.status(400).json({ error: "NO_CREDITS" });
-}
+//if (user.credits < cost) {
+  //return res.status(400).json({ error: "NO_CREDITS" });
+//}
 
 
     console.log("🗣️ Hedra talking photo start");
@@ -2265,9 +2229,9 @@ if (!isPremium) {
 }
 
 // 💸 scala crediti
-user.credits -= cost;
+//user.credits -= cost;
 
-console.log("💸 Credits scalati:", cost);
+//console.log("💸 Credits scalati:", cost);
 
 // 📤 RISPOSTA
 return res.json({ videoUrl: finalVideoUrl });
@@ -3018,4 +2982,4 @@ const PORT = Number(process.env.PORT) || 4000;
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`✅ Server avviato su porta ${PORT}`);
 });
-export {};
+export { };

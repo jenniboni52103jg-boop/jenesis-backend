@@ -142,6 +142,7 @@ console.log("IS PREMIUM:", isPremium);
 
   const [recordedAudioMimeType, setRecordedAudioMimeType] = useState<string>("audio/mp4");
   const [hasSavedVoice, setHasSavedVoice] = useState(false);
+
   /* -------------------- FUNZIONE CREDITS -------------------- */
   const spendCredits = async (amount: number) => {
   if (credits < amount) {
@@ -253,7 +254,6 @@ const [isPlayingRecordedAudio, setIsPlayingRecordedAudio] = useState(false);
     };
   }, [])
 );
-
 
   /* -------------------- TALKING PHOTO (HEDRA) -------------------- */
   const [talkingImage, setTalkingImage] = useState<string | null>(null);
@@ -434,6 +434,7 @@ const clearSavedRecordedVoice = async () => {
 useEffect(() => {
   loadRecordedVoice();
 }, []);
+
   /* -------------------- GLOW -------------------- */
   const glowAnim = useRef(new Animated.Value(0)).current;
 
