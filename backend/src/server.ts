@@ -19,8 +19,6 @@ import sharp from "sharp";
 import { CALCIO_ARCHETYPES_MAP, CalcioSceneKey } from "./calcioCards";
 import { getCouplePrompt, restyleCalcioImage, restyleImage, restyleStyleCardImage } from "./restyle";
 dotenv.config({ path: "../.env" });
-//const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 async function applyWatermarkToVideo(videoUrl: string): Promise<Buffer> {
 const tempInput = path.join(os.tmpdir(), `input_${Date.now()}.mp4`);
@@ -2983,3 +2981,4 @@ app.listen(PORT, "0.0.0.0", () => {
   console.log(`✅ Server avviato su porta ${PORT}`);
 });
 export { };
+
