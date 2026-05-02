@@ -1500,10 +1500,9 @@ if (talkingScript.length > maxChars) {
   method: "POST",
   headers: {
     "Content-Type": "application/json",
-    "user-id": "test123",
   },
   body: JSON.stringify({
-    imageBase64: talkingImageBase64,
+    imageBase64: "test",
     script: talkingScript,
     voiceId: selectedHedraVoice,
     ratio: "720:1280",

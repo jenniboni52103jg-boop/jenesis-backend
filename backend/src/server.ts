@@ -2217,14 +2217,14 @@ app.post("/generate-talking-photo", async (req, res) => {
     console.log("✅ Hedra talking photo ready:", videoUrl);
 
     // 💧 WATERMARK QUI (GIUSTO)
-let finalVideoUrl = videoUrl;
+//let finalVideoUrl = videoUrl;
 
-if (!isPremium) {
-  console.log("🚫 Applying watermark...");
+//if (!isPremium) {
+  //console.log("🚫 Applying watermark...");
 
-  const watermarkedBuffer = await applyWatermarkToVideo(videoUrl);
-  finalVideoUrl = await uploadToCloudinary(watermarkedBuffer);
-}
+ // const watermarkedBuffer = await applyWatermarkToVideo(videoUrl);
+ // finalVideoUrl = await uploadToCloudinary(watermarkedBuffer);
+//}
 
 // 💸 scala crediti
 //user.credits -= cost;
@@ -2232,7 +2232,8 @@ if (!isPremium) {
 //console.log("💸 Credits scalati:", cost);
 
 // 📤 RISPOSTA
-return res.json({ videoUrl: finalVideoUrl });
+//return res.json({ videoUrl: finalVideoUrl });
+ return res.json({ test: "FUNZIONA" }); // 👈 BLOCCA TUTTO
  //return res.json({ ok: true });
  } // catch (err: any) {
     //console.error("❌ Talking photo error:", err);
