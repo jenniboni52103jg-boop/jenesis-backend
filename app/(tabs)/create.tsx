@@ -1431,17 +1431,17 @@ try {
 //}
 
    // 👇 METTILO QUI
-    const access = await checkAccess("talking");
-    if (!access.ok) {
-  setShowPaywall(true);
-  return;
-}
+   // const access = await checkAccess("talking");
+   // if (!access.ok) {
+  //setShowPaywall(true);
+ // return;
+//}
 
 // 👇 QUI
-  if (duration === 15 && !isPremium) {
-    setShowPaywall(true);
-    return;
-  }
+ // if (duration === 15 && !isPremium) {
+   // setShowPaywall(true);
+   // return;
+ // }
 
     if (!talkingImage || !talkingImageBase64) {
       Alert.alert("Error", "Upload your photo first");
