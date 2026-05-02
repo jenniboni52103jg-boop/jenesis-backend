@@ -1287,7 +1287,7 @@ const runwayTask = await runway.imageToVideo
       throw new Error("Hedra did not return videoUrl");
     }
    
-    console.log("🎬 Applying avatar watermark...");
+   // console.log("🎬 Applying avatar watermark...");
 
 const videoBuffer = await fetch(videoUrl).then(r => r.buffer());
 
@@ -2051,7 +2051,7 @@ app.post("/generate-motion-speaking-video", upload.single("image"), async (req: 
       success: false,
       error: "SERVER_ERROR",
       message: errMsg,
-      // videoUrl: "https://sample-videos.com/video123/mp4/720/big_buck_bunny_720p_1mb.mp4" // Solo per test
+     
     });
   }
 });

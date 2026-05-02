@@ -680,7 +680,7 @@ if (avatarVoiceMode === "clone" && recordedAudioBase64) {
   form.append("audioBase64", recordedAudioBase64);
 }
 
-const res = await fetch(`${API_URL}/avatar/start`, {
+const res = await fetch(`${API_URL}/generate-avatar`, {
   method: "POST",
   body: form,
   headers: {
