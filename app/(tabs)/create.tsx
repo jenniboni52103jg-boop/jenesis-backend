@@ -688,7 +688,10 @@ const res = await fetch(`${API_URL}/generate-avatar`, {
   },
 });
 
-const data = await res.json();
+//const data = await res.json();
+const text = await res.text();
+console.log("🔥 AVATAR:", text);
+return;
 
 //if (!res.ok) {
   //if (data.error === "PRO_REQUIRED") {
@@ -699,18 +702,18 @@ const data = await res.json();
  // throw new Error(data.error || "Errore generazione avatar");
 //}
 
-console.log("✅ AVATAR CREATO:", data);
+//console.log("✅ AVATAR CREATO:", data);
 
 
     
-if (!data?.videoUrl) {
-  throw new Error("Backend non ha restituito videoUrl");
-}
+//if (!data?.videoUrl) {
+  //throw new Error("Backend non ha restituito videoUrl");
+//}
 
 //if (!(await spendCredits(CREDIT_COSTS.avatar))) return;
 
-    setGeneratedVideoUrl(data.videoUrl);
-    await saveAvatarToProjects(data.videoUrl, avatarStyle, "Talking Avatar");
+   // setGeneratedVideoUrl(data.videoUrl);
+    //await saveAvatarToProjects(data.videoUrl, avatarStyle, "Talking Avatar");
 
     setSavedToProjects(true);
     setTimeout(() => setSavedToProjects(false), 2500);
