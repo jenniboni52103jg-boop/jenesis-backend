@@ -707,7 +707,7 @@ if (!data?.videoUrl) {
   throw new Error("Backend non ha restituito videoUrl");
 }
 
-if (!(await spendCredits(CREDIT_COSTS.avatar))) return;
+//if (!(await spendCredits(CREDIT_COSTS.avatar))) return;
 
     setGeneratedVideoUrl(data.videoUrl);
     await saveAvatarToProjects(data.videoUrl, avatarStyle, "Talking Avatar");
@@ -803,7 +803,7 @@ if (!proCheck.ok) {
   throw new Error("No image returned");
 }
 
-if (!(await spendCredits(CREDIT_COSTS.effects))) return;
+//if (!(await spendCredits(CREDIT_COSTS.effects))) return;
 
 await addProjectToProjects({
   id: `effects_${Date.now()}`,
