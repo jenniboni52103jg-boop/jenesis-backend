@@ -690,14 +690,14 @@ const res = await fetch(`${API_URL}/generate-avatar`, {
 
 const data = await res.json();
 
-if (!res.ok) {
-  if (data.error === "PRO_REQUIRED") {
-    Alert.alert("Passa a PRO", "Questa funzione è disponibile solo per utenti PRO");
-    return;
-  }
+//if (!res.ok) {
+  //if (data.error === "PRO_REQUIRED") {
+    //Alert.alert("Passa a PRO", "Questa funzione è disponibile solo per utenti PRO");
+    //return;
+  //}
 
-  throw new Error(data.error || "Errore generazione avatar");
-}
+ // throw new Error(data.error || "Errore generazione avatar");
+//}
 
 console.log("✅ AVATAR CREATO:", data);
 
