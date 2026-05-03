@@ -601,7 +601,7 @@ const getBase64FromAsset = async (assetSource: any) => {
 
   return base64;
 };
-/* ------------GENERATE ANIMATE AVATAR ------------*/
+/* ------------------GENERATE ANIMATE AVATAR ---------------------------------------------------*/
 const generateAndAnimateAvatar = async () => {
   try {
     // 👇 METTILO QUI
@@ -819,23 +819,11 @@ function getEffectPrompt(effect: string | null) {
       return "realistic scene";
   }
 }
-/* -------------------- funzioni AI effects  -------------------- */
+/* -------------------- funzioni effects  -------------------- */
 const generateEffectsVideo = async () => {
-  //if (!isPro) {
-  //setShowPaywall(true); // oppure navigation al paywall
-  //return;
-//}
-  const access = await checkAccess("effects");
-if (!access.ok) {
-  setShowPaywall(true);
-  return;
-}
-
-const proCheck = await checkAccess(`effect:${selectedEffect}`);
-if (!proCheck.ok) {
-  setShowPaywall(true);
-  return;
-}
+  //if (!(await guardGenerationOrPaywall())) return;
+ // const access = await checkFeatureAccess("effects");
+//if (!access.ok) return;
 
   if (!effectsImage) {
     Alert.alert("Error", "Upload your photo first");
@@ -870,10 +858,7 @@ if (!proCheck.ok) {
       }),
     });
 
-const text = await res.text();
-console.log("🔥 Ai effects:", text);
-
-const data = JSON.parse(text);
+    const data = await res.json();
     
 
     if (!res.ok) {
@@ -883,8 +868,6 @@ const data = JSON.parse(text);
     if (!data?.imageUrl) {
   throw new Error("No image returned");
 }
-
-//if (!(await spendCredits(CREDIT_COSTS.effects))) return;
 
 await addProjectToProjects({
   id: `effects_${Date.now()}`,
