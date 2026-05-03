@@ -603,30 +603,23 @@ const getBase64FromAsset = async (assetSource: any) => {
 };
 /* ------------GENERATE ANIMATE AVATAR ------------*/
 const generateAndAnimateAvatar = async () => {
-  //if (!isPro) {
-  //setShowPaywall(true); // oppure navigation al paywall
- // return;
-//}
   try {
     // 👇 METTILO QUI
-    const access = await checkAccess("avatar");
-    if (!access.ok) {
-  setShowPaywall(true);
-  return;
-}
+    //const access = await checkFeatureAccess("avatar");
+    //if (!access.ok) return;
 
    const selectedPreset = AVATAR_PRESETS.find(
   (p) => p.id === avatarPreset
 );
-//const form = new FormData();
-//form.append("voiceId", selectedElevenVoice);
-//form.append("isPremium", isPremium ? "true" : "false");
-//const isUsingPreset = avatarInputType === "preset" && !!selectedPreset;
+const form = new FormData();
+form.append("voiceId", selectedElevenVoice);
+//form.append("isPremiumUser", isPremiumUser ? "true" : "false");
+const isUsingPreset = avatarInputType === "preset" && !!selectedPreset;
 
-//if (!avatarImageBase64 && !isUsingPreset) {
-  //Alert.alert("Errore", "Carica prima una foto per l'avatar.");
-  //return;
-//}
+if (!avatarImageBase64 && !isUsingPreset) {
+  Alert.alert("Errore", "Carica prima una foto per l'avatar.");
+  return;
+}
 
     const spokenPart = avatarPrompt.trim();
 
@@ -658,6 +651,8 @@ const generateAndAnimateAvatar = async () => {
       return;
     }
 
+    //if (!(await guardGenerationOrPaywall())) return;
+
     setAvatarLoading(true);
     setSavingToProjects(true);
     setSavedToProjects(false);
@@ -667,68 +662,133 @@ const generateAndAnimateAvatar = async () => {
 
 let finalImageBase64 = avatarImageBase64;
 
-//if (isUsingPreset && selectedPreset) {
- // finalImageBase64 = await getBase64FromAsset(selectedPreset.image);
-//}
-//form.append("imageBase64", finalImageBase64 || "");
-//form.append("avatarPrompt", spokenPart);
-//form.append("avatarStyle", avatarStyle);
-//form.append("avatarInputType", avatarInputType);
-//form.append("avatarVoiceMode", avatarVoiceMode);
+if (isUsingPreset && selectedPreset) {
+  finalImageBase64 = await getBase64FromAsset(selectedPreset.image);
+}
+form.append("imageBase64", finalImageBase64 || "");
+form.append("avatarPrompt", spokenPart);
+form.append("avatarStyle", avatarStyle);
+form.append("avatarInputType", avatarInputType);
+form.append("avatarVoiceMode", avatarVoiceMode);
 
-//if (avatarVoiceMode === "clone" && recordedAudioBase64) {
-  //form.append("audioBase64", recordedAudioBase64);
-//}
+if (avatarVoiceMode === "clone" && recordedAudioBase64) {
+  form.append("audioBase64", recordedAudioBase64);
+}
 
-//const res = await fetch(`${API_URL}/generate-avatar`, {
-  //method: "POST",
-  //body: form,
-  //headers: {
-    //"ngrok-skip-browser-warning": "true",
- // },
-//});
-const res = await fetch(`${API_URL}/generate-speaking-avatar`, {
+const res = await fetch("https://injurable-giavanna-purselike.ngrok-free.dev/generate-avatar", {
   method: "POST",
-  body: JSON.stringify({
-    imageBase64: finalImageBase64,
-    avatarPrompt: spokenPart,
-    avatarStyle,
-    avatarInputType,
-    avatarVoiceMode,
-    isPremium,
-  }),
-  headers: {
-    "Content-Type": "application/json",
-  },
+  body: form,
 });
 
-//const data = await res.json();
-const text = await res.text();
-console.log("🔥 AVATAR:", text);
+const data = await res.json();
 
-const data = JSON.parse(text);
+if (!res.ok) {
+  if (data.error === "PRO_REQUIRED") {
+    Alert.alert("Passa a PRO", "Questa funzione è disponibile solo per utenti PRO");
+    return;
+  }
 
-//if (!res.ok) {
-  //if (data.error === "PRO_REQUIRED") {
-    //Alert.alert("Passa a PRO", "Questa funzione è disponibile solo per utenti PRO");
-    //return;
-  //}
+  throw new Error(data.error || "Errore generazione avatar");
+}
 
- // throw new Error(data.error || "Errore generazione avatar");
-//}
+console.log("✅ AVATAR CREATO:", data);
 
-//console.log("✅ AVATAR CREATO:", data);
+    /* STEP 1: start avatar job */
+    const startRes = await fetch(`${API_URL}/generate-speaking-avatar`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "ngrok-skip-browser-warning": "true",
+      },
+      body: JSON.stringify({
+        imageBase64: finalImageBase64,
+        effect: selectedEffect,
+        realismo: true,
+       avatarPrompt: spokenPart,
+       avatarVisualPrompt: visualPart,
+        voiceMode: avatarVoiceMode === "clone" ? "my_voice" : "preset",
+        voiceId: avatarVoiceMode === "preset" ? selectedElevenVoice : null,
+        recordedAudioBase64:
+          avatarVoiceMode === "clone" ? recordedAudioBase64 : null,
+        avatarStyle,
+        avatarInputType,
+        avatarPreset,
+        isPremium:isPremium,
+        prompt: getEffectPrompt(selectedEffect), // 🔥 QUESTO
+      }),
+    });
 
+    const startText = await startRes.text();
 
-    
-//if (!data?.videoUrl) {
-  //throw new Error("Backend non ha restituito videoUrl");
-//}
+    let startData: any = null;
+    try {
+      startData = JSON.parse(startText);
+    } catch {
+      Alert.alert("Errore server", startText.slice(0, 200));
+      return;
+    }
 
-//if (!(await spendCredits(CREDIT_COSTS.avatar))) return;
+    if (!startRes.ok) {
+      Alert.alert("Errore", startData?.error || "Errore avvio avatar");
+      return;
+    }
 
-   // setGeneratedVideoUrl(data.videoUrl);
-    //await saveAvatarToProjects(data.videoUrl, avatarStyle, "Talking Avatar");
+    const jobId = startData?.jobId;
+    if (!jobId) {
+      Alert.alert("Errore", "Il backend non ha restituito jobId");
+      return;
+    }
+
+    /* STEP 2: poll job status */
+    let finalVideoUrl: string | null = null;
+    let finalError: string | null = null;
+
+    for (let i = 0; i < 180; i++) {
+      await new Promise((resolve) => setTimeout(resolve, 4000));
+
+      const statusRes = await fetch(`${API_URL}/avatar-job/${jobId}`, {
+        headers: {
+          "ngrok-skip-browser-warning": "true",
+        },
+      });
+
+      const statusText = await statusRes.text();
+
+      let statusData: any = null;
+      try {
+        statusData = JSON.parse(statusText);
+      } catch {
+        finalError = "Risposta job non valida";
+        break;
+      }
+
+      if (!statusRes.ok) {
+        finalError = statusData?.error || "Errore controllo stato avatar";
+        break;
+      }
+
+      if (statusData?.status === "complete") {
+        finalVideoUrl = statusData?.videoUrl || null;
+        break;
+      }
+
+      if (statusData?.status === "failed") {
+        finalError = statusData?.error || "Generazione avatar fallita";
+        break;
+      }
+    }
+
+    if (!finalVideoUrl) {
+      Alert.alert(
+        "Errore",
+        finalError || "Timeout generazione avatar. Riprova tra poco."
+      );
+      return;
+    }
+
+    setGeneratedVideoUrl(finalVideoUrl);
+    await saveAvatarToProjects(finalVideoUrl, avatarStyle, "Talking Avatar");
+   // await consumeGeneration();
 
     setSavedToProjects(true);
     setTimeout(() => setSavedToProjects(false), 2500);
@@ -810,7 +870,10 @@ if (!proCheck.ok) {
       }),
     });
 
-    const data = await res.json();
+const text = await res.text();
+console.log("🔥 Ai effects:", text);
+
+const data = JSON.parse(text);
     
 
     if (!res.ok) {
