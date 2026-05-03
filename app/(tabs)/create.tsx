@@ -680,7 +680,7 @@ if (avatarVoiceMode === "clone" && recordedAudioBase64) {
   form.append("audioBase64", recordedAudioBase64);
 }
 
-const res = await fetch(`${API_URL}/generate-avatar`, {
+const res = await fetch(`${API_URL}/generate-speaking-avatar`, {
   method: "POST",
   body: form,
   headers: {
@@ -691,7 +691,8 @@ const res = await fetch(`${API_URL}/generate-avatar`, {
 //const data = await res.json();
 const text = await res.text();
 console.log("🔥 AVATAR:", text);
-return;
+
+const data = JSON.parse(text);
 
 //if (!res.ok) {
   //if (data.error === "PRO_REQUIRED") {
