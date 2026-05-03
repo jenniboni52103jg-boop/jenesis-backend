@@ -618,15 +618,15 @@ const generateAndAnimateAvatar = async () => {
    const selectedPreset = AVATAR_PRESETS.find(
   (p) => p.id === avatarPreset
 );
-const form = new FormData();
-form.append("voiceId", selectedElevenVoice);
-form.append("isPremium", isPremium ? "true" : "false");
-const isUsingPreset = avatarInputType === "preset" && !!selectedPreset;
+//const form = new FormData();
+//form.append("voiceId", selectedElevenVoice);
+//form.append("isPremium", isPremium ? "true" : "false");
+//const isUsingPreset = avatarInputType === "preset" && !!selectedPreset;
 
-if (!avatarImageBase64 && !isUsingPreset) {
-  Alert.alert("Errore", "Carica prima una foto per l'avatar.");
-  return;
-}
+//if (!avatarImageBase64 && !isUsingPreset) {
+  //Alert.alert("Errore", "Carica prima una foto per l'avatar.");
+  //return;
+//}
 
     const spokenPart = avatarPrompt.trim();
 
@@ -667,18 +667,18 @@ if (!avatarImageBase64 && !isUsingPreset) {
 
 let finalImageBase64 = avatarImageBase64;
 
-if (isUsingPreset && selectedPreset) {
-  finalImageBase64 = await getBase64FromAsset(selectedPreset.image);
-}
-form.append("imageBase64", finalImageBase64 || "");
-form.append("avatarPrompt", spokenPart);
-form.append("avatarStyle", avatarStyle);
-form.append("avatarInputType", avatarInputType);
-form.append("avatarVoiceMode", avatarVoiceMode);
+//if (isUsingPreset && selectedPreset) {
+ // finalImageBase64 = await getBase64FromAsset(selectedPreset.image);
+//}
+//form.append("imageBase64", finalImageBase64 || "");
+//form.append("avatarPrompt", spokenPart);
+//form.append("avatarStyle", avatarStyle);
+//form.append("avatarInputType", avatarInputType);
+//form.append("avatarVoiceMode", avatarVoiceMode);
 
-if (avatarVoiceMode === "clone" && recordedAudioBase64) {
-  form.append("audioBase64", recordedAudioBase64);
-}
+//if (avatarVoiceMode === "clone" && recordedAudioBase64) {
+  //form.append("audioBase64", recordedAudioBase64);
+//}
 
 //const res = await fetch(`${API_URL}/generate-avatar`, {
   //method: "POST",
