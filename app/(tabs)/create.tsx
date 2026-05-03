@@ -687,7 +687,7 @@ if (avatarVoiceMode === "clone" && recordedAudioBase64) {
     //"ngrok-skip-browser-warning": "true",
  // },
 //});
-const res = await fetch(`${API_URL}/generate-avatar`, {
+const res = await fetch(`${API_URL}/generate-speaking-avatar`, {
   method: "POST",
   body: JSON.stringify({
     imageBase64: finalImageBase64,
