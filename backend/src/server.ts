@@ -2330,13 +2330,12 @@ app.post("/generate-avatar", async (req, res) => {
   try {
     const isPremium = req.body?.isPremium === "true" || req.body?.isPremium === true;
     const {
-      imageBase64,
-      avatarAction,
-      avatarStyle,
-      avatarMode,
-      avatarInputType,
-      avatarPreset,
-    } = req.body;
+  imageBase64,
+  avatarPrompt,
+  avatarStyle,
+  avatarVoiceMode,
+  avatarInputType,
+} = req.body;
 
     console.log("🔥 /generate-avatar HIT");
     console.log("BODY KEYS:", Object.keys(req.body || {}));
@@ -2346,7 +2345,7 @@ app.post("/generate-avatar", async (req, res) => {
       return res.status(400).json({ error: "Missing image" });
     }
 
-    if (!avatarAction) {
+    if (!avatarPrompt) {
       return res.status(400).json({ error: "Missing avatar action" });
     }
 
@@ -2355,7 +2354,7 @@ app.post("/generate-avatar", async (req, res) => {
 Create a vertical TikTok style talking avatar video.
 
 Action:
-${avatarAction}
+${avatarPrompt}
 
 Style:
 ${avatarStyle === "3d" ? "3D animated avatar" : "2D animated avatar"}

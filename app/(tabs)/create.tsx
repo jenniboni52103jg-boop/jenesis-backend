@@ -680,11 +680,25 @@ if (avatarVoiceMode === "clone" && recordedAudioBase64) {
   form.append("audioBase64", recordedAudioBase64);
 }
 
-const res = await fetch(`${API_URL}/generate-speaking-avatar`, {
+//const res = await fetch(`${API_URL}/generate-avatar`, {
+  //method: "POST",
+  //body: form,
+  //headers: {
+    //"ngrok-skip-browser-warning": "true",
+ // },
+//});
+const res = await fetch(`${API_URL}/generate-avatar`, {
   method: "POST",
-  body: form,
+  body: JSON.stringify({
+    imageBase64: finalImageBase64,
+    avatarPrompt: spokenPart,
+    avatarStyle,
+    avatarInputType,
+    avatarVoiceMode,
+    isPremium,
+  }),
   headers: {
-    "ngrok-skip-browser-warning": "true",
+    "Content-Type": "application/json",
   },
 });
 
