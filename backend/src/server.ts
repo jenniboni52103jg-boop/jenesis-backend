@@ -72,6 +72,9 @@ cloudinary.config({
   api_secret: process.env.CLOUD_API_SECRET,
   secure: true
 });
+console.log("CLOUD NAME:", process.env.CLOUD_NAME);
+console.log("API KEY:", process.env.CLOUD_API_KEY);
+console.log("SECRET:", process.env.CLOUD_API_SECRET);
 
 const app = express();
 
