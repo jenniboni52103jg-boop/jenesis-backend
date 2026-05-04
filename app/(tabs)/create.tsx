@@ -1420,7 +1420,7 @@ if (!useRecordedAudio) {
       const controller = new AbortController();
 
 // timeout 2 minuti
-setTimeout(() => controller.abort(), 120000);
+setTimeout(() => controller.abort(), 300000);
 
       const res = await fetch(`${API_URL}/generate-motion-speaking-video`, {
         method: "POST",
