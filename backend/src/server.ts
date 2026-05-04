@@ -20,6 +20,7 @@ import { CALCIO_ARCHETYPES_MAP, CalcioSceneKey } from "./calcioCards";
 import { getCouplePrompt, restyleCalcioImage, restyleImage, restyleStyleCardImage } from "./restyle";
 dotenv.config({ path: "../.env" });
 
+
 async function applyWatermarkToVideo(videoUrl: string): Promise<Buffer> {
 const tempInput = path.join(os.tmpdir(), `input_${Date.now()}.mp4`);
 const tempOutput = path.join(os.tmpdir(), `output_${Date.now()}.mp4`);
@@ -38,7 +39,7 @@ const tempOutput = path.join(os.tmpdir(), `output_${Date.now()}.mp4`);
       .on("error", reject)
       .run();
   });
-
+ 
   const finalBuffer = fs.readFileSync(tempOutput);
 
   fs.unlinkSync(tempInput);
@@ -1947,6 +1948,13 @@ app.post("/generate-motion-speaking-video", upload.single("image"), async (req: 
       ? runwayTask.output[0] 
       : (runwayTask as any).videoUrl;
 
+      console.log("🎬 VIDEO URL:", videoUrl);
+
+if (!videoUrl) {
+  console.log("❌ RUNWAY OUTPUT:", runwayTask);
+  throw new Error("❌ VIDEO NON GENERATO DA RUNWAY");
+}
+
     if (!videoUrl) {
       throw new Error("Runway non ha restituito un URL video valido.");
     }
@@ -2004,9 +2012,14 @@ app.post("/generate-motion-speaking-video", upload.single("image"), async (req: 
         },
       },
     ];
+  
+const videoBuffer = await fetch(videoUrl).then(r => r.buffer());
+
+const videoPath = path.join(TEMP_DIR, `video_${Date.now()}.mp4`);
+fs.writeFileSync(videoPath, videoBuffer);
 
     await new Promise((resolve, reject) => {
-      ffmpeg(videoUrl) // Usa direttamente l'URL di Runway
+      ffmpeg(videoPath) // Usa direttamente l'URL di Runway
         .input(audioPath)
         .videoFilters(filters)
         .outputOptions("-shortest") // Taglia il video/audio alla durata del più corto
@@ -2018,6 +2031,11 @@ app.post("/generate-motion-speaking-video", upload.single("image"), async (req: 
         .save(outputPath);
     });
 
+    console.log("📁 FILE PATH:", outputPath);
+
+if (!fs.existsSync(outputPath)) {
+  throw new Error("❌ FILE NON ESISTE DOPO FFMPEG");
+}
     /* STEP 5 — Upload finale su Cloudinary */
     console.log("☁️ Upload su Cloudinary...");
     const uploadRes = await cloudinary.uploader.upload(outputPath, {

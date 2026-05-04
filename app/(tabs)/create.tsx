@@ -1417,6 +1417,10 @@ if (!useRecordedAudio) {
       console.log("SPEECH:", speechText);
       console.log("USE RECORDED AUDIO:", useRecordedAudio);
 
+      const controller = new AbortController();
+
+// timeout 2 minuti
+setTimeout(() => controller.abort(), 120000);
 
       const res = await fetch(`${API_URL}/generate-motion-speaking-video`, {
         method: "POST",
@@ -1424,6 +1428,7 @@ if (!useRecordedAudio) {
           "ngrok-skip-browser-warning": "true",
         },
         body: form,
+        signal: controller.signal
       });
 console.log("STATUS:", res.status);
       //const data = await res.json();
