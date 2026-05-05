@@ -1908,6 +1908,10 @@ app.post("/api/runway/image-to-video", upload.single("image"), async (req: any, 
 /* ------------------- NUOVA ROUTE: GENERATE MOTION SPEAKING VIDEO ------------------- */
 app.post("/generate-motion-speaking-video", upload.single("image"), async (req: any, res) => {
   try {
+    return res.status(500).json({
+  error: "STOP_DEBUG",
+  message: "Bloccato per debug"
+});
     console.log("--- INIZIO PROCESSO VIDEO ---");
     console.log("BODY RICEVUTO:", req.body);
 
@@ -2036,12 +2040,17 @@ fs.writeFileSync(videoPath, videoBuffer);
 if (!fs.existsSync(outputPath)) {
   throw new Error("❌ FILE NON ESISTE DOPO FFMPEG");
 }
+
+const stats = fs.statSync(outputPath);
+console.log("📦 FILE SIZE (MB):", stats.size / 1024 / 1024);
+
     /* STEP 5 — Upload finale su Cloudinary */
     console.log("☁️ Upload su Cloudinary...");
     const uploadRes = await cloudinary.uploader.upload(outputPath, {
-      resource_type: "video",
-      folder: "generated_avatars"
-    });
+  resource_type: "video",
+  folder: "generated_avatars",
+  chunk_size: 6000000
+});
 
     // Pulizia file temporanei
     try { fs.unlinkSync(audioPath); fs.unlinkSync(outputPath); } catch (e) {}
