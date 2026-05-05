@@ -2053,19 +2053,31 @@ if (!fs.existsSync(outputPath)) {
 const stats = fs.statSync(outputPath);
 console.log("📦 FILE SIZE (MB):", stats.size / 1024 / 1024);
 
-return res.status(500).json({
-  error: "STOP_AFTER_FFMPEG",
-  message: "Debug dopo ffmpeg"
-});
 
     /* STEP 5 — Upload finale su Cloudinary */
     console.log("☁️ Upload su Cloudinary...");
-    const uploadRes = await cloudinary.uploader.upload(outputPath, {
-  resource_type: "video",
-  folder: "generated_avatars",
-  chunk_size: 6000000
-});
+   let uploadRes;
 
+try {
+
+  uploadRes = await cloudinary.uploader.upload(outputPath, {
+    resource_type: "video",
+    folder: "generated_avatars",
+    chunk_size: 6000000
+  });
+
+  console.log("✅ CLOUDINARY OK:", uploadRes.secure_url);
+
+} catch (cloudErr: any) {
+
+  console.log("❌ CLOUDINARY ERROR:");
+  console.log(cloudErr);
+
+  throw new Error(
+    cloudErr?.message || "Cloudinary upload failed"
+  );
+
+}
     // Pulizia file temporanei
     try { fs.unlinkSync(audioPath); fs.unlinkSync(outputPath); } catch (e) {}
 
