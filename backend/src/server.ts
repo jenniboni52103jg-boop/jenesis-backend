@@ -1908,10 +1908,7 @@ app.post("/api/runway/image-to-video", upload.single("image"), async (req: any, 
 /* ------------------- NUOVA ROUTE: GENERATE MOTION SPEAKING VIDEO ------------------- */
 app.post("/generate-motion-speaking-video", upload.single("image"), async (req: any, res) => {
   try {
-    return res.status(500).json({
-  error: "STOP_DEBUG",
-  message: "Bloccato per debug"
-});
+  
     console.log("--- INIZIO PROCESSO VIDEO ---");
     console.log("BODY RICEVUTO:", req.body);
 
@@ -2043,6 +2040,11 @@ if (!fs.existsSync(outputPath)) {
 
 const stats = fs.statSync(outputPath);
 console.log("📦 FILE SIZE (MB):", stats.size / 1024 / 1024);
+
+return res.status(500).json({
+  error: "STOP_AFTER_FFMPEG",
+  message: "Debug dopo ffmpeg"
+});
 
     /* STEP 5 — Upload finale su Cloudinary */
     console.log("☁️ Upload su Cloudinary...");
