@@ -40,6 +40,18 @@ const tempOutput = path.join(os.tmpdir(), `output_${Date.now()}.mp4`);
       .run();
   });
  
+  const exists = fs.existsSync(tempOutput);
+
+console.log("🎬 FILE EXISTS:", exists);
+
+if (!exists) {
+  throw new Error("FFMPEG_NON_HA_CREATO_FILE");
+}
+
+const stats = fs.statSync(tempOutput);
+
+console.log("📦 FILE SIZE:", stats.size);
+
   const finalBuffer = fs.readFileSync(tempOutput);
 
   fs.unlinkSync(tempInput);
