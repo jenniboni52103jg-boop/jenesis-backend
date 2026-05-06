@@ -1452,16 +1452,23 @@ try {
   console.log("✅ DATA:", data);
 } catch (e) {
   console.log("❌ RAW BACKEND:", text);
-  Alert.alert("Errore", "Server non ha risposto correttamente");
+
+  Alert.alert(
+    "DEBUG SERVER",
+    text?.slice(0, 300) || "EMPTY RESPONSE"
+  );
+
   return;
 }
       if (!res.ok) {
 
   if (data?.error === "NO_CREDITS") {
-    Alert.alert("Crediti finiti", "Ricarica per continuare");
-    openPaywall();
-    return;
-  }
+  Alert.alert(
+    "Video temporarily unavailable",
+    "AI video generation is currently unavailable. Please try again later."
+  );
+  return;
+}
 
   if (data?.error === "GENERATION_FAILED") {
     Alert.alert("Errore", "Errore generazione video");
