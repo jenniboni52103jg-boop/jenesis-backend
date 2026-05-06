@@ -2107,10 +2107,21 @@ try {
 
     console.log("✅ PROCESSO COMPLETATO. URL:", uploadRes.secure_url);
 
-    return res.json({
-      success: true,
-      videoUrl: uploadRes.secure_url,
-    });
+    //return res.json({
+    //  success: true,
+      //videoUrl: uploadRes.secure_url,
+    //});
+    console.log("🔥 FINAL RESPONSE:", {
+  success: true,
+  videoUrl: uploadRes?.secure_url,
+  uploadRes,
+});
+
+return res.json({
+  success: true,
+  videoUrl: uploadRes?.secure_url,
+  uploadRes,
+});
 
   } catch (err: any) {
     console.error("❌ ERRORE CRITICO ROUTE:");
