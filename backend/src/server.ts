@@ -2084,10 +2084,9 @@ console.log("📦 FILE SIZE (MB):", stats.size / 1024 / 1024);
 
 try {
 
-  uploadRes = await cloudinary.uploader.upload_large(outputPath, {
+  uploadRes = await cloudinary.uploader.upload(outputPath, {
   resource_type: "video",
   folder: "generated_avatars",
-  chunk_size: 6000000
 });
 
   console.log("✅ CLOUDINARY OK:", uploadRes.secure_url);
