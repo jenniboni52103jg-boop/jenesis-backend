@@ -1997,33 +1997,13 @@ if (!videoUrl) {
     }
 
     /* STEP 2 — Hedra: Generazione Voce */
-    //console.log("🎙️ Chiamata a Hedra per l'audio...");
-    //const audioGenId = await hedraGenerateAudio({
-      //text: speech,
-      //voiceId,
-    //});
+    console.log("🎙️ Chiamata a Hedra per l'audio...");
+    const audioGenId = await hedraGenerateAudio({
+      text: speech,
+      voiceId,
+    });
 
-    /* STEP 2 — Hedra: Generazione Voce */
-console.log("🎙️ START HEDRA AUDIO");
-
-console.log("📝 SPEECH:", speech);
-console.log("🆔 VOICE ID:", voiceId);
-
-const audioGenId = await hedraGenerateAudio({
-  text: speech,
-  voiceId,
-});
-
-console.log("✅ AUDIO GEN ID:", audioGenId);
-
-console.log("⏳ POLLING HEDRA AUDIO...");
-
-const audioResult = await hedraPollGenerationResult(audioGenId);
-
-console.log("✅ AUDIO RESULT:");
-console.log(audioResult);
-
-    //const audioResult = await hedraPollGenerationResult(audioGenId);
+    const audioResult = await hedraPollGenerationResult(audioGenId);
     
     // Fallback multipli per recuperare l'URL audio da Hedra
     let audioUrl = audioResult?.url || audioResult?.audio_url || audioResult?.download_url || 
@@ -2042,8 +2022,6 @@ console.log(audioResult);
     const audioPath = path.join(TEMP_DIR, `audio_${Date.now()}.mp3`);
     const outputPath = path.join(VIDEOS_DIR, `final_${Date.now()}.mp4`);
 
-    console.log("🎵 AUDIO URL:", audioUrl);
-    console.log("⬇️ DOWNLOADING AUDIO...");
     const audioResponse = await fetch(audioUrl, {
       headers: { "User-Agent": "Mozilla/5.0" },
       redirect: "follow"
@@ -2051,9 +2029,6 @@ console.log(audioResult);
 
     if (!audioResponse.ok) throw new Error("Download audio fallito");
     const audioBuffer = await audioResponse.buffer();
-    
-
-    console.log("✅ AUDIO BUFFER OK");
     fs.writeFileSync(audioPath, audioBuffer);
 
     /* STEP 4 — FFmpeg: Merge Audio + Video + Watermark */
@@ -2098,19 +2073,10 @@ fs.writeFileSync(videoPath, videoBuffer);
 console.log("✅ VIDEO SALVATO:", videoPath);
 
     await new Promise((resolve, reject) => {
-      ffmpeg(videoPath)
-  .input(audioPath)
-  .videoFilters(filters)
-  .outputOptions([
-    "-shortest",
-    "-preset superfast", // Velocizza la compressione sacrificando un po' la dimensione file
-    "-tune zerolatency"
-  ])
-  // ... resto del codice
-      //ffmpeg(videoPath) // Usa direttamente l'URL di Runway
-        //.input(audioPath)
-        //.videoFilters(filters)
-        //.outputOptions("-shortest") // Taglia il video/audio alla durata del più corto
+      ffmpeg(videoPath) // Usa direttamente l'URL di Runway
+        .input(audioPath)
+        .videoFilters(filters)
+        .outputOptions("-shortest") // Taglia il video/audio alla durata del più corto
         .on("end", resolve)
         .on("error", (err) => {
           console.error("FFmpeg Error:", err);
@@ -2175,17 +2141,27 @@ return res.json({
 });
 
   } catch (err: any) {
-  console.log("❌ FULL ERROR:");
-  console.log(err);
-  console.log(err?.message);
-  console.log(err?.response?.data);
+    console.error("❌ ERRORE CRITICO ROUTE:");
+    const errMsg = err?.response?.data?.error || err?.message || "Internal Server Error";
+    console.log(errMsg);
 
-  return res.status(500).json({
-    error: true,
-    message: err?.message || "SERVER ERROR",
-    raw: err?.response?.data || null,
-  });
-}
+    // Gestione Crediti
+    if (errMsg.toLowerCase().includes("enough credits")) {
+      return res.status(402).json({
+        success: false,
+        error: "NO_CREDITS",
+        message: "Crediti Runway/Hedra esauriti.",
+      });
+    }
+
+    // Risposta di emergenza per debug o fallback
+    return res.status(500).json({
+      success: false,
+      error: "SERVER_ERROR",
+      message: errMsg,
+     
+    });
+  }
 });
 
 /* ======================================= routa prova =================================================== */
