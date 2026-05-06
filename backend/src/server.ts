@@ -213,7 +213,10 @@ async function uploadToCloudinary(buffer: Buffer) {
 
   return new Promise<string>((resolve, reject) => {
     const stream = cloudinary.uploader.upload_stream(
-      { folder: "app" },
+  {
+    folder: "app",
+    resource_type: "video"
+  },
       (error, result) => {
         if (error) {
            console.error("Errore Cloudinary dettagliato:", error); // Questo ti dirà COSA manca
