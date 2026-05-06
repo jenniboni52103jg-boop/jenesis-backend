@@ -85,9 +85,13 @@ cloudinary.config({
   api_secret: process.env.CLOUD_API_SECRET,
   secure: true
 });
-console.log("CLOUD NAME:", process.env.CLOUD_NAME);
-console.log("API KEY:", process.env.CLOUD_API_KEY);
-console.log("SECRET:", process.env.CLOUD_API_SECRET);
+//console.log("CLOUD NAME:", process.env.CLOUD_NAME);
+//console.log("API KEY:", process.env.CLOUD_API_KEY);
+//console.log("SECRET:", process.env.CLOUD_API_SECRET);
+console.log("CLOUD NAME EXISTS:", !!process.env.CLOUD_NAME);
+console.log("API KEY EXISTS:", !!process.env.CLOUD_API_KEY);
+console.log("SECRET EXISTS:", !!process.env.CLOUD_API_SECRET);
+console.log("CLOUDINARY CONFIG:", cloudinary.config());
 
 const app = express();
 
@@ -102,7 +106,7 @@ const storage = multer.memoryStorage();
 //const upload = multer({ storage: storage });
 
 // 4. AVVIO SERVER
-app.listen(3000, () => console.log("Server running on port 3000"));
+//app.listen(3000, () => console.log("Server running on port 3000"));
 
 app.get('/', (req, res) => {
   res.send('Server attivo 🚀');
