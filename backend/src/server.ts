@@ -2141,27 +2141,17 @@ return res.json({
 });
 
   } catch (err: any) {
-    console.error("❌ ERRORE CRITICO ROUTE:");
-    const errMsg = err?.response?.data?.error || err?.message || "Internal Server Error";
-    console.log(errMsg);
+  console.log("❌ FULL ERROR:");
+  console.log(err);
+  console.log(err?.message);
+  console.log(err?.response?.data);
 
-    // Gestione Crediti
-    if (errMsg.toLowerCase().includes("enough credits")) {
-      return res.status(402).json({
-        success: false,
-        error: "NO_CREDITS",
-        message: "Crediti Runway/Hedra esauriti.",
-      });
-    }
-
-    // Risposta di emergenza per debug o fallback
-    return res.status(500).json({
-      success: false,
-      error: "SERVER_ERROR",
-      message: errMsg,
-     
-    });
-  }
+  return res.status(500).json({
+    error: true,
+    message: err?.message || "SERVER ERROR",
+    raw: err?.response?.data || null,
+  });
+}
 });
 
 /* ======================================= routa prova =================================================== */
