@@ -2142,26 +2142,26 @@ return res.json({
 
   } catch (err: any) {
     console.error("❌ ERRORE CRITICO ROUTE:");
-    const errMsg = err?.response?.data?.error || err?.message || "Internal Server Error";
-    console.log(errMsg);
+    
+    // Estrai il messaggio di errore in modo più preciso
+    const errMsg = err?.body?.error || err?.message || "Errore sconosciuto";
+    console.log("Dettaglio errore:", errMsg);
 
-    // Gestione Crediti
-    if (errMsg.toLowerCase().includes("enough credits")) {
-      return res.status(402).json({
-        success: false,
-        error: "NO_CREDITS",
-        message: "Crediti Runway/Hedra esauriti.",
-      });
+    // Se i crediti sono finiti, mandiamo un messaggio chiaro all'app
+    if (errMsg.toLowerCase().includes("credits")) {
+        return res.status(402).json({
+            success: false,
+            error: "NO_CREDITS",
+            message: "I crediti di Runway sono finiti! Ricarica l'account."
+        });
     }
 
-    // Risposta di emergenza per debug o fallback
     return res.status(500).json({
-      success: false,
-      error: "SERVER_ERROR",
-      message: errMsg,
-     
+        success: false,
+        error: "SERVER_ERROR",
+        message: errMsg
     });
-  }
+}
 });
 
 /* ======================================= routa prova =================================================== */
