@@ -2098,10 +2098,19 @@ fs.writeFileSync(videoPath, videoBuffer);
 console.log("✅ VIDEO SALVATO:", videoPath);
 
     await new Promise((resolve, reject) => {
-      ffmpeg(videoPath) // Usa direttamente l'URL di Runway
-        .input(audioPath)
-        .videoFilters(filters)
-        .outputOptions("-shortest") // Taglia il video/audio alla durata del più corto
+      ffmpeg(videoPath)
+  .input(audioPath)
+  .videoFilters(filters)
+  .outputOptions([
+    "-shortest",
+    "-preset superfast", // Velocizza la compressione sacrificando un po' la dimensione file
+    "-tune zerolatency"
+  ])
+  // ... resto del codice
+      //ffmpeg(videoPath) // Usa direttamente l'URL di Runway
+        //.input(audioPath)
+        //.videoFilters(filters)
+        //.outputOptions("-shortest") // Taglia il video/audio alla durata del più corto
         .on("end", resolve)
         .on("error", (err) => {
           console.error("FFmpeg Error:", err);
