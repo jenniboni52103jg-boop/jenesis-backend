@@ -1997,13 +1997,33 @@ if (!videoUrl) {
     }
 
     /* STEP 2 — Hedra: Generazione Voce */
-    console.log("🎙️ Chiamata a Hedra per l'audio...");
-    const audioGenId = await hedraGenerateAudio({
-      text: speech,
-      voiceId,
-    });
+    //console.log("🎙️ Chiamata a Hedra per l'audio...");
+    //const audioGenId = await hedraGenerateAudio({
+      //text: speech,
+      //voiceId,
+    //});
 
-    const audioResult = await hedraPollGenerationResult(audioGenId);
+    /* STEP 2 — Hedra: Generazione Voce */
+console.log("🎙️ START HEDRA AUDIO");
+
+console.log("📝 SPEECH:", speech);
+console.log("🆔 VOICE ID:", voiceId);
+
+const audioGenId = await hedraGenerateAudio({
+  text: speech,
+  voiceId,
+});
+
+console.log("✅ AUDIO GEN ID:", audioGenId);
+
+console.log("⏳ POLLING HEDRA AUDIO...");
+
+const audioResult = await hedraPollGenerationResult(audioGenId);
+
+console.log("✅ AUDIO RESULT:");
+console.log(audioResult);
+
+    //const audioResult = await hedraPollGenerationResult(audioGenId);
     
     // Fallback multipli per recuperare l'URL audio da Hedra
     let audioUrl = audioResult?.url || audioResult?.audio_url || audioResult?.download_url || 
@@ -2022,6 +2042,8 @@ if (!videoUrl) {
     const audioPath = path.join(TEMP_DIR, `audio_${Date.now()}.mp3`);
     const outputPath = path.join(VIDEOS_DIR, `final_${Date.now()}.mp4`);
 
+    console.log("🎵 AUDIO URL:", audioUrl);
+    console.log("⬇️ DOWNLOADING AUDIO...");
     const audioResponse = await fetch(audioUrl, {
       headers: { "User-Agent": "Mozilla/5.0" },
       redirect: "follow"
@@ -2029,6 +2051,9 @@ if (!videoUrl) {
 
     if (!audioResponse.ok) throw new Error("Download audio fallito");
     const audioBuffer = await audioResponse.buffer();
+    
+
+    console.log("✅ AUDIO BUFFER OK");
     fs.writeFileSync(audioPath, audioBuffer);
 
     /* STEP 4 — FFmpeg: Merge Audio + Video + Watermark */
