@@ -1942,7 +1942,7 @@ app.post("/api/runway/image-to-video", upload.single("image"), async (req: any, 
 });
 
 /* ------------------- NUOVA ROUTE: GENERATE MOTION SPEAKING VIDEO ------------------- */
-app.post("/generate-motion-speaking-video", upload.single("image"), async (req: any, res) => {
+app.post("/api/generate-motion-speaking-video", upload.single("image"), async (req: any, res) => {
   try {
   
     console.log("--- INIZIO PROCESSO VIDEO ---");
