@@ -2050,10 +2050,27 @@ if (!videoUrl) {
       },
     ];
   
-const videoBuffer = await fetch(videoUrl).then(r => r.buffer());
+//const videoBuffer = await fetch(videoUrl).then(r => r.buffer());
+
+//const videoPath = path.join(TEMP_DIR, `video_${Date.now()}.mp4`);
+//fs.writeFileSync(videoPath, videoBuffer);
+
+console.log("📥 DOWNLOAD VIDEO RUNWAY...");
+
+const videoResponse = await fetch(videoUrl);
+
+if (!videoResponse.ok) {
+  throw new Error("Download video Runway fallito");
+}
+
+const arrayBuffer = await videoResponse.arrayBuffer();
+const videoBuffer = Buffer.from(arrayBuffer);
 
 const videoPath = path.join(TEMP_DIR, `video_${Date.now()}.mp4`);
+
 fs.writeFileSync(videoPath, videoBuffer);
+
+console.log("✅ VIDEO SALVATO:", videoPath);
 
     await new Promise((resolve, reject) => {
       ffmpeg(videoPath) // Usa direttamente l'URL di Runway
