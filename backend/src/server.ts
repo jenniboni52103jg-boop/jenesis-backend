@@ -1319,30 +1319,47 @@ const outputPath = path.join(VIDEOS_DIR, `avatar_wm_${Date.now()}.mp4`);
 
 fs.writeFileSync(inputPath, videoBuffer);
 
-
-const filters = isPremium
-  ? []
-  : [
-      {
-        filter: "drawtext",
-        options: {
-          text: "JenesisAI",
-          fontcolor: "white@0.5",
-          fontsize: "h/20",
-          x: "(w-text_w)/2",
-          y: "(h-text_h)*0.9",
-          shadowcolor: "black",
-          shadowx: 2,
-          shadowy: 2,
-        },
-      },
-    ];
+const filterString = isPremium
+  ? null
+  : "drawtext=text='JenesisAI':fontcolor=white@0.5:fontsize=40:x=(w-text_w)/2:y=h-60:shadowcolor=black:shadowx=2:shadowy=2";
+//const filters = isPremium
+ // ? []
+  //: [
+     // {
+       // filter: "drawtext",
+       // options: {
+       //   text: "JenesisAI",
+        //  fontcolor: "white@0.5",
+        //  fontsize: "h/20",
+        //  x: "(w-text_w)/2",
+        //  y: "(h-text_h)*0.9",
+        //  shadowcolor: "black",
+        //  shadowx: 2,
+        //  shadowy: 2,
+      //  },
+     // },
+   // ];
+//await new Promise((resolve, reject) => {
+  //ffmpeg(inputPath)
+  //.videoFilters(filters)
+  //(filterString ? [".videoFilters(filterString)"] : [])
+  //.save(outputPath)
+    //.on("end", resolve)
+    //.on("error", reject);
+//});
 await new Promise((resolve, reject) => {
-  ffmpeg(inputPath)
-  .videoFilters(filters)
-  .save(outputPath)
+
+  const command = ffmpeg(inputPath);
+
+  if (filterString) {
+    command.videoFilters(filterString);
+  }
+
+  command
     .on("end", resolve)
-    .on("error", reject);
+    .on("error", reject)
+    .save(outputPath);
+
 });
 try { fs.unlinkSync(inputPath); } catch {}
 
