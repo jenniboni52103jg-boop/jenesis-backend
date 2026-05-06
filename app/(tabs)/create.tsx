@@ -1422,7 +1422,7 @@ if (!useRecordedAudio) {
 // timeout 2 minuti
 setTimeout(() => controller.abort(), 300000);
 
-      const res = await fetch(`${API_URL}/generate-motion-speaking-video`, {
+      const res = await fetch(`${API_URL}/api/generate-motion-speaking-video`, {
         method: "POST",
         headers: {
           "ngrok-skip-browser-warning": "true",
