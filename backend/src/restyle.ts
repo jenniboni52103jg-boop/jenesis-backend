@@ -437,7 +437,7 @@ ultra detailed face, high skin detail, natural pores, realistic skin texture, sh
     return [prompt1, prompt2, prompt3, prompt4];
   }
 
-  if (templateKey === "anime") {
+  if (templateKey === "travel") {
     const prompt1 = `
 Keep the exact same person, preserve facial identity, eyes, nose, lips, and proportions.
 

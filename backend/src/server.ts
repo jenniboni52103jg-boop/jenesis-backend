@@ -2369,12 +2369,12 @@ app.get("/api/hedra/voices", async (_req, res) => {
 });
 
 /* ============= AVATAR JOB START ============ */
-app.post("/generate-avatar", async (req, res) => {
+app.post("/generate-avatar", upload.none(), async (req, res) => {
   try {
     const isPremium = req.body?.isPremium === "true" || req.body?.isPremium === true;
     const {
       imageBase64,
-      avatarAction,
+      avatarPrompt,
       avatarStyle,
       avatarMode,
       avatarInputType,
@@ -2389,7 +2389,7 @@ app.post("/generate-avatar", async (req, res) => {
       return res.status(400).json({ error: "Missing image" });
     }
 
-    if (!avatarAction) {
+    if (!avatarPrompt) {
       return res.status(400).json({ error: "Missing avatar action" });
     }
 
@@ -2398,7 +2398,7 @@ app.post("/generate-avatar", async (req, res) => {
 Create a vertical TikTok style talking avatar video.
 
 Action:
-${avatarAction}
+${avatarPrompt}
 
 Style:
 ${avatarStyle === "3d" ? "3D animated avatar" : "2D animated avatar"}
@@ -2685,9 +2685,31 @@ app.post("/effects/generate", async (req, res) => {
     if (!effect) {
       return res.status(400).json({ error: "Missing effect" });
     }
+   
+const prompt = req.body.prompt || "";
 
-   const finalImageUrl = await restyleImage(String(imageBase64), String(effect));
+//const finalPrompt = `
+//Keep the same person, same face identity.
 
+//Apply this style:
+//${prompt}
+
+//IMPORTANT:
+//- The face must remain ultra realistic and identical
+//- Natural skin texture, real human face
+//- No distortion, no fake AI look
+//- cinematic camera, depth of field, 35mm lens
+
+//The environment and outfit must follow the style (${effect})
+//with strong cinematic impact, dramatic lighting, high detail.
+//`;
+  
+const finalPrompt = getEffectPrompt(effect);
+
+const finalImageUrl = await restyleImage(
+  String(imageBase64),
+  finalPrompt
+);
    const buffer = await downloadToBuffer(finalImageUrl);
 
    const finalBuffer = isPremium

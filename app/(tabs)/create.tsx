@@ -681,7 +681,36 @@ if (avatarVoiceMode === "clone" && recordedAudioBase64) {
   form.append("audioBase64", recordedAudioBase64);
 }
 
-const res = await fetch(`${API_URL}/avatar/start`, {
+if (avatarInputType === "preset") {
+  const foundPreset = AVATAR_PRESETS.find(
+    (p) => p.id === avatarPreset
+  );
+
+  if (!foundPreset) {
+    throw new Error("Preset avatar non trovato");
+  }
+
+  const presetBase64 = await getBase64FromAsset(
+    foundPreset.image
+  );
+
+  form.append("imageBase64", presetBase64);
+  form.append("avatarPrompt", foundPreset.prompt);
+}
+
+if (avatarInputType === "custom") {
+  if (!avatarImageBase64) {
+    throw new Error("Missing custom avatar image");
+  }
+
+  form.append("imageBase64", avatarImageBase64);
+
+  if (avatarPrompt) {
+    form.append("avatarPrompt", avatarPrompt);
+  }
+}
+
+const res = await fetch(`${API_URL}/generate-avatar`, {
   method: "POST",
   body: form,
 });
