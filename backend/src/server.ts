@@ -2547,7 +2547,6 @@ app.post("/generate-speaking-avatar", async (req, res) => {
     });
   }
 });
-
 /* ============= AVATAR JOB STATUS ============ */
 app.get("/avatar-job/:jobId", async (req, res) => {
   try {
