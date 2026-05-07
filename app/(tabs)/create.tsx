@@ -1,4 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as ImageManipulator from "expo-image-manipulator";
 import { useFocusEffect } from "@react-navigation/native";
 import { Asset } from "expo-asset";
 import { Audio } from "expo-av";
@@ -680,12 +681,23 @@ if (avatarVoiceMode === "clone" && recordedAudioBase64) {
   form.append("audioBase64", recordedAudioBase64);
 }
 
-const res = await fetch("https://injurable-giavanna-purselike.ngrok-free.dev/generate-avatar", {
+const res = await fetch(`${API_URL}/avatar/start`, {
   method: "POST",
   body: form,
 });
 
-const data = await res.json();
+const rawText = await res.text();
+
+console.log("RAW AVATAR RESPONSE:");
+console.log(rawText);
+
+let data;
+
+try {
+  data = JSON.parse(rawText);
+} catch {
+  throw new Error(rawText.slice(0, 300));
+}
 
 if (!res.ok) {
   if (data.error === "PRO_REQUIRED") {
@@ -825,7 +837,7 @@ function getEffectPrompt(effect: string | null) {
   }
 }
 /* -------------------- funzioni effects  -------------------- */
-const generateEffectsVideo = async () => {
+const generateEffectsImage = async () => {
   if (!effectsImage) {
     Alert.alert("Error", "Upload your photo first");
     return;
@@ -857,24 +869,46 @@ const generateEffectsVideo = async () => {
         effect: selectedEffect,
       }),
     });
+const rawText = await res.text();
 
-    const data = await res.json();
+console.log("RAW EFFECTS RESPONSE:");
+console.log(rawText);
 
-    if (!res.ok) {
-      throw new Error(data?.error || "Effects generation failed");
-    }
+let data;
 
-    if (!data?.videoUrl) {
-      throw new Error("No video returned");
-    }
+try {
+  data = JSON.parse(rawText);
+} catch {
+  throw new Error(rawText.slice(0, 200));
+}
 
-    await addProjectToProjects({
-      id: `effects_${Date.now()}`,
-      templateId: `effects-${selectedEffect}`,
-      imageUrl: effectsImage,
-      videoUrl: data.videoUrl,
-      createdAt: new Date().toISOString(),
-    });
+if (!res.ok) {
+  throw new Error(data?.error || "Effects generation failed");
+}
+
+    //const data = await res.json();
+
+   // if (!res.ok) {
+     // throw new Error(data?.error || "Effects generation failed");
+    //}
+
+    //if (!data?.videoUrl) {
+      //throw new Error("No video returned");
+    //}
+
+    if (!data?.imageUrl) {
+  console.log("FULL DATA:");
+  console.log(data);
+
+  throw new Error("No image returned");
+}
+
+await addProjectToProjects({
+  id: `effects_${Date.now()}`,
+  templateId: `effects-${selectedEffect}`,
+  imageUrl: data.imageUrl,
+  createdAt: new Date().toISOString(),
+});
 
     setSavedToProjects(true);
     setTimeout(() => setSavedToProjects(false), 2500);
@@ -1248,19 +1282,18 @@ const asset = result.assets[0];
 
 const imageUri = asset.uri;
 
-if (
-  imageUri.toLowerCase().endsWith(".heic") ||
-  imageUri.toLowerCase().endsWith(".heif")
-) {
-  Alert.alert(
-    "Formato non supportato",
-    "Le foto HEIC di iPhone non sono supportate. Usa uno screenshot oppure una foto JPG."
-  );
-  return;
-}
+const manipulatedImage = await ImageManipulator.manipulateAsync(
+  imageUri,
+  [],
+  {
+    compress: 1,
+    format: ImageManipulator.SaveFormat.JPEG,
+    base64: true,
+  }
+);
 
-setEffectsImage(imageUri);
-setEffectsImageBase64(asset.base64 ?? null);
+setEffectsImage(manipulatedImage.uri);
+setEffectsImageBase64(manipulatedImage.base64 ?? null);
   };
 
   const takeEffectsPhoto = async () => {
@@ -3072,7 +3105,7 @@ setTimeout(() => setSavedToProjects(false), 2500);
                 <Animated.View style={[styles.effectsGenerateWrap, glowShadow]}>
                   <TouchableOpacity
                     style={{ width: "100%", alignItems: "center" }}
-                    onPress={generateEffectsVideo}
+                    onPress={generateEffectsImage}
                     disabled={effectsLoading}
                   >
                     {effectsLoading ? (

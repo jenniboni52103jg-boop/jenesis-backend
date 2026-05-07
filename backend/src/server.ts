@@ -2685,28 +2685,9 @@ app.post("/effects/generate", async (req, res) => {
     if (!effect) {
       return res.status(400).json({ error: "Missing effect" });
     }
-   
-const prompt = req.body.prompt || "";
 
-const finalPrompt = `
-Keep the same person, same face identity.
+   const finalImageUrl = await restyleImage(String(imageBase64), String(effect));
 
-Apply this style:
-${prompt}
-
-IMPORTANT:
-- The face must remain ultra realistic and identical
-- Natural skin texture, real human face
-- No distortion, no fake AI look
-- cinematic camera, depth of field, 35mm lens
-
-The environment and outfit must follow the style (${effect})
-with strong cinematic impact, dramatic lighting, high detail.
-`;
-   const finalImageUrl = await restyleImage(
-  String(imageBase64),
-  finalPrompt
-);
    const buffer = await downloadToBuffer(finalImageUrl);
 
    const finalBuffer = isPremium
