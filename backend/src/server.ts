@@ -2170,10 +2170,9 @@ app.get("/test", (req, res) => {
   res.json({ ok: true });
 });
 /* ======================================= TALKING PHOTO =================================================== */
-app.post("/generate-talking-photo", async (req, res) => {
+ app.post("/generate-talking-photo", async (req, res) => {
   try {
-    console.log("🔥🔥🔥 SONO QUI DENTRO");
-    const { imageBase64, script, voiceId, audioBase64, isPremium } = req.body ?? {};
+    const { imageBase64, script, voiceId, audioBase64 } = req.body ?? {};
 
     if (!imageBase64) {
       return res.status(400).json({ error: "Missing image" });
@@ -2184,40 +2183,6 @@ app.post("/generate-talking-photo", async (req, res) => {
         error: "Missing script or audioBase64",
       });
     }
- 
-    // 💰 CREDITI (AGGIUNTA SICURA)
-//const rawUserId = req.headers["user-id"];
-
-//if (!rawUserId || Array.isArray(rawUserId)) {
- // return res.status(401).json({ error: "NO_USER", message: "User ID mancante" });
-//}
-
-//const userId = rawUserId; // ora è STRING SICURA
-
-// 👉 recupera utente (usa il tuo DB)
-//const user = await getUserFromDB(userId);
-//const users = {
- // test123: { credits: 100 }
-//};
-
-//const user = users[userId];
-
-//if (!user) {
- // return res.status(404).json({ error: "USER_NOT_FOUND" });
-//}
-
-//if (!user) {
- // return res.status(404).json({ error: "USER_NOT_FOUND" });
-//}
-
-// 👉 costo (decidi tu)
-//const cost = audioBase64 ? 6 : 5;
-
-// ❌ controlla crediti
-//if (user.credits < cost) {
-  //return res.status(400).json({ error: "NO_CREDITS" });
-//}
-
 
     console.log("🗣️ Hedra talking photo start");
 
@@ -2321,38 +2286,13 @@ app.post("/generate-talking-photo", async (req, res) => {
       throw new Error("Hedra non ha restituito videoUrl");
     }
 
-
     console.log("✅ Hedra talking photo ready:", videoUrl);
 
-    // 💧 WATERMARK QUI (GIUSTO)
-//let finalVideoUrl = videoUrl;
-
-//if (!isPremium) {
-  //console.log("🚫 Applying watermark...");
-
- // const watermarkedBuffer = await applyWatermarkToVideo(videoUrl);
- // finalVideoUrl = await uploadToCloudinary(watermarkedBuffer);
-//}
-
-// 💸 scala crediti
-//user.credits -= cost;
-
-//console.log("💸 Credits scalati:", cost);
-
-// 📤 RISPOSTA
-//return res.json({ videoUrl: finalVideoUrl });
- return res.json({ test: "FUNZIONA" }); // 👈 BLOCCA TUTTO
- //return res.json({ ok: true });
- } // catch (err: any) {
-    //console.error("❌ Talking photo error:", err);
-
-    
-   // return res.status(500).json({ error: stringifyUnknownError(err) });
- // }
-  catch (err) {
-  console.error("❌ Errore:", err);
-  return res.status(500).json({ error: err.message || "Errore interno" });
-}
+    return res.json({ videoUrl });
+  } catch (err: any) {
+    console.error("❌ Talking photo error:", err);
+    return res.status(500).json({ error: stringifyUnknownError(err) });
+  }
 })
 
 /* ======================================= ROUTA CREDITS =================================================== */
@@ -2438,12 +2378,13 @@ app.post("/generate-avatar", async (req, res) => {
   try {
     const isPremium = req.body?.isPremium === "true" || req.body?.isPremium === true;
     const {
-  imageBase64,
-  avatarPrompt,
-  avatarStyle,
-  avatarVoiceMode,
-  avatarInputType,
-} = req.body;
+      imageBase64,
+      avatarAction,
+      avatarStyle,
+      avatarMode,
+      avatarInputType,
+      avatarPreset,
+    } = req.body;
 
     console.log("🔥 /generate-avatar HIT");
     console.log("BODY KEYS:", Object.keys(req.body || {}));
@@ -2453,7 +2394,7 @@ app.post("/generate-avatar", async (req, res) => {
       return res.status(400).json({ error: "Missing image" });
     }
 
-    if (!avatarPrompt) {
+    if (!avatarAction) {
       return res.status(400).json({ error: "Missing avatar action" });
     }
 
@@ -2462,7 +2403,7 @@ app.post("/generate-avatar", async (req, res) => {
 Create a vertical TikTok style talking avatar video.
 
 Action:
-${avatarPrompt}
+${avatarAction}
 
 Style:
 ${avatarStyle === "3d" ? "3D animated avatar" : "2D animated avatar"}
@@ -2504,6 +2445,56 @@ Natural speaking, expressive gestures, short viral style video.
   } catch (err: any) {
     console.error("Avatar error:", err);
     return res.status(500).json({ error: err?.message || "Avatar generation failed" });
+  }
+});
+
+/* ============= AVATAR JOB START ============ */
+app.post("/generate-speaking-avatar", async (req, res) => {
+  const isPremium = req.body?.isPremium === "true" || req.body?.isPremium === true;
+  try {
+   const {
+  imageBase64,
+  avatarPrompt,
+  avatarVisualPrompt,
+  voiceMode,
+  voiceId,
+  recordedAudioBase64,
+} = req.body ?? {};
+
+    if (!imageBase64) {
+      return res.status(400).json({ error: "Missing image" });
+    }
+
+    if (!avatarPrompt?.trim() && voiceMode !== "my_voice" && voiceMode !== "clone") {
+      return res.status(400).json({ error: "Missing avatar prompt" });
+    }
+
+    if ((voiceMode === "my_voice" || voiceMode === "clone") && !recordedAudioBase64) {
+      return res.status(400).json({ error: "Missing recorded audio" });
+    }
+
+    const job = createAvatarJob();
+
+    res.json({
+      ok: true,
+      jobId: job.id,
+      status: job.status,
+    });
+
+    void runAvatarJob(job.id, {
+  imageBase64,
+  avatarPrompt,
+  avatarVisualPrompt,
+  voiceMode,
+  voiceId,
+  recordedAudioBase64,
+  isPremium,
+});
+
+  } catch (err: any) {
+    return res.status(500).json({
+      error: stringifyUnknownError(err),
+    });
   }
 });
 

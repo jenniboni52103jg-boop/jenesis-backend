@@ -606,14 +606,14 @@ const generateAndAnimateAvatar = async () => {
   try {
     // 👇 METTILO QUI
     //const access = await checkFeatureAccess("avatar");
-    //if (!access.ok) return;
+   // if (!access.ok) return;
 
    const selectedPreset = AVATAR_PRESETS.find(
   (p) => p.id === avatarPreset
 );
 const form = new FormData();
 form.append("voiceId", selectedElevenVoice);
-//form.append("isPremiumUser", isPremiumUser ? "true" : "false");
+form.append("isPremiumUser", isPremium ? "true" : "false");
 const isUsingPreset = avatarInputType === "preset" && !!selectedPreset;
 
 if (!avatarImageBase64 && !isUsingPreset) {
@@ -651,7 +651,7 @@ if (!avatarImageBase64 && !isUsingPreset) {
       return;
     }
 
-    //if (!(await guardGenerationOrPaywall())) return;
+  //  if (!(await guardGenerationOrPaywall())) return;
 
     setAvatarLoading(true);
     setSavingToProjects(true);
@@ -788,7 +788,7 @@ console.log("✅ AVATAR CREATO:", data);
 
     setGeneratedVideoUrl(finalVideoUrl);
     await saveAvatarToProjects(finalVideoUrl, avatarStyle, "Talking Avatar");
-   // await consumeGeneration();
+    //await consumeGeneration();
 
     setSavedToProjects(true);
     setTimeout(() => setSavedToProjects(false), 2500);
@@ -799,6 +799,7 @@ console.log("✅ AVATAR CREATO:", data);
     setSavingToProjects(false);
   }
 };
+
 
 /* -------------------- funzioni realistic effects -------------------- */
 function getEffectPrompt(effect: string | null) {
@@ -1500,24 +1501,10 @@ try {
 };
 
 /*--------------------------------GENERATE TALKING PHOTO-------------------------------------- */
-  const generateTalkingPhoto = async () => {
-    //if (!isPro) {
-  //setShowPaywall(true); // oppure navigation al paywall
-  //return;
-//}
-
+   const generateTalkingPhoto = async () => {
    // 👇 METTILO QUI
-   // const access = await checkAccess("talking");
-   // if (!access.ok) {
-  //setShowPaywall(true);
- // return;
-//}
-
-// 👇 QUI
- // if (duration === 15 && !isPremium) {
-   // setShowPaywall(true);
-   // return;
- // }
+    //const access = await checkFeatureAccess("talking");
+   // if (!access.ok) return;
 
     if (!talkingImage || !talkingImageBase64) {
       Alert.alert("Error", "Upload your photo first");
@@ -1550,95 +1537,61 @@ if (talkingScript.length > maxChars) {
       return;
     }
 
-   // 1️⃣ calcoli costo
-          const cost =
-  duration === 5
-    ? CREDIT_COSTS.talking.short
-    : CREDIT_COSTS.talking.long;
+   // if (!(await guardGenerationOrPaywall())) return;
 
-   // 2️⃣ SCALI CREDITI PRIMA
-      //if (!(await spendCredits(cost))) return;
-      if (!(await spendCredits(cost))) {
-  Alert.alert(
-    "Crediti insufficienti",
-    "Acquista crediti per continuare"
-  );
-  setShowPaywall(true);
-  return;
-}
-   
-  try {
+    try {
       setTalkingLoading(true);
       setSavingToProjects(true);
       setSavedToProjects(false);
 
- const res = await fetch(`${API_URL}/generate-talking-photo`, {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json",
-  },
-  body: JSON.stringify({
-    imageBase64: "test",
-    script: talkingScript,
-    voiceId: selectedHedraVoice,
-    ratio: "720:1280",
-    duration,
-    isPremium,
-  }),
-});
+      const res = await fetch(`${API_URL}/generate-talking-photo`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "ngrok-skip-browser-warning": "true",
+        },
+        body: JSON.stringify({
+          imageBase64: talkingImageBase64,
+          script: talkingScript,
+          voiceId: selectedHedraVoice,
+          ratio: "720:1280",
+          duration,            // 👈 AGGIUNGI QUESTO
+          isPremium: isPremium, // 👈 
+        }),
+      });
 
-const text = await res.text();
-console.log("🔥 TEST RESPONSE:", text);
+      const text = await res.text();
 
 let data;
-
 try {
   data = JSON.parse(text);
 } catch (e) {
-  console.log("❌ RISPOSTA SERVER:", text);
-  Alert.alert("Errore server", "Crediti finiti o server down");
-  return;
+  console.log("❌ NOT JSON:", text);
+  throw new Error("Server returned invalid response");
 }
 
-console.log("✅ DATA:", data);
-
-        if (!res.ok) {
-
-  if (data?.error === "NO_CREDITS") {
-    Alert.alert(
-      "Crediti finiti",
-      "Acquista altri crediti per continuare",
-      [
-        { text: "Annulla" },
-        { text: "Compra", onPress: () => setShowPaywall(true) }
-      ]
-    );
-    return;
-  }
-
-  if (data?.error === "PRO_REQUIRED") {
-    setShowPaywall(true);
-    return;
-  }
-
-  throw new Error(data?.error || "Errore generazione talking photo");
-}
+      if (!res.ok) {
+        throw new Error(data?.error || "Errore generazione talking photo");
+      }
 
       if (!data?.videoUrl) {
         throw new Error("Backend non ha restituito videoUrl");
       }
 
       await saveTalkingPhotoToProjects(data.videoUrl, talkingImage);
+      //await consumeGeneration();
 
       setSavedToProjects(true);
       setTimeout(() => setSavedToProjects(false), 2500);
     } catch (e: any) {
-    Alert.alert("Error", e?.message || "Something went wrong");
+      Alert.alert("Error", e?.message || "Something went wrong");
     } finally {
       setTalkingLoading(false);
       setSavingToProjects(false);
     }
   };
+
+
 /*-------- GENERATE TEXT -IMAGE ------------*/
   const generateTextImage = async () => {
     //if (!isPro) {
