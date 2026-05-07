@@ -1231,15 +1231,36 @@ const clearRecordedAudio = async () => {
     }
 
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      quality: 1,
-      base64: true,
-    });
+  mediaTypes: ImagePicker.MediaTypeOptions.Images,
+  quality: 1,
+  base64: true,
+  allowsEditing: false,
+  exif: false,
+});
 
-    if (!result.canceled) {
-      setEffectsImage(result.assets[0].uri);
-      setEffectsImageBase64(result.assets[0].base64 ?? null);
-    }
+    //if (!result.canceled) {
+      //setEffectsImage(result.assets[0].uri);
+      //setEffectsImageBase64(result.assets[0].base64 ?? null);
+   // }
+   if (result.canceled) return;
+
+const asset = result.assets[0];
+
+const imageUri = asset.uri;
+
+if (
+  imageUri.toLowerCase().endsWith(".heic") ||
+  imageUri.toLowerCase().endsWith(".heif")
+) {
+  Alert.alert(
+    "Formato non supportato",
+    "Le foto HEIC di iPhone non sono supportate. Usa uno screenshot oppure una foto JPG."
+  );
+  return;
+}
+
+setEffectsImage(imageUri);
+setEffectsImageBase64(asset.base64 ?? null);
   };
 
   const takeEffectsPhoto = async () => {
