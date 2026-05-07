@@ -681,6 +681,22 @@ if (avatarVoiceMode === "clone" && recordedAudioBase64) {
   form.append("audioBase64", recordedAudioBase64);
 }
 
+//if (avatarInputType === "preset") {
+  //const foundPreset = AVATAR_PRESETS.find(
+   // (p) => p.id === avatarPreset
+  //);
+
+  //if (!foundPreset) {
+    //throw new Error("Preset avatar non trovato");
+  //}
+
+  //const presetBase64 = await getBase64FromAsset(
+    //foundPreset.image
+  //);
+
+  //form.append("imageBase64", presetBase64);
+  //form.append("avatarPrompt", foundPreset.prompt);
+//}
 if (avatarInputType === "preset") {
   const foundPreset = AVATAR_PRESETS.find(
     (p) => p.id === avatarPreset
@@ -694,8 +710,15 @@ if (avatarInputType === "preset") {
     foundPreset.image
   );
 
-  form.append("imageBase64", presetBase64);
-  form.append("avatarPrompt", foundPreset.prompt);
+  console.log(
+    "PRESET BASE64 LENGTH:",
+    presetBase64?.length
+  );
+
+  finalImageBase64 = presetBase64;
+
+  form.set("imageBase64", presetBase64);
+  form.set("avatarPrompt", foundPreset.prompt);
 }
 
 if (avatarInputType === "custom") {
