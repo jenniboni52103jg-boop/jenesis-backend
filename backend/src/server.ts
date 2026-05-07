@@ -2449,52 +2449,77 @@ Natural speaking, expressive gestures, short viral style video.
 });
 
 /* ============= AVATAR JOB START ============ */
-app.post("/generate-speaking-avatar", async (req, res) => {
-  const isPremium = req.body?.isPremium === "true" || req.body?.isPremium === true;
+app.post("/generate-avatar", async (req, res) => {
   try {
-   const {
-  imageBase64,
-  avatarPrompt,
-  avatarVisualPrompt,
-  voiceMode,
-  voiceId,
-  recordedAudioBase64,
-} = req.body ?? {};
+    const isPremium = req.body?.isPremium === "true" || req.body?.isPremium === true;
+    const {
+      imageBase64,
+      avatarAction,
+      avatarStyle,
+      avatarMode,
+      avatarInputType,
+      avatarPreset,
+    } = req.body;
+
+    console.log("🔥 /generate-avatar HIT");
+    console.log("BODY KEYS:", Object.keys(req.body || {}));
+    console.log("BASE64 LENGTH:", req.body?.imageBase64?.length || 0);
 
     if (!imageBase64) {
       return res.status(400).json({ error: "Missing image" });
     }
 
-    if (!avatarPrompt?.trim() && voiceMode !== "my_voice" && voiceMode !== "clone") {
-      return res.status(400).json({ error: "Missing avatar prompt" });
+    if (!avatarAction) {
+      return res.status(400).json({ error: "Missing avatar action" });
     }
 
-    if ((voiceMode === "my_voice" || voiceMode === "clone") && !recordedAudioBase64) {
-      return res.status(400).json({ error: "Missing recorded audio" });
-    }
+    const imageUrl = `data:image/jpeg;base64,${imageBase64}`;
+    const prompt = `
+Create a vertical TikTok style talking avatar video.
 
-    const job = createAvatarJob();
+Action:
+${avatarAction}
 
-    res.json({
-      ok: true,
-      jobId: job.id,
-      status: job.status,
+Style:
+${avatarStyle === "3d" ? "3D animated avatar" : "2D animated avatar"}
+
+Natural speaking, expressive gestures, short viral style video.
+`;
+
+    console.log("🚀 Runway avatar create START");
+
+    const createdTask: any = await runway.imageToVideo.create({
+      model: "gen4.5",
+      promptImage: imageUrl,
+      promptText: prompt,
+      ratio: "720:1280",
+      duration: 5,
     });
 
-    void runAvatarJob(job.id, {
-  imageBase64,
-  avatarPrompt,
-  avatarVisualPrompt,
-  voiceMode,
-  voiceId,
-  recordedAudioBase64,
-  isPremium,
-});
+    console.log("✅ Runway task created:", createdTask.id);
 
+    const finishedTask: any = await runway.tasks
+      .retrieve(createdTask.id)
+      .waitForTaskOutput();
+
+    console.log("✅ Runway task finished");
+
+    const videoUrl =
+      (Array.isArray(finishedTask?.output)
+        ? finishedTask.output[0]?.url || finishedTask.output[0]
+        : null) ||
+      finishedTask?.videoUrl ||
+      null;
+
+    if (!videoUrl) {
+      console.log("❌ finishedTask:", finishedTask);
+      return res.status(500).json({ error: "Video generation failed" });
+    }
+
+    return res.json({ videoUrl });
   } catch (err: any) {
-    return res.status(500).json({
-      error: stringifyUnknownError(err),
-    });
+    console.error("Avatar error:", err);
+    return res.status(500).json({ error: err?.message || "Avatar generation failed" });
   }
 });
 
