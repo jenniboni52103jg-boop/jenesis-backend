@@ -2164,11 +2164,6 @@ return res.json({
 }
 });
 
-/* ======================================= routa prova =================================================== */
-app.get("/test", (req, res) => {
-  console.log("TEST OK");
-  res.json({ ok: true });
-});
 /* ======================================= TALKING PHOTO =================================================== */
  app.post("/generate-talking-photo", async (req, res) => {
   try {
@@ -2370,81 +2365,6 @@ app.get("/api/hedra/voices", async (_req, res) => {
   } catch (err: any) {
     console.error("❌ Hedra voices error:", err);
     return res.status(500).json({ error: err?.message });
-  }
-});
-
-/* ================== ROUTE AVATAR ================== */
-app.post("/generate-avatar", async (req, res) => {
-  try {
-    const isPremium = req.body?.isPremium === "true" || req.body?.isPremium === true;
-    const {
-      imageBase64,
-      avatarAction,
-      avatarStyle,
-      avatarMode,
-      avatarInputType,
-      avatarPreset,
-    } = req.body;
-
-    console.log("🔥 /generate-avatar HIT");
-    console.log("BODY KEYS:", Object.keys(req.body || {}));
-    console.log("BASE64 LENGTH:", req.body?.imageBase64?.length || 0);
-
-    if (!imageBase64) {
-      return res.status(400).json({ error: "Missing image" });
-    }
-
-    if (!avatarAction) {
-      return res.status(400).json({ error: "Missing avatar action" });
-    }
-
-    const imageUrl = `data:image/jpeg;base64,${imageBase64}`;
-    const prompt = `
-Create a vertical TikTok style talking avatar video.
-
-Action:
-${avatarAction}
-
-Style:
-${avatarStyle === "3d" ? "3D animated avatar" : "2D animated avatar"}
-
-Natural speaking, expressive gestures, short viral style video.
-`;
-
-    console.log("🚀 Runway avatar create START");
-
-    const createdTask: any = await runway.imageToVideo.create({
-      model: "gen4.5",
-      promptImage: imageUrl,
-      promptText: prompt,
-      ratio: "720:1280",
-      duration: 5,
-    });
-
-    console.log("✅ Runway task created:", createdTask.id);
-
-    const finishedTask: any = await runway.tasks
-      .retrieve(createdTask.id)
-      .waitForTaskOutput();
-
-    console.log("✅ Runway task finished");
-
-    const videoUrl =
-      (Array.isArray(finishedTask?.output)
-        ? finishedTask.output[0]?.url || finishedTask.output[0]
-        : null) ||
-      finishedTask?.videoUrl ||
-      null;
-
-    if (!videoUrl) {
-      console.log("❌ finishedTask:", finishedTask);
-      return res.status(500).json({ error: "Video generation failed" });
-    }
-
-    return res.json({ videoUrl });
-  } catch (err: any) {
-    console.error("Avatar error:", err);
-    return res.status(500).json({ error: err?.message || "Avatar generation failed" });
   }
 });
 
@@ -2804,6 +2724,7 @@ return res.json({
     });
   }
 });
+
 /* ================== STYLE CARDS PRO (EXPLORER) ================== */
 // memoria jobs
 const styleCardJobs = new Map();

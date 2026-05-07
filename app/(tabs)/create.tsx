@@ -609,30 +609,26 @@ const avatarLanguage = "en";
 /* ------------------GENERATE ANIMATE AVATAR ---------------------------------------------------*/
 const generateAndAnimateAvatar = async () => {
   try {
-    if (!avatarImageBase64) {
-      Alert.alert("Errore", "Carica prima una foto per l'avatar.");
-      return;
-    }
+    // 👇 METTILO QUI
+   // const access = await checkFeatureAccess("avatar");
+   // if (!access.ok) return;
 
-    let finalPrompt = avatarPrompt.trim();
+   const selectedPreset = AVATAR_PRESETS.find(
+  (p) => p.id === avatarPreset
+);
+const form = new FormData();
+form.append("voiceId", selectedElevenVoice);
+//form.append("isPremiumUser", isPremiumUser ? "true" : "false");
+const isUsingPreset = avatarInputType === "preset" && !!selectedPreset;
 
-    if (avatarInputType === "preset" && avatarPreset === "story") {
-      if (!avatarStoryTopic.trim()) {
-        Alert.alert("Errore", "Scrivi l'argomento della mini story.");
-        return;
-      }
+if (!avatarImageBase64 && !isUsingPreset) {
+  Alert.alert("Errore", "Carica prima una foto per l'avatar.");
+  return;
+}
 
-      const topic = avatarStoryTopic.trim();
+    const spokenPart = avatarPrompt.trim();
 
-      finalPrompt = [
-        `Introduce yourself to the camera and mention ${topic}`,
-        `Explain quickly what ${topic} is about`,
-        `Show excitement about ${topic}`,
-        `Invite people to try ${topic}`,
-      ].join(". ");
-    }
-
-    if (!finalPrompt && avatarVoiceMode !== "clone") {
+    if (!spokenPart) {
       Alert.alert("Errore", "Scrivi cosa deve dire l'avatar.");
       return;
     }
@@ -660,11 +656,47 @@ const generateAndAnimateAvatar = async () => {
       return;
     }
 
-   // if (!(await guardGenerationOrPaywall())) return;
+    //if (!(await guardGenerationOrPaywall())) return;
 
     setAvatarLoading(true);
     setSavingToProjects(true);
     setSavedToProjects(false);
+
+   const visualPart =
+  avatarInputType === "preset" ? selectedPreset?.prompt || "" : "";
+
+let finalImageBase64 = avatarImageBase64;
+
+if (isUsingPreset && selectedPreset) {
+  finalImageBase64 = await getBase64FromAsset(selectedPreset.image);
+}
+form.append("imageBase64", finalImageBase64 || "");
+form.append("avatarPrompt", spokenPart);
+form.append("avatarStyle", avatarStyle);
+form.append("avatarInputType", avatarInputType);
+form.append("avatarVoiceMode", avatarVoiceMode);
+
+if (avatarVoiceMode === "clone" && recordedAudioBase64) {
+  form.append("audioBase64", recordedAudioBase64);
+}
+
+const res = await fetch("https://injurable-giavanna-purselike.ngrok-free.dev/generate-avatar", {
+  method: "POST",
+  body: form,
+});
+
+const data = await res.json();
+
+if (!res.ok) {
+  if (data.error === "PRO_REQUIRED") {
+    Alert.alert("Passa a PRO", "Questa funzione è disponibile solo per utenti PRO");
+    return;
+  }
+
+  throw new Error(data.error || "Errore generazione avatar");
+}
+
+console.log("✅ AVATAR CREATO:", data);
 
     /* STEP 1: start avatar job */
     const startRes = await fetch(`${API_URL}/generate-speaking-avatar`, {
@@ -674,17 +706,20 @@ const generateAndAnimateAvatar = async () => {
         "ngrok-skip-browser-warning": "true",
       },
       body: JSON.stringify({
-        imageBase64: avatarImageBase64,
-        avatarPrompt: finalPrompt,
+        imageBase64: finalImageBase64,
+        effect: selectedEffect,
+        realismo: true,
+       avatarPrompt: spokenPart,
+       avatarVisualPrompt: visualPart,
         voiceMode: avatarVoiceMode === "clone" ? "my_voice" : "preset",
         voiceId: avatarVoiceMode === "preset" ? selectedElevenVoice : null,
         recordedAudioBase64:
           avatarVoiceMode === "clone" ? recordedAudioBase64 : null,
         avatarStyle,
-        avatarMode,
         avatarInputType,
         avatarPreset,
-        avatarLanguage,
+        isPremium:isPremium,
+        prompt: getEffectPrompt(selectedEffect), // 🔥 QUESTO
       }),
     });
 
@@ -758,7 +793,7 @@ const generateAndAnimateAvatar = async () => {
 
     setGeneratedVideoUrl(finalVideoUrl);
     await saveAvatarToProjects(finalVideoUrl, avatarStyle, "Talking Avatar");
-   // await consumeGeneration();
+    //await consumeGeneration();
 
     setSavedToProjects(true);
     setTimeout(() => setSavedToProjects(false), 2500);
@@ -769,6 +804,7 @@ const generateAndAnimateAvatar = async () => {
     setSavingToProjects(false);
   }
 };
+
 /* -------------------- funzioni realistic effects -------------------- */
 function getEffectPrompt(effect: string | null) {
   switch (effect) {
@@ -790,10 +826,6 @@ function getEffectPrompt(effect: string | null) {
 }
 /* -------------------- funzioni effects  -------------------- */
 const generateEffectsVideo = async () => {
-  //if (!(await guardGenerationOrPaywall())) return;
- // const access = await checkFeatureAccess("effects");
-//if (!access.ok) return;
-
   if (!effectsImage) {
     Alert.alert("Error", "Upload your photo first");
     return;
@@ -823,27 +855,26 @@ const generateEffectsVideo = async () => {
       body: JSON.stringify({
         imageBase64: effectsImageBase64,
         effect: selectedEffect,
-        isPremium,
       }),
     });
 
     const data = await res.json();
-    
 
     if (!res.ok) {
       throw new Error(data?.error || "Effects generation failed");
     }
 
-    if (!data?.imageUrl) {
-  throw new Error("No image returned");
-}
+    if (!data?.videoUrl) {
+      throw new Error("No video returned");
+    }
 
-await addProjectToProjects({
-  id: `effects_${Date.now()}`,
-  templateId: `effects-${selectedEffect}`,
-  imageUrl: data.imageUrl,
-  createdAt: new Date().toISOString(),
-});
+    await addProjectToProjects({
+      id: `effects_${Date.now()}`,
+      templateId: `effects-${selectedEffect}`,
+      imageUrl: effectsImage,
+      videoUrl: data.videoUrl,
+      createdAt: new Date().toISOString(),
+    });
 
     setSavedToProjects(true);
     setTimeout(() => setSavedToProjects(false), 2500);
@@ -855,7 +886,6 @@ await addProjectToProjects({
     setSavingToProjects(false);
   }
 };
-
   /* -------------------- AI EFFECTS -------------------- */
   // STATE
 const [effectsImage, setEffectsImage] = useState<string | null>(null);
