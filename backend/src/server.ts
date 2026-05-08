@@ -139,6 +139,16 @@ function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+function extractSpeech(text: string) {
+  const match = text.match(/"([^"]+)"/);
+
+  if (match?.[1]) {
+    return match[1];
+  }
+
+  return text;
+}
+
 function safeJsonParse(text: string) {
   try {
     return JSON.parse(text);
@@ -1982,9 +1992,43 @@ app.post("/api/generate-motion-speaking-video", upload.single("image"), async (r
 
     // 1. Estrazione e Validazione Input
     const isPremium = req.body?.isPremium === "true" || req.body?.isPremium === true;
-    const prompt = String(req.body?.actionPrompt || "Animate naturally, cinematic movement");
-    const speech = String(req.body?.speechText || "");
     const voiceId = String(req.body?.voiceId || "");
+
+     //const prompt = String(req.body?.actionPrompt || "Animate naturally, cinematic movement");
+     //const speech = String(req.body?.speechText || "");
+     const speechText = String(req.body?.speechText || "");
+const actionPrompt = String(req.body?.actionPrompt || "");
+
+const hasTalkingMode = speechText.trim().length > 0;
+
+const speech = hasTalkingMode
+  ? extractSpeech(speechText)
+  : "";
+
+const prompt = hasTalkingMode
+  ? `
+${speechText}
+
+IMPORTANT:
+- natural realistic movement
+- cinematic motion
+- expressive movement
+- realistic animation
+- smooth motion
+- subtle dynamic movement
+- realistic interaction with camera
+- high realism
+- cinematic behavior
+- realistic expressions
+- no stiff motion
+- no frozen pose
+- no distortion
+- no horror motion
+- no weird movement
+- realistic physics
+- smooth natural acting
+`
+  : actionPrompt || "Animate naturally, cinematic movement";
 
     if (!speech || speech.trim().length < 2) {
       return res.status(400).json({ error: "Il testo del parlato (speechText) è troppo breve o mancante." });
