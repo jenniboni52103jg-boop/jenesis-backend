@@ -2707,7 +2707,7 @@ app.post("/effects/generate", async (req, res) => {
 const prompt = req.body.prompt || "";
 
 const finalPrompt = `
-Keep the same person, same face identity.
+same face identity.
 
 Apply this style:
 ${prompt}
