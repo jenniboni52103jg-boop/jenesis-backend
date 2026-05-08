@@ -639,26 +639,58 @@ function getEffectReference(effect: string) {
 
 /* ================== HELPERS PROMPT EFFECTS ================== */
 function getEffectPrompt(effect: string) {
-  const base =
-    "portrait photo of the SAME person from the input image, preserve the exact same face, same identity, same gender, same ethnicity, same facial structure, same eyes, same nose, same lips, same hairline, same hairstyle, same age, same skin tone, same body proportions";
 
   if (effect === "movie") {
-    return `${base}, cinematic movie lighting, dramatic atmosphere, luxury fashion editorial, realistic high-end portrait`;
+    return `
+Epic cinematic fantasy warrior queen.
+Luxury fantasy armor.
+Blockbuster movie scene.
+Fire, smoke, cinematic atmosphere.
+Powerful female heroine.
+Ultra detailed outfit.
+Dramatic lighting.
+Movie poster quality.
+Hollywood fantasy style.
+`;
   }
 
   if (effect === "cyberpunk") {
-    return `${base}, cyberpunk neon lighting, futuristic fashion, sci-fi city mood, realistic portrait`;
+    return `
+Futuristic cyberpunk heroine.
+Neon city lights.
+Sci-fi cinematic scene.
+Luxury futuristic fashion.
+Blade Runner atmosphere.
+Pink and blue neon glow.
+High-tech cinematic outfit.
+Ultra detailed cyberpunk styling.
+`;
   }
 
   if (effect === "photorealistic") {
-    return `${base}, premium editorial photography, ultra realistic portrait, studio lighting, enhanced but same person`;
+    return `
+Luxury Vogue fashion photography.
+Professional model photoshoot.
+Designer clothing.
+Natural cinematic lighting.
+Editorial magazine quality.
+Ultra realistic portrait photography.
+`;
   }
 
   if (effect === "cartoon") {
-    return `${base}, soft stylized cartoon look, but still clearly recognizable as the same person`;
+    return `
+Pixar inspired animated character.
+Cute cinematic cartoon style.
+Expressive eyes.
+Disney quality rendering.
+Stylized animated movie character.
+`;
   }
 
-  return `${base}, realistic portrait`;
+  return `
+Cinematic portrait.
+`;
 }
 
 function getEffectNegativePrompt() {
@@ -2703,23 +2735,38 @@ app.post("/effects/generate", async (req, res) => {
     if (!effect) {
       return res.status(400).json({ error: "Missing effect" });
     }
-   
-const prompt = req.body.prompt || "";
+  
+const stylePrompt = getEffectPrompt(effect);
 
 const finalPrompt = `
-git commit -m "Fix AI effects cinematic prompts"
-
-Apply this style:
-${prompt}
+${stylePrompt}
 
 IMPORTANT:
-- The face must remain ultra realistic and identical
-- Natural skin texture, real human face
-- No distortion, no fake AI look
-- cinematic camera, depth of field, 35mm lens
+- preserve the same person identity
+- keep recognizable facial features
+- cinematic blockbuster quality
+- dramatic movie lighting
+- highly detailed outfit redesign
+- beautiful styling
+- luxury fashion cinematic look
+- epic environment
+- professional color grading
+- realistic skin texture
+- realistic eyes
+- realistic anatomy
+-preserver tiny natural details and micro texture
 
-The environment and outfit must follow the style (${effect})
-with strong cinematic impact, dramatic lighting, high detail.
+The MAIN goal is:
+transform the outfit, styling, scene and atmosphere
+into a visually stunning cinematic character.
+
+-no plastic skin
+-no AI face face look
+-no over-airbrushing
+-no waxy texture
+
+Do NOT keep the original clothes.
+Do NOT keep the original background.
 `;
    const finalImageUrl = await restyleImage(
   String(imageBase64),
