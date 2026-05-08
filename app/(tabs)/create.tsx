@@ -196,11 +196,30 @@ const textCredits = calculateTextCredits();
   async function checkAccess(feature: string) {
   const res = await fetch(`${API_URL}/paywall/check`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+    },
     body: JSON.stringify({ feature }),
   });
 
-  return await res.json();
+  const rawText = await res.text();
+
+  console.log("CHECK ACCESS RAW:");
+  console.log(rawText);
+
+  let data;
+
+  try {
+    data = JSON.parse(rawText);
+  } catch {
+    console.log("❌ INVALID JSON RESPONSE");
+
+    return {
+      ok: true,
+    };
+  }
+
+  return data;
 }
   /* -------------------- IMAGE → AI VIDEO -------------------- */
 const [selectedImage, setSelectedImage] = useState<string | null>(null);
@@ -888,8 +907,24 @@ function getEffectPrompt(effect: string | null) {
       return "realistic scene";
   }
 }
-/* -------------------- funzioni effects  -------------------- */
+/* --------------------------------------- funzioni effects  -------------------------- */
 const generateEffectsImage = async () => {
+  //if (!isPro) {
+  //setShowPaywall(true); // oppure navigation al paywall
+  //return;
+//}
+  const access = await checkAccess("effects");
+if (!access.ok) {
+  setShowPaywall(true);
+  return;
+}
+
+const proCheck = await checkAccess(`effect:${selectedEffect}`);
+if (!proCheck.ok) {
+  setShowPaywall(true);
+  return;
+}
+
   if (!effectsImage) {
     Alert.alert("Error", "Upload your photo first");
     return;
@@ -919,41 +954,22 @@ const generateEffectsImage = async () => {
       body: JSON.stringify({
         imageBase64: effectsImageBase64,
         effect: selectedEffect,
+        isPremium,
       }),
     });
-const rawText = await res.text();
 
-console.log("RAW EFFECTS RESPONSE:");
-console.log(rawText);
+    const data = await res.json();
+    
 
-let data;
-
-try {
-  data = JSON.parse(rawText);
-} catch {
-  throw new Error(rawText.slice(0, 200));
-}
-
-if (!res.ok) {
-  throw new Error(data?.error || "Effects generation failed");
-}
-
-    //const data = await res.json();
-
-   // if (!res.ok) {
-     // throw new Error(data?.error || "Effects generation failed");
-    //}
-
-    //if (!data?.videoUrl) {
-      //throw new Error("No video returned");
-    //}
+    if (!res.ok) {
+      throw new Error(data?.error || "Effects generation failed");
+    }
 
     if (!data?.imageUrl) {
-  console.log("FULL DATA:");
-  console.log(data);
-
   throw new Error("No image returned");
 }
+
+//if (!(await spendCredits(CREDIT_COSTS.effects))) return;
 
 await addProjectToProjects({
   id: `effects_${Date.now()}`,

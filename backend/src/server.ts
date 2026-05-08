@@ -2685,7 +2685,7 @@ function getTemplates(templateKey: string) {
     path.join(basePath, "autunno4.jpg"),
   ];
 }
-/* ================== ROUTE AI EFFECTS ================== */
+/* ======================================= ROUTE AI EFFECTS ============================ */
 app.post("/effects/generate", async (req, res) => {
   try {
     const isPremium = req.body?.isPremium === "true" || req.body?.isPremium === true;
@@ -2706,25 +2706,22 @@ app.post("/effects/generate", async (req, res) => {
    
 const prompt = req.body.prompt || "";
 
-//const finalPrompt = `
-//Keep the same person, same face identity.
+const finalPrompt = `
+Keep the same person, same face identity.
 
-//Apply this style:
-//${prompt}
+Apply this style:
+${prompt}
 
-//IMPORTANT:
-//- The face must remain ultra realistic and identical
-//- Natural skin texture, real human face
-//- No distortion, no fake AI look
-//- cinematic camera, depth of field, 35mm lens
+IMPORTANT:
+- The face must remain ultra realistic and identical
+- Natural skin texture, real human face
+- No distortion, no fake AI look
+- cinematic camera, depth of field, 35mm lens
 
-//The environment and outfit must follow the style (${effect})
-//with strong cinematic impact, dramatic lighting, high detail.
-//`;
-  
-const finalPrompt = getEffectPrompt(effect);
-
-const finalImageUrl = await restyleImage(
+The environment and outfit must follow the style (${effect})
+with strong cinematic impact, dramatic lighting, high detail.
+`;
+   const finalImageUrl = await restyleImage(
   String(imageBase64),
   finalPrompt
 );
