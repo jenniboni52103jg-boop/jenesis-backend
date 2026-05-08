@@ -1011,7 +1011,7 @@ async function hedraCreateAvatarTalkingVideo(opts: {
 async function hedraPollGenerationResult(generationId: string) {
   const apiKey = requireEnv("HEDRA_API_KEY");
 
-  for (let i = 0; i < 120; i++) {
+  for (let i = 0; i < 180; i++) {
     const resp = await fetch(
       `https://api.hedra.com/web-app/public/generations/${generationId}/status`,
       {
@@ -1052,7 +1052,8 @@ async function hedraPollGenerationResult(generationId: string) {
       );
     }
 
-    await sleep(4000);
+    //await sleep(4000);
+    await sleep(7000);
   }
 
   throw new Error("Hedra timeout");
