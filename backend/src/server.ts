@@ -2707,7 +2707,7 @@ app.post("/effects/generate", async (req, res) => {
 const prompt = req.body.prompt || "";
 
 const finalPrompt = `
-same face identity.
+git commit -m "Fix AI effects cinematic prompts"
 
 Apply this style:
 ${prompt}
