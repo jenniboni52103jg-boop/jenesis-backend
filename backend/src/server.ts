@@ -140,7 +140,16 @@ function sleep(ms: number) {
 }
 
 function extractSpeech(text: string) {
-  const match = text.match(/"([^"]+)"/);
+
+  // virgolette normali "
+  let match = text.match(/"([^"]+)"/);
+
+  if (match?.[1]) {
+    return match[1];
+  }
+
+  // virgolette smart italiane “ ”
+  match = text.match(/“([^”]+)”/);
 
   if (match?.[1]) {
     return match[1];
