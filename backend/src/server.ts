@@ -625,7 +625,7 @@ async function createEffectVideoFromImage(opts: {
   return outputPath;
 }
 
-/* ============== helper aiEFFECTS ================== */
+/* ============== helper ai EFFECTS ================== */
 function getEffectReference(effect: string) {
   const base = path.join(__dirname, "assets", "effects");
 

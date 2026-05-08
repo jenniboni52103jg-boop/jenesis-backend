@@ -1009,7 +1009,7 @@ if (!res.ok) {
 }
   setSelectedEffect(effect);
 };
-  
+
   /* -------------------- HEDRA VOICES -------------------- */
   const loadHedraVoices = async () => {
   try {

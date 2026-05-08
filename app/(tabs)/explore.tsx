@@ -79,11 +79,11 @@ const handleBuyCredits = async () => {
 
     const pkg = offering[0];
 
-    const customerInfo = await buyPackage(pkg);
+    //const customerInfo = await buyPackage(pkg);
 
-    if (customerInfo) {
-      Alert.alert("Successo", "Acquisto completato 🔥");
-    }
+   // if (customerInfo) {
+    //  Alert.alert("Successo", "Acquisto completato 🔥");
+  //  }
 
   } catch (e) {
     console.log(e);
