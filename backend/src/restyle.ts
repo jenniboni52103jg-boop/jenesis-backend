@@ -688,10 +688,9 @@ text, watermark, logo
 }
 
 /* ================= EFFECTS PROMPTS ================= */
-
-function getEffectPrompt(effect: string) {
-  if (effect === "movie") {
-    return `
+function getEffectPrompt(effect) {
+    if (effect === "movie") {
+        return `
 Keep the exact same woman, exact same face, exact same identity, exact same ethnicity,
 clearly recognizable as the same person.
 
@@ -729,10 +728,9 @@ Do not make the subject male.
 Face quality:
 ultra detailed face, high skin detail, natural pores, realistic skin texture, sharp focus, DSLR quality
 `.trim();
-  }
-
-  if (effect === "cyberpunk") {
-    return `
+    }
+    if (effect === "cyberpunk") {
+        return `
 Keep the exact same woman, exact same face, exact same identity, exact same ethnicity,
 clearly recognizable as the same person.
 
@@ -767,10 +765,9 @@ Do not make the subject male.
 Face quality:
 ultra detailed face, high skin detail, natural pores, realistic skin texture, sharp focus, DSLR quality
 `.trim();
-  }
-
-  if (effect === "photorealistic") {
-    return `
+    }
+    if (effect === "photorealistic") {
+        return `
 Keep the exact same woman, exact same face, exact same identity.
 
 Enhance the image into a professional photorealistic portrait.
@@ -801,10 +798,9 @@ Do not change the person.
 Face quality:
 ultra detailed face, high skin detail, natural pores, realistic skin texture, sharp focus, DSLR quality
 `.trim();
-  }
-
-  if (effect === "cartoon") {
-    return `
+    }
+    if (effect === "cartoon") {
+        return `
 Keep the exact same woman, preserving identity and facial structure,
 but transform into a high-quality cartoon character.
 
@@ -836,17 +832,15 @@ Do not make the subject male.
 Face quality:
 ultra detailed face, high skin detail, natural pores, realistic skin texture, sharp focus, DSLR quality
 `.trim();
-  }
-
-  return `
+    }
+    return `
 Keep the exact same woman, exact same face, exact same identity.
 Change outfit and background only.
 Do not make the subject male.
 `.trim();
 }
-
 function getNegativePrompt() {
-  return `
+    return `
 male, man, beard, mustache, masculine jaw, masculine face,
 different person, different identity, different ethnicity,
 low quality, blurry, distorted face, duplicate person,

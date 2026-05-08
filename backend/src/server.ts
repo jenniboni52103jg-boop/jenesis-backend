@@ -139,25 +139,6 @@ function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-function extractSpeech(text: string) {
-
-  // virgolette normali "
-  let match = text.match(/"([^"]+)"/);
-
-  if (match?.[1]) {
-    return match[1];
-  }
-
-  // virgolette smart italiane “ ”
-  match = text.match(/“([^”]+)”/);
-
-  if (match?.[1]) {
-    return match[1];
-  }
-
-  return text;
-}
-
 function safeJsonParse(text: string) {
   try {
     return JSON.parse(text);
@@ -658,58 +639,26 @@ function getEffectReference(effect: string) {
 
 /* ================== HELPERS PROMPT EFFECTS ================== */
 function getEffectPrompt(effect: string) {
+  const base =
+    "portrait photo of the SAME person from the input image, preserve the exact same face, same identity, same gender, same ethnicity, same facial structure, same eyes, same nose, same lips, same hairline, same hairstyle, same age, same skin tone, same body proportions";
 
   if (effect === "movie") {
-    return `
-Epic cinematic fantasy warrior queen.
-Luxury fantasy armor.
-Blockbuster movie scene.
-Fire, smoke, cinematic atmosphere.
-Powerful female heroine.
-Ultra detailed outfit.
-Dramatic lighting.
-Movie poster quality.
-Hollywood fantasy style.
-`;
+    return `${base}, cinematic movie lighting, dramatic atmosphere, luxury fashion editorial, realistic high-end portrait`;
   }
 
   if (effect === "cyberpunk") {
-    return `
-Futuristic cyberpunk heroine.
-Neon city lights.
-Sci-fi cinematic scene.
-Luxury futuristic fashion.
-Blade Runner atmosphere.
-Pink and blue neon glow.
-High-tech cinematic outfit.
-Ultra detailed cyberpunk styling.
-`;
+    return `${base}, cyberpunk neon lighting, futuristic fashion, sci-fi city mood, realistic portrait`;
   }
 
   if (effect === "photorealistic") {
-    return `
-Luxury Vogue fashion photography.
-Professional model photoshoot.
-Designer clothing.
-Natural cinematic lighting.
-Editorial magazine quality.
-Ultra realistic portrait photography.
-`;
+    return `${base}, premium editorial photography, ultra realistic portrait, studio lighting, enhanced but same person`;
   }
 
   if (effect === "cartoon") {
-    return `
-Pixar inspired animated character.
-Cute cinematic cartoon style.
-Expressive eyes.
-Disney quality rendering.
-Stylized animated movie character.
-`;
+    return `${base}, soft stylized cartoon look, but still clearly recognizable as the same person`;
   }
 
-  return `
-Cinematic portrait.
-`;
+  return `${base}, realistic portrait`;
 }
 
 function getEffectNegativePrompt() {
@@ -1011,7 +960,7 @@ async function hedraCreateAvatarTalkingVideo(opts: {
 async function hedraPollGenerationResult(generationId: string) {
   const apiKey = requireEnv("HEDRA_API_KEY");
 
-  for (let i = 0; i < 180; i++) {
+  for (let i = 0; i < 120; i++) {
     const resp = await fetch(
       `https://api.hedra.com/web-app/public/generations/${generationId}/status`,
       {
@@ -1052,8 +1001,7 @@ async function hedraPollGenerationResult(generationId: string) {
       );
     }
 
-    //await sleep(4000);
-    await sleep(7000);
+    await sleep(4000);
   }
 
   throw new Error("Hedra timeout");
@@ -2002,43 +1950,9 @@ app.post("/api/generate-motion-speaking-video", upload.single("image"), async (r
 
     // 1. Estrazione e Validazione Input
     const isPremium = req.body?.isPremium === "true" || req.body?.isPremium === true;
+    const prompt = String(req.body?.actionPrompt || "Animate naturally, cinematic movement");
+    const speech = String(req.body?.speechText || "");
     const voiceId = String(req.body?.voiceId || "");
-
-     //const prompt = String(req.body?.actionPrompt || "Animate naturally, cinematic movement");
-     //const speech = String(req.body?.speechText || "");
-     const speechText = String(req.body?.speechText || "");
-const actionPrompt = String(req.body?.actionPrompt || "");
-
-const hasTalkingMode = speechText.trim().length > 0;
-
-const speech = hasTalkingMode
-  ? extractSpeech(speechText)
-  : "";
-
-const prompt = hasTalkingMode
-  ? `
-${speechText}
-
-IMPORTANT:
-- natural realistic movement
-- cinematic motion
-- expressive movement
-- realistic animation
-- smooth motion
-- subtle dynamic movement
-- realistic interaction with camera
-- high realism
-- cinematic behavior
-- realistic expressions
-- no stiff motion
-- no frozen pose
-- no distortion
-- no horror motion
-- no weird movement
-- realistic physics
-- smooth natural acting
-`
-  : actionPrompt || "Animate naturally, cinematic movement";
 
     if (!speech || speech.trim().length < 2) {
       return res.status(400).json({ error: "Il testo del parlato (speechText) è troppo breve o mancante." });
@@ -2789,38 +2703,23 @@ app.post("/effects/generate", async (req, res) => {
     if (!effect) {
       return res.status(400).json({ error: "Missing effect" });
     }
-  
-const stylePrompt = getEffectPrompt(effect);
+   
+const prompt = req.body.prompt || "";
 
 const finalPrompt = `
-${stylePrompt}
+Keep the same person, same face identity.
+
+Apply this style:
+${prompt}
 
 IMPORTANT:
-- preserve the same person identity
-- keep recognizable facial features
-- cinematic blockbuster quality
-- dramatic movie lighting
-- highly detailed outfit redesign
-- beautiful styling
-- luxury fashion cinematic look
-- epic environment
-- professional color grading
-- realistic skin texture
-- realistic eyes
-- realistic anatomy
--preserver tiny natural details and micro texture
+- The face must remain ultra realistic and identical
+- Natural skin texture, real human face
+- No distortion, no fake AI look
+- cinematic camera, depth of field, 35mm lens
 
-The MAIN goal is:
-transform the outfit, styling, scene and atmosphere
-into a visually stunning cinematic character.
-
--no plastic skin
--no AI face face look
--no over-airbrushing
--no waxy texture
-
-Do NOT keep the original clothes.
-Do NOT keep the original background.
+The environment and outfit must follow the style (${effect})
+with strong cinematic impact, dramatic lighting, high detail.
 `;
    const finalImageUrl = await restyleImage(
   String(imageBase64),
