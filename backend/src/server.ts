@@ -2438,9 +2438,27 @@ Natural speaking, expressive gestures, short viral style video.
 
     return res.json({ videoUrl });
   } catch (err: any) {
-    console.error("Avatar error:", err);
-    return res.status(500).json({ error: err?.message || "Avatar generation failed" });
+  console.error("Avatar error:", err);
+
+  const rawMessage =
+    err?.error?.error ||
+    err?.message ||
+    "";
+
+  if (
+    rawMessage.includes("enough credits") ||
+    rawMessage.includes("credits")
+  ) {
+    return res.status(400).json({
+      error:
+        "You have finished your AI video credits. Recharge credits to continue generating avatars.",
+    });
   }
+
+  return res.status(500).json({
+    error: rawMessage || "Avatar generation failed",
+  });
+}
 });
 
 /* ============= AVATAR JOB START ============ */
