@@ -689,32 +689,7 @@ text, watermark, logo
 
 /* ================= EFFECTS PROMPTS ================= */
 
-function getEffectPrompt(effect: string) {
-  const base =
-    "portrait photo of the SAME person from the input image, preserve the exact same face, same identity, same gender, same ethnicity, same facial structure, same eyes, same nose, same lips, same hairline, same hairstyle, same age, same skin tone, same body proportions";
 
-  if (effect === "movie") {
-    return `${base}, cinematic movie lighting, dramatic atmosphere, luxury fashion editorial, realistic high-end portrait`;
-  }
-
-  if (effect === "cyberpunk") {
-    return `${base}, cyberpunk neon lighting, futuristic fashion, sci-fi city mood, realistic portrait`;
-  }
-
-  if (effect === "photorealistic") {
-    return `${base}, premium editorial photography, ultra realistic portrait, studio lighting, enhanced but same person`;
-  }
-
-  if (effect === "cartoon") {
-    return `${base}, soft stylized cartoon look, but still clearly recognizable as the same person`;
-  }
-
-  return `${base}, realistic portrait`;
-}
-
-function getEffectNegativePrompt() {
-  return "different person, another person, different identity, male, man, masculine face, different gender, different ethnicity, different facial features, different hairstyle, short hair, beard, mustache, face distortion, deformed face, blurry face, duplicate person, extra people, ugly, unrealistic face";
-}
 /* ================= CALCIO PROMPTS ================= */
 
 function getCalcioPrompt(opts: {
@@ -837,7 +812,7 @@ export async function restyleImage(imageBase64: string, effect: string) {
   console.log("RESTYLE START");
   console.log("RESTYLE EFFECT =", effect);
 
-  const prompt = getEffectPrompt(effect);
+  //const prompt = getEffectPrompt(effect);
   //const negativePrompt = getNegativePrompt();
 
   const uploadedUrl = await uploadBase64ToFal(imageBase64);
@@ -846,7 +821,7 @@ export async function restyleImage(imageBase64: string, effect: string) {
   try {
     const result = await fal.subscribe("fal-ai/flux-pulid", {
       input: {
-        prompt,
+       // prompt,
         reference_image_url: uploadedUrl,
         image_size: "portrait_16_9",
         num_inference_steps: 28,
