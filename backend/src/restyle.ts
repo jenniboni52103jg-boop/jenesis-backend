@@ -1001,17 +1001,25 @@ export async function restyleImage(imageBase64: string, effect: string) {
   console.log("FAL STORAGE URL =", uploadedUrl);
 
   try {
-    const result = await fal.subscribe("fal-ai/flux-pulid", {
+    const result = await fal.subscribe("fal-ai/flux-dev", {
       input: {
-        prompt,
-        reference_image_url: uploadedUrl,
-        image_size: "portrait_4_3",
-        num_inference_steps: 28,
-        guidance_scale: 7,
-        negative_prompt: negativePrompt,
-        id_weight: 0.72,
-        enable_safety_checker: true,
-      },
+  prompt: `
+${prompt}
+
+REFERENCE PERSON:
+Use the uploaded image only as identity reference.
+Create a completely new cinematic scene.
+`,
+
+  image_url: uploadedUrl,
+
+  image_size: "portrait_4_3",
+
+  num_inference_steps: 40,
+
+  guidance_scale: 8.5,
+},
+
       logs: true,
       onQueueUpdate(update) {
         if (update.status === "IN_PROGRESS") {
