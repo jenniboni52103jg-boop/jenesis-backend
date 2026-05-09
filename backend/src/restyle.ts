@@ -688,7 +688,189 @@ text, watermark, logo
 }
 
 /* ================= EFFECTS PROMPTS ================= */
+function getEffectPrompt(effect: string) {
+  if (effect === "movie") {
+  return `
+Transform the uploaded woman into an EPIC CINEMATIC MOVIE CHARACTER.
 
+CRITICAL:
+The final image must look COMPLETELY DIFFERENT from the original photo
+while preserving ONLY the same facial identity.
+
+KEEP:
+- same woman
+- same face identity
+- same eyes
+- same facial proportions
+- recognizable identity
+
+CHANGE EVERYTHING ELSE:
+- completely different outfit
+- completely different hairstyle styling
+- completely different environment
+- completely different lighting
+- completely different composition
+- completely different mood
+
+Create:
+- fantasy warrior armor
+- cinematic battle outfit
+- luxury fantasy costume
+- dramatic movie wardrobe
+
+Scene:
+epic fantasy battlefield, burning kingdom, cinematic ruins,
+volumetric smoke, fire, dramatic atmosphere, movie scene.
+
+Camera:
+full body or mid-body cinematic shot,
+dynamic angle,
+NOT a close-up portrait.
+
+STYLE:
+Hollywood movie still,
+ultra cinematic,
+high budget fantasy film,
+dramatic lighting,
+35mm movie frame.
+
+IMPORTANT:
+Do NOT keep original clothes.
+Do NOT keep original pose.
+Do NOT keep original background.
+Do NOT create a simple portrait.
+Do NOT create a selfie.
+Do NOT create a studio headshot.
+
+The image must look like a real movie frame.
+
+Ultra realistic.
+`.trim();
+}
+
+  if (effect === "cyberpunk") {
+    return `
+Keep the exact same woman, exact same face, exact same identity, exact same ethnicity,
+clearly recognizable as the same person.
+
+Transform her into a futuristic cyberpunk character.
+
+IMPORTANT:
+Completely remove original clothing.
+Do NOT generate modern casual outfits.
+
+Create a strong cyberpunk outfit such as:
+- futuristic jacket with neon details
+- high-tech armor
+- glowing accessories
+- sci-fi fashion with holographic elements
+
+Place her in a cyberpunk environment:
+neon city, futuristic streets, glowing signs, night city, rain reflections.
+
+Lighting and style:
+neon lighting, glowing lights, reflections, cinematic shadows, high contrast.
+
+Style must be:
+ultra detailed, futuristic, cyberpunk aesthetic, high-end sci-fi movie.
+
+Ensure different outfit and background every time.
+
+Do not keep original clothes.
+Do not keep original background.
+Do not make it a normal portrait.
+Do not make the subject male.
+
+Face quality:
+ultra detailed face, high skin detail, natural pores, realistic skin texture, sharp focus, DSLR quality
+`.trim();
+  }
+
+  if (effect === "photorealistic") {
+    return `
+Keep the exact same woman, exact same face, exact same identity.
+
+Enhance the image into a professional photorealistic portrait.
+
+IMPORTANT:
+Do NOT change identity.
+Do NOT change outfit drastically.
+Do NOT change environment completely.
+
+Improve:
+- skin quality (natural, not fake)
+- lighting (soft professional lighting)
+- sharpness and detail
+- depth of field
+
+Style:
+ultra realistic, DSLR camera, studio quality, natural colors.
+
+Optional:
+slightly improve outfit styling but keep it realistic.
+
+The result must look like a high-end professional photoshoot.
+
+Do not make it look artificial.
+Do not make it cartoon.
+Do not change the person.
+
+Face quality:
+ultra detailed face, high skin detail, natural pores, realistic skin texture, sharp focus, DSLR quality
+`.trim();
+  }
+
+  if (effect === "cartoon") {
+    return `
+Keep the exact same woman, preserving identity and facial structure,
+but transform into a high-quality cartoon character.
+
+IMPORTANT:
+Do not keep realistic skin texture.
+Do not generate photorealism.
+
+Create a stylized cartoon version with:
+- smooth skin
+- big expressive eyes
+- clean soft shading
+- friendly and appealing look
+
+Style:
+Pixar-style, Disney-style, 3D cartoon, vibrant colors, soft lighting.
+
+Outfit:
+adapt outfit into cartoon style, colorful and stylized.
+
+Background:
+bright, warm, animated environment.
+
+The result must look like a high-end animated movie character.
+
+Do not generate realistic photo.
+Do not distort identity too much.
+Do not make the subject male.
+
+Face quality:
+ultra detailed face, high skin detail, natural pores, realistic skin texture, sharp focus, DSLR quality
+`.trim();
+  }
+
+  return `
+Keep the exact same woman, exact same face, exact same identity.
+Change outfit and background only.
+Do not make the subject male.
+`.trim();
+}
+
+function getNegativePrompt() {
+  return `
+male, man, beard, mustache, masculine jaw, masculine face,
+different person, different identity, different ethnicity,
+low quality, blurry, distorted face, duplicate person,
+extra fingers, extra limbs, bad anatomy, text, watermark, logo,
+simple portrait, selfie, close-up face, studio headshot
+`.trim();
+}
 
 /* ================= CALCIO PROMPTS ================= */
 
@@ -812,8 +994,8 @@ export async function restyleImage(imageBase64: string, effect: string) {
   console.log("RESTYLE START");
   console.log("RESTYLE EFFECT =", effect);
 
-  //const prompt = getEffectPrompt(effect);
-  //const negativePrompt = getNegativePrompt();
+  const prompt = getEffectPrompt(effect);
+  const negativePrompt = getNegativePrompt();
 
   const uploadedUrl = await uploadBase64ToFal(imageBase64);
   console.log("FAL STORAGE URL =", uploadedUrl);
@@ -821,13 +1003,13 @@ export async function restyleImage(imageBase64: string, effect: string) {
   try {
     const result = await fal.subscribe("fal-ai/flux-pulid", {
       input: {
-       // prompt,
+        prompt,
         reference_image_url: uploadedUrl,
-        image_size: "portrait_16_9",
+        image_size: "portrait_4_3",
         num_inference_steps: 28,
-        guidance_scale: 4.5,
-        //negative_prompt: negativePrompt,
-        id_weight: 0.9,
+        guidance_scale: 7,
+        negative_prompt: negativePrompt,
+        id_weight: 0.72,
         enable_safety_checker: true,
       },
       logs: true,
