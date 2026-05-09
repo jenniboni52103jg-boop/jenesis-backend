@@ -688,166 +688,33 @@ text, watermark, logo
 }
 
 /* ================= EFFECTS PROMPTS ================= */
-function getEffectPrompt(effect) {
-    if (effect === "movie") {
-        return `
-Keep the exact same woman, exact same face, exact same identity, exact same ethnicity,
-clearly recognizable as the same person.
 
-Transform her into a powerful cinematic movie character.
+function getEffectPrompt(effect: string) {
+  const base =
+    "portrait photo of the SAME person from the input image, preserve the exact same face, same identity, same gender, same ethnicity, same facial structure, same eyes, same nose, same lips, same hairline, same hairstyle, same age, same skin tone, same body proportions";
 
-IMPORTANT:
-Completely remove original clothing.
-Do NOT generate modern outfits.
-Do NOT generate blazers, jackets, or casual clothes.
+  if (effect === "movie") {
+    return `${base}, cinematic movie lighting, dramatic atmosphere, luxury fashion editorial, realistic high-end portrait`;
+  }
 
-Create a strong movie costume such as:
-- fantasy warrior armor
-- cinematic heroine outfit
-- epic battle costume
-- dramatic high-budget movie wardrobe
+  if (effect === "cyberpunk") {
+    return `${base}, cyberpunk neon lighting, futuristic fashion, sci-fi city mood, realistic portrait`;
+  }
 
-Use a random cinematic setting each time such as:
-burning battlefield, fantasy kingdom, dramatic ruins, luxury film set, dark cinematic hallway.
+  if (effect === "photorealistic") {
+    return `${base}, premium editorial photography, ultra realistic portrait, studio lighting, enhanced but same person`;
+  }
 
-Ensure different outfit and scene every generation.
+  if (effect === "cartoon") {
+    return `${base}, soft stylized cartoon look, but still clearly recognizable as the same person`;
+  }
 
-Lighting and style must be cinematic:
-epic lighting, volumetric light, cinematic depth of field, dramatic shadows.
-
-Shot style:
-shot on 35mm film, movie still, high-budget production, ultra realistic.
-
-The result must look like a real frame from a Hollywood movie.
-
-Do not keep original clothes.
-Do not keep original background.
-Do not make it a normal portrait.
-Do not make the subject male.
-
-Face quality:
-ultra detailed face, high skin detail, natural pores, realistic skin texture, sharp focus, DSLR quality
-`.trim();
-    }
-    if (effect === "cyberpunk") {
-        return `
-Keep the exact same woman, exact same face, exact same identity, exact same ethnicity,
-clearly recognizable as the same person.
-
-Transform her into a futuristic cyberpunk character.
-
-IMPORTANT:
-Completely remove original clothing.
-Do NOT generate modern casual outfits.
-
-Create a strong cyberpunk outfit such as:
-- futuristic jacket with neon details
-- high-tech armor
-- glowing accessories
-- sci-fi fashion with holographic elements
-
-Place her in a cyberpunk environment:
-neon city, futuristic streets, glowing signs, night city, rain reflections.
-
-Lighting and style:
-neon lighting, glowing lights, reflections, cinematic shadows, high contrast.
-
-Style must be:
-ultra detailed, futuristic, cyberpunk aesthetic, high-end sci-fi movie.
-
-Ensure different outfit and background every time.
-
-Do not keep original clothes.
-Do not keep original background.
-Do not make it a normal portrait.
-Do not make the subject male.
-
-Face quality:
-ultra detailed face, high skin detail, natural pores, realistic skin texture, sharp focus, DSLR quality
-`.trim();
-    }
-    if (effect === "photorealistic") {
-        return `
-Keep the exact same woman, exact same face, exact same identity.
-
-Enhance the image into a professional photorealistic portrait.
-
-IMPORTANT:
-Do NOT change identity.
-Do NOT change outfit drastically.
-Do NOT change environment completely.
-
-Improve:
-- skin quality (natural, not fake)
-- lighting (soft professional lighting)
-- sharpness and detail
-- depth of field
-
-Style:
-ultra realistic, DSLR camera, studio quality, natural colors.
-
-Optional:
-slightly improve outfit styling but keep it realistic.
-
-The result must look like a high-end professional photoshoot.
-
-Do not make it look artificial.
-Do not make it cartoon.
-Do not change the person.
-
-Face quality:
-ultra detailed face, high skin detail, natural pores, realistic skin texture, sharp focus, DSLR quality
-`.trim();
-    }
-    if (effect === "cartoon") {
-        return `
-Keep the exact same woman, preserving identity and facial structure,
-but transform into a high-quality cartoon character.
-
-IMPORTANT:
-Do not keep realistic skin texture.
-Do not generate photorealism.
-
-Create a stylized cartoon version with:
-- smooth skin
-- big expressive eyes
-- clean soft shading
-- friendly and appealing look
-
-Style:
-Pixar-style, Disney-style, 3D cartoon, vibrant colors, soft lighting.
-
-Outfit:
-adapt outfit into cartoon style, colorful and stylized.
-
-Background:
-bright, warm, animated environment.
-
-The result must look like a high-end animated movie character.
-
-Do not generate realistic photo.
-Do not distort identity too much.
-Do not make the subject male.
-
-Face quality:
-ultra detailed face, high skin detail, natural pores, realistic skin texture, sharp focus, DSLR quality
-`.trim();
-    }
-    return `
-Keep the exact same woman, exact same face, exact same identity.
-Change outfit and background only.
-Do not make the subject male.
-`.trim();
-}
-function getNegativePrompt() {
-    return `
-male, man, beard, mustache, masculine jaw, masculine face,
-different person, different identity, different ethnicity,
-low quality, blurry, distorted face, duplicate person,
-extra fingers, extra limbs, bad anatomy, text, watermark, logo
-`.trim();
+  return `${base}, realistic portrait`;
 }
 
+function getEffectNegativePrompt() {
+  return "different person, another person, different identity, male, man, masculine face, different gender, different ethnicity, different facial features, different hairstyle, short hair, beard, mustache, face distortion, deformed face, blurry face, duplicate person, extra people, ugly, unrealistic face";
+}
 /* ================= CALCIO PROMPTS ================= */
 
 function getCalcioPrompt(opts: {
@@ -971,7 +838,7 @@ export async function restyleImage(imageBase64: string, effect: string) {
   console.log("RESTYLE EFFECT =", effect);
 
   const prompt = getEffectPrompt(effect);
-  const negativePrompt = getNegativePrompt();
+  //const negativePrompt = getNegativePrompt();
 
   const uploadedUrl = await uploadBase64ToFal(imageBase64);
   console.log("FAL STORAGE URL =", uploadedUrl);
@@ -984,7 +851,7 @@ export async function restyleImage(imageBase64: string, effect: string) {
         image_size: "portrait_16_9",
         num_inference_steps: 28,
         guidance_scale: 4.5,
-        negative_prompt: negativePrompt,
+        //negative_prompt: negativePrompt,
         id_weight: 0.9,
         enable_safety_checker: true,
       },
