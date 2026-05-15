@@ -10,11 +10,16 @@ export default function TabsLayout() {
   useEffect(() => {
     const initRevenueCat = async () => {
       try {
-        await Purchases.configure({
-          apiKey: Platform.select({
-            ios: "test_GpZKHSpWbTLdDBVsjixIYyiarUo", // 🔥 METTI LA TUA VERA
-          })!,
-        });
+       const APIKeys = {
+  ios: "appl_KVREdrrSHPaulxZHkXRIekUIhZA", //chiave revenucat
+  android: "google_fake_key"
+};
+
+await Purchases.configure({
+  apiKey: Platform.OS === "ios"
+    ? APIKeys.ios
+    : APIKeys.android,
+});
 
         console.log("✅ RevenueCat configurato");
       } catch (e) {
