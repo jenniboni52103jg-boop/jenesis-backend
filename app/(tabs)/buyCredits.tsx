@@ -8,6 +8,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useCredits } from "../contexts/CreditsContext";
 import { getOffers, buyPackage } from "../services/revenuecat";
 import Purchases from 'react-native-purchases';
+import { showRewardedAd } from "../services/rewardedAds";
 import {
   Animated,
   Alert,
@@ -67,11 +68,37 @@ const getPackagesMap = async () => {
 export default function ShopScreen() {
   const { setCredits } = useCredits();
 
-  const handleBuyCredits = async () => {
-  const newCredits = selectedPack.credits;
+ const handleBuyCredits = async () => {
+  try {
+    // crediti attuali
+    const currentCredits =
+      Number(await AsyncStorage.getItem("credits")) || 0;
 
-  await AsyncStorage.setItem("credits", String(newCredits));
-  setCredits(newCredits);
+    // aggiungi pack
+    const updatedCredits =
+      currentCredits + selectedPack.credits;
+
+    // salva
+    await AsyncStorage.setItem(
+      "credits",
+      String(updatedCredits)
+    );
+
+    // aggiorna UI realtime
+    setCredits(updatedCredits);
+
+    Alert.alert(
+      "🔥 Crediti aggiunti",
+      `Hai ricevuto +${selectedPack.credits} crediti`
+    );
+  } catch (e) {
+    console.log(e);
+
+    Alert.alert(
+      "Errore",
+      "Impossibile aggiungere crediti"
+    );
+  }
 };
  
 const [plans, setPlans] = useState<any>(null);
@@ -255,7 +282,7 @@ useFocusEffect(
           style={[styles.priceCard, styles.best]}
           onPress={async () => {
   if (!plans?.annual) return;
-  await buyPackage(plans.annual);
+  await buyPackage(plans.annual, "mocUser");
   Alert.alert("Successo", "Abbonamento attivato!");
 }}
         >

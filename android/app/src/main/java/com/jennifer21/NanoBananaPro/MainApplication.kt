@@ -1,4 +1,4 @@
-package com.jennifer21.NanoBananaPro
+package com.jennifer21.nanobananapro
 
 import android.app.Application
 import android.content.res.Configuration

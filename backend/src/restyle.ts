@@ -690,63 +690,45 @@ text, watermark, logo
 /* ================= EFFECTS PROMPTS ================= */
 function getEffectPrompt(effect: string) {
   if (effect === "movie") {
-  return `
-Transform the uploaded woman into an EPIC CINEMATIC MOVIE CHARACTER.
+    return `
+Keep the exact same woman, exact same face, exact same identity, exact same ethnicity,
+clearly recognizable as the same person.
 
-CRITICAL:
-The final image must look COMPLETELY DIFFERENT from the original photo
-while preserving ONLY the same facial identity.
-
-KEEP:
-- same woman
-- same face identity
-- same eyes
-- same facial proportions
-- recognizable identity
-
-CHANGE EVERYTHING ELSE:
-- completely different outfit
-- completely different hairstyle styling
-- completely different environment
-- completely different lighting
-- completely different composition
-- completely different mood
-
-Create:
-- fantasy warrior armor
-- cinematic battle outfit
-- luxury fantasy costume
-- dramatic movie wardrobe
-
-Scene:
-epic fantasy battlefield, burning kingdom, cinematic ruins,
-volumetric smoke, fire, dramatic atmosphere, movie scene.
-
-Camera:
-full body or mid-body cinematic shot,
-dynamic angle,
-NOT a close-up portrait.
-
-STYLE:
-Hollywood movie still,
-ultra cinematic,
-high budget fantasy film,
-dramatic lighting,
-35mm movie frame.
+Transform her into a powerful cinematic movie character.
 
 IMPORTANT:
-Do NOT keep original clothes.
-Do NOT keep original pose.
-Do NOT keep original background.
-Do NOT create a simple portrait.
-Do NOT create a selfie.
-Do NOT create a studio headshot.
+Completely remove original clothing.
+Do NOT generate modern outfits.
+Do NOT generate blazers, jackets, or casual clothes.
 
-The image must look like a real movie frame.
+Create a strong movie costume such as:
+- fantasy warrior armor
+- cinematic heroine outfit
+- epic battle costume
+- dramatic high-budget movie wardrobe
 
-Ultra realistic.
+Use a random cinematic setting each time such as:
+burning battlefield, fantasy kingdom, dramatic ruins, luxury film set, dark cinematic hallway.
+
+Ensure different outfit and scene every generation.
+
+Lighting and style must be cinematic:
+epic lighting, volumetric light, cinematic depth of field, dramatic shadows.
+
+Shot style:
+shot on 35mm film, movie still, high-budget production, ultra realistic.
+
+The result must look like a real frame from a Hollywood movie.
+
+Do not keep original clothes.
+Do not keep original background.
+Do not make it a normal portrait.
+Do not make the subject male.
+
+Face quality:
+ultra detailed face, high skin detail, natural pores, realistic skin texture, sharp focus, DSLR quality
 `.trim();
-}
+  }
 
   if (effect === "cyberpunk") {
     return `
@@ -867,8 +849,7 @@ function getNegativePrompt() {
 male, man, beard, mustache, masculine jaw, masculine face,
 different person, different identity, different ethnicity,
 low quality, blurry, distorted face, duplicate person,
-extra fingers, extra limbs, bad anatomy, text, watermark, logo,
-simple portrait, selfie, close-up face, studio headshot
+extra fingers, extra limbs, bad anatomy, text, watermark, logo
 `.trim();
 }
 
@@ -1001,25 +982,17 @@ export async function restyleImage(imageBase64: string, effect: string) {
   console.log("FAL STORAGE URL =", uploadedUrl);
 
   try {
-    const result = await fal.subscribe("fal-ai/flux-dev", {
+    const result = await fal.subscribe("fal-ai/flux-pulid", {
       input: {
-  prompt: `
-${prompt}
-
-REFERENCE PERSON:
-Use the uploaded image only as identity reference.
-Create a completely new cinematic scene.
-`,
-
-  image_url: uploadedUrl,
-
-  image_size: "portrait_4_3",
-
-  num_inference_steps: 40,
-
-  guidance_scale: 8.5,
-},
-
+        prompt,
+        reference_image_url: uploadedUrl,
+        image_size: "portrait_16_9",
+        num_inference_steps: 28,
+        guidance_scale: 4.5,
+        negative_prompt: negativePrompt,
+        id_weight: 0.9,
+        enable_safety_checker: true,
+      },
       logs: true,
       onQueueUpdate(update) {
         if (update.status === "IN_PROGRESS") {

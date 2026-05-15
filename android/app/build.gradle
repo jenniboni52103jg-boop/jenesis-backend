@@ -87,9 +87,9 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace 'com.jennifer21.NanoBananaPro'
+    namespace 'com.jennifer21.nanobananapro'
     defaultConfig {
-        applicationId 'com.jennifer21.NanoBananaPro'
+        applicationId 'com.jennifer21.nanobananapro'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

@@ -1,4 +1,4 @@
-package com.jennifer21.NanoBananaPro
+package com.jennifer21.nanobananapro
 import expo.modules.splashscreen.SplashScreenManager
 
 import android.os.Build

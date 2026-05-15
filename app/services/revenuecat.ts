@@ -5,7 +5,7 @@ const API_URL = "https://jenesis-backend-1.onrender.com";
 export async function initRevenueCat() {
   try {
     await Purchases.configure({
-      apiKey: "test_GpZKHSpWbTLdDBVsjixIYyiarUo", // 🔑 tua API key
+      apiKey: "appl_KVREdrrSHPaulxZHkXRIekUIhZA", // 🔑 tua API key
     });
 
     console.log("✅ RevenueCat ready");

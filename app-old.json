@@ -1,0 +1,48 @@
+{
+  "expo": {
+    "scheme": "jennifer-ai",
+    "name": "NanoBananaPro",
+    "slug": "NanoBananaPro",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.jennifer21.nanobananaproapp",
+      "googleServicesFile": "./GoogleService-Info.plist",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+
+    "android": {
+      "package": "com.jennifer21.nanobananaproapp"
+    },
+
+    "web": {
+      "output": "static"
+    },
+
+    "plugins": [
+  "expo-router",
+  "expo-font",
+  "expo-localization",
+  "expo-video",
+  [
+    "react-native-google-mobile-ads",
+    {
+      "androidAppId": "ca-app-pub-3940256099942544~3347511713",
+      "iosAppId": "ca-app-pub-6178698725098646~6301335999"
+    }
+  ]
+],
+
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "19301f31-8a32-4af9-8d8b-9132ae6e0e49"
+      }
+    }
+  }
+}

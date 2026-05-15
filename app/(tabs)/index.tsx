@@ -2,6 +2,8 @@ import * as AppleAuthentication from "expo-apple-authentication";
 import * as Google from "expo-auth-session/providers/google";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { showRewardedAd } from "../services/rewardedAds";
 import {
     createUserWithEmailAndPassword,
     GoogleAuthProvider,
@@ -75,7 +77,30 @@ const CATEGORIES: Record<string, any[]> = {
 
 export default function HomeScreen() {
   /* crediti */
- const { credits } = useCredits();
+ const { credits, setCredits } = useCredits();
+
+ const handleRewardPress = async () => {
+
+  await showRewardedAd(async () => {
+
+    const currentCredits =
+      Number(await AsyncStorage.getItem("credits")) || 0;
+
+    const updatedCredits = currentCredits + 10;
+
+    await AsyncStorage.setItem(
+      "credits",
+      String(updatedCredits)
+    );
+
+    setCredits(updatedCredits);
+
+    Alert.alert(
+      "🎁 Reward ottenuta",
+      "+10 crediti"
+    );
+  });
+};
 
   const router = useRouter();
   const { openModal } = useLocalSearchParams<{ openModal?: "privacy" | "terms" }>();
@@ -926,7 +951,7 @@ useEffect(() => {
         </TouchableOpacity>
 
         <View style={{ flexDirection: "row", gap: 12 }}>
-          <TouchableOpacity onPress={() => router.push("/buyCredits")}>
+          <TouchableOpacity onPress={handleRewardPress}>
             <Text style={styles.topIcon}>🎁</Text>
           </TouchableOpacity>
 
