@@ -6,7 +6,7 @@
     "orientation": "portrait",
 
     "ios": {
-      "bundleIdentifier": "com.jennifer21.nanobananaproapp",
+      "bundleIdentifier": "com.jennifer21.nanobananapro",
       "googleServicesFile": "./GoogleService-Info.plist",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
