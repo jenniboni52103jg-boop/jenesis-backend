@@ -6,7 +6,7 @@
     "orientation": "portrait",
 
     "ios": {
-      "bundleIdentifier": "com.jennifer21.nanobananapro",
+      "bundleIdentifier": "com.jennifer21.NanoBananaPro",
       "googleServicesFile": "./GoogleService-Info.plist",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
@@ -17,7 +17,7 @@
     },
 
     "android": {
-      "package": "com.jennifer21.nanobananaproapp"
+      "package": "com.jennifer21.NanoBananaPro"
     },
 
     "plugins": [
