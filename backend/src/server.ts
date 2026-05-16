@@ -2903,13 +2903,13 @@ app.post("/calcio/generate", upload.single("image"), async (req: any, res) => {
 
     const templatePath = path.join(
   process.cwd(),
-  "backend/src/assets/calcio",
+  "src/assets/calcio",
   archetype.templateImage
 );
 
 const maskPath = path.join(
   process.cwd(),
-  "backend/src/assets/calcio",
+  "src/assets/calcio",
   archetype.maskImage
 );
     console.log("templatePath:", templatePath);
