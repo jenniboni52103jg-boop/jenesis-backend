@@ -21,35 +21,7 @@ import {
   View,
 } from "react-native";
 
-const buyProduct = async (productId: string) => {
-  try {
-    const offerings = await Purchases.getOfferings();
-    console.log("CLICK:", productId);
-    console.log("OFFERINGS:", offerings.current);
-    
-    if (!offerings.current) {
-      console.log("❌ Nessun offering");
-      return;
-    }
-
-    const pkg = offerings.current.availablePackages.find(
-      (p) => p.product.identifier === productId
-    );
-
-    if (!pkg) {
-      console.log("❌ Prodotto non trovato:", productId);
-      return;
-    }
-
-    const purchase = await Purchases.purchasePackage(pkg);
-
-    console.log("✅ ACQUISTO OK:", purchase);
-  } catch (e) {
-    console.log("❌ ERRORE:", e);
-  }
-};
-
-const isPro = true;
+//const isPro = true;
 /* 👇 METTI QUI (fuori dal componente) */
 const getPackagesMap = async () => {
   const packages = await getOffers();
@@ -70,34 +42,69 @@ export default function ShopScreen() {
 
  const handleBuyCredits = async () => {
   try {
-    // crediti attuali
+    const offerings = await Purchases.getOfferings();
+
+    if (!offerings.current) {
+      Alert.alert(
+        "Errore",
+        "Offering non trovato"
+      );
+      return;
+    }
+
+    const productId =
+      CREDIT_PRODUCT_IDS[selectedPack.id];
+
+    const pkg =
+      offerings.current.availablePackages.find(
+        (p) =>
+          p.product.identifier === productId
+      );
+
+    if (!pkg) {
+      Alert.alert(
+        "Errore",
+        "Pacchetto crediti non trovato"
+      );
+      return;
+    }
+
+    // 🔥 ACQUISTO VERO
+    await Purchases.purchasePackage(pkg);
+
+    await syncPremiumStatus();
+
+    // 🔥 AGGIUNGI CREDITI
     const currentCredits =
-      Number(await AsyncStorage.getItem("credits")) || 0;
+      Number(
+        await AsyncStorage.getItem("credits")
+      ) || 0;
 
-    // aggiungi pack
     const updatedCredits =
-      currentCredits + selectedPack.credits;
+      currentCredits +
+      selectedPack.credits;
 
-    // salva
     await AsyncStorage.setItem(
       "credits",
       String(updatedCredits)
     );
 
-    // aggiorna UI realtime
     setCredits(updatedCredits);
 
     Alert.alert(
-      "🔥 Crediti aggiunti",
-      `Hai ricevuto +${selectedPack.credits} crediti`
+      "🔥 Acquisto completato",
+      `Hai ricevuto ${selectedPack.credits} crediti`
     );
-  } catch (e) {
+
+  } catch (e: any) {
     console.log(e);
 
-    Alert.alert(
-      "Errore",
-      "Impossibile aggiungere crediti"
-    );
+    if (!e.userCancelled) {
+      Alert.alert(
+        "Errore acquisto",
+        "Pagamento non completato"
+      );
+    }
   }
 };
  
@@ -105,6 +112,7 @@ const [plans, setPlans] = useState<any>(null);
 
 useEffect(() => {
   loadPlans();
+  syncPremiumStatus();
 }, []);
 
 const loadPlans = async () => {
@@ -123,6 +131,41 @@ const loadPlans = async () => {
 
   const [creditsOpen, setCreditsOpen] = useState(false);
 
+  const buyProduct = async (productId: string) => {
+    if (plan === "pro") {
+  Alert.alert("💎 PRO già attivo");
+  return;
+}
+  try {
+    const offerings = await Purchases.getOfferings();
+    console.log("CLICK:", productId);
+    console.log("OFFERINGS:", offerings.current);
+    
+    if (!offerings.current) {
+      console.log("❌ Nessun offering");
+      return;
+    }
+
+    const pkg = offerings.current.availablePackages.find(
+      (p) => p.product.identifier === productId
+    );
+
+    if (!pkg) {
+      console.log("❌ Prodotto non trovato:", productId);
+      return;
+    }
+
+    await Purchases.purchasePackage(pkg);
+
+await syncPremiumStatus();
+
+Alert.alert("🔥 PRO ATTIVO!");
+
+  } catch (e) {
+    console.log("❌ ERRORE:", e);
+  }
+};
+
 const CREDIT_PACKS = [
   { id: "c330", credits: 330, price: 6.0 },
   { id: "c660", credits: 660, price: 10.0 },
@@ -132,6 +175,15 @@ const CREDIT_PACKS = [
   { id: "c13200", credits: 13200, price: 229.0 },
 ] as const;
 
+const CREDIT_PRODUCT_IDS = {
+  c330: "credits_330",
+  c660: "credits_660",
+  c1320: "credits_1320",
+  c3300: "credits_3300",
+  c6600: "credits_6600",
+  c13200: "credits_13200",
+} as const;
+
 const [selectedPackId, setSelectedPackId] = useState<(typeof CREDIT_PACKS)[number]["id"]>(
   CREDIT_PACKS[0].id
 );
@@ -140,6 +192,46 @@ const selectedPack = CREDIT_PACKS.find(p => p.id === selectedPackId)!;
 
 const euro = (n: number) =>
   n.toLocaleString("it-IT", { style: "currency", currency: "EUR" });
+
+const syncPremiumStatus = async () => {
+  try {
+    const customerInfo = await Purchases.getCustomerInfo();
+
+    // 🔥 PRO ACTIVE
+    const isProActive =
+      customerInfo.entitlements.active["pro"];
+
+    if (isProActive) {
+      await AsyncStorage.setItem("plan", "pro");
+      setPlanState("pro");
+    } else {
+      await AsyncStorage.setItem("plan", "free");
+      setPlanState("free");
+    }
+
+  } catch (e) {
+    console.log("SYNC ERROR:", e);
+  }
+};
+
+const restorePurchases = async () => {
+  try {
+    await Purchases.restorePurchases();
+
+    await syncPremiumStatus();
+
+    Alert.alert(
+      "Acquisti ripristinati"
+    );
+
+  } catch (e) {
+    console.log(e);
+
+    Alert.alert(
+      "Errore restore"
+    );
+  }
+};
 
 useFocusEffect(
   useCallback(() => {
@@ -193,9 +285,14 @@ useFocusEffect(
       return;
     }
 
-    await Purchases.purchasePackage(selectedPackage);
+    await Purchases.purchasePackage(
+  selectedPackage
+);
 
-    Alert.alert("🔥 PRO ATTIVO!");
+await syncPremiumStatus();
+
+Alert.alert("🔥 PRO ATTIVO!");
+
   } catch (e) {
     console.log("Errore acquisto:", e);
   }
@@ -280,11 +377,12 @@ useFocusEffect(
 
         <TouchableOpacity
           style={[styles.priceCard, styles.best]}
-          onPress={async () => {
-  if (!plans?.annual) return;
-  await buyPackage(plans.annual, "mocUser");
-  Alert.alert("Successo", "Abbonamento attivato!");
-}}
+          onPress={() => buyProduct("pro_yearly")}
+         // onPress={async () => {
+  //if (!plans?.annual) return;
+ // await buyPackage(plans.annual, "mocUser");
+ // Alert.alert("Successo", "Abbonamento attivato!");
+//}}
         >
           <Text style={styles.bestBadge}>🔥 Miglior valore</Text>
           <Text style={styles.priceTitle}>Annuale</Text>
@@ -304,6 +402,24 @@ useFocusEffect(
       >
         <Text style={styles.viewAllText}>View all plans & features</Text>
       </TouchableOpacity>
+    
+    <TouchableOpacity
+  onPress={restorePurchases}
+  style={{
+    marginTop: 10,
+    alignSelf: "center",
+  }}
+>
+  <Text
+    style={{
+      color: "#c7c7ff",
+      textDecorationLine: "underline",
+      fontWeight: "700",
+    }}
+  >
+    Restore Purchases
+  </Text>
+</TouchableOpacity>
 
       {/* CREDITS INFO */}
       <View style={styles.creditsBox}>
@@ -480,7 +596,7 @@ useFocusEffect(
           </TouchableOpacity>
 
           <Text style={styles.modalFinePrint}>
-            Pagamento simulato (mock). Collegheremo lo store più avanti.
+            Acquisto sicuro tramite App Store.
           </Text>
         </Pressable>
       </Pressable>
