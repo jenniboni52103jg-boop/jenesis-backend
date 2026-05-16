@@ -465,10 +465,35 @@ async function elevenTextToSpeech(text: string, voiceId?: string) {
   return Buffer.concat(chunks);
 }
 
-async function downloadToBuffer(url: string) {
-  const resp = await fetch(url);
-  if (!resp.ok) throw new Error(`Download failed: ${resp.status}`);
-  return await resp.buffer();
+//async function downloadToBuffer(url: string) {
+  //const resp = await fetch(url);
+  //if (!resp.ok) throw new Error(`Download failed: ${resp.status}`);
+  //return await resp.buffer();
+//}
+
+async function downloadToBuffer(
+  url: string
+): Promise<Buffer> {
+
+  // BASE64 DATA URL
+  if (url.startsWith("data:image")) {
+
+    const base64Data =
+      url.split(",")[1];
+
+    return Buffer.from(
+      base64Data,
+      "base64"
+    );
+  }
+
+  // NORMAL HTTP URL
+  const response = await fetch(url);
+
+  const arrayBuffer =
+    await response.arrayBuffer();
+
+  return Buffer.from(arrayBuffer);
 }
 
 /*============ helper elevenlabs ==========*/
