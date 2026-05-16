@@ -184,6 +184,7 @@ Natural skin texture and identity preservation.
     id: "col3_selfie",
 
     title: "Colombia Victory",
+
     subtitle: "Post match selfie",
 
     templateImage: "col3_template.png",
@@ -208,6 +209,7 @@ Realistic sports photography.
     id: "eng_selfie",
 
     title: "England Superstar",
+
     subtitle: "VIP stadium selfie",
 
     templateImage: "eng_template.png",
@@ -233,6 +235,7 @@ Natural facial identity and realistic skin texture.
     id: "fra_selfie",
 
     title: "France Victory Selfie",
+
     subtitle: "Post match moment",
 
     templateImage: "fra_template.png",
@@ -257,6 +260,7 @@ Natural facial details and realistic proportions.
     id: "por_selfie",
 
     title: "Portugal Tunnel Cam",
+
     subtitle: "Pre-match selfie",
 
     templateImage: "por_template.png",
@@ -281,6 +285,7 @@ Authentic sports photography.
     id: "spa_selfie",
 
     title: "Spain Matchday",
+
     subtitle: "Pitch-side selfie",
 
     templateImage: "spa_template.png",

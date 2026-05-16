@@ -168,11 +168,12 @@ const updateCredits = async (value: number) => {
   const [stylePhotoFileName, setStylePhotoFileName] = React.useState<string | null>(null);
 
   const openCalcioModal = (c: any) => {
-    setSelectedCalcio({
-      title: c.title,
-      archetypeKey: c.archetypeKey,
-      presetKey: c.presetKey,
-    });
+  setSelectedCalcio({
+    title: c.title,
+    archetypeKey: c.id,
+    presetKey: c.id,
+  });
+
     setUserPhotoUri(null);
     setUserPhotoMimeType(null);
     setUserPhotoFileName(null);
@@ -840,10 +841,10 @@ if (!isUnlimited) {
                       key={c.id}
                       activeOpacity={0.9}
                       style={styles.card}
-                      onPress={() => {}}
+                      onPress={() => openCalcioModal(c)}
                     >
                       <ImageBackground
-                        source={c.image}
+                        source={c.preview}
                         style={StyleSheet.absoluteFill}
                         imageStyle={{ borderRadius: 18 }}
                       />

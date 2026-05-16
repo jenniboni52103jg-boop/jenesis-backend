@@ -1,44 +1,44 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as AppleAuthentication from "expo-apple-authentication";
 import * as Google from "expo-auth-session/providers/google";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { showRewardedAd } from "../services/rewardedAds";
 import {
-    createUserWithEmailAndPassword,
-    GoogleAuthProvider,
-    OAuthProvider,
-    sendPasswordResetEmail,
-    signInWithCredential,
-    signInWithEmailAndPassword,
-    signOut,
+  createUserWithEmailAndPassword,
+  GoogleAuthProvider,
+  OAuthProvider,
+  sendPasswordResetEmail,
+  signInWithCredential,
+  signInWithEmailAndPassword,
+  signOut,
 } from "firebase/auth";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { useContext, useEffect, useRef, useState } from "react";
 import {
-    Alert,
-    Animated,
-    Image,
-    Keyboard,
-    Modal,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    TouchableWithoutFeedback,
-    View,
+  Alert,
+  Animated,
+  Image,
+  Keyboard,
+  Modal,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+  View,
 } from "react-native";
 import { auth, db } from "../../firebase";
 import { LanguageContext } from "../context/LanguageContext";
 import { useCredits } from "../contexts/CreditsContext";
+import { showRewardedAd } from "../services/rewardedAds";
 
 /* ===== IMMAGINI HERO PUBBLICITÀ ===== */
 const HERO_IMAGES = [
-  require("../../assets/hero/hero1.png"),
-  require("../../assets/hero/hero2.png"),
-  require("../../assets/hero/hero3.png"),
-  require("../../assets/hero/hero4.png"),
+  require("../../assets/explorer/hero/hero1.png"),
+  require("../../assets/explorer/hero/hero2.png"),
+  require("../../assets/explorer/hero/hero3.png"),
+  require("../../assets/explorer/hero/hero4.png"),
 ];
 
 /* ===== CATEGORIE + IMMAGINI ===== */
@@ -50,11 +50,26 @@ const CATEGORIES: Record<string, any[]> = {
     require("../../assets/autunno/autunno4.jpeg"),
   ],
   calcio: [
-    require("../../assets/calcio/calcio1.jpeg"),
-    require("../../assets/calcio/calcio2.jpeg"),
-    require("../../assets/calcio/calcio3.jpeg"),
-    require("../../assets/calcio/calcio4.jpeg"),
-  ],
+  require("../../assets/explorer/arg_preview.jpg"),
+  require("../../assets/explorer/arg2_preview.jpg"),
+
+  require("../../assets/explorer/bra_preview.jpg"),
+  require("../../assets/explorer/bra2_preview.jpg"),
+  require("../../assets/explorer/bra3_preview.jpg"),
+
+  require("../../assets/explorer/col_preview.jpg"),
+  require("../../assets/explorer/col2_preview.jpg"),
+  require("../../assets/explorer/col3_preview.jpg"),
+
+  require("../../assets/explorer/eng_preview.jpg"),
+
+  require("../../assets/explorer/fra_preview.jpg"),
+
+  require("../../assets/explorer/por_preview.jpg"),
+
+  require("../../assets/explorer/spa_preview.jpg"),
+],
+
   photoshop: [
     require("../../assets/photoshop/photoshop1.jpeg"),
     require("../../assets/photoshop/photoshop2.jpeg"),
