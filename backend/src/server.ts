@@ -2864,7 +2864,6 @@ async function processStyleCardsJob(
   }
 }
 /* ================== CALCIO GENERATE ================== */
-
 app.post("/calcio/generate", upload.single("image"), async (req: any, res) => {
   try {
     console.log("⚽ /calcio/generate HIT");

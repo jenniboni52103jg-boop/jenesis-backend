@@ -918,31 +918,40 @@ export async function restyleCalcioImage(opts: {
 
   try {
     const result = await fal.subscribe(
-      "fal-ai/flux-pro/v1/fill",
+      "fal-ai/flux-general/inpainting",
       {
         input: {
           image_url: templateUrl,
 
           mask_url: maskUrl,
+          
+          control_image_url: userUrl,
 
           prompt: `
+Realistic football selfie.
+
 Replace ONLY the masked person with the uploaded user.
 
-Preserve:
+The generated person must preserve:
+- facial identity
+- face shape
+- skin tone
+- hairstyle
+- realism
+
+Keep untouched:
 - football player
 - stadium
-- lighting
-- selfie composition
-- camera angle
 - jersey
+- lighting
+- selfie framing
 - background
 
-The uploaded user must look naturally integrated into the original selfie.
-
-${opts.prompt}
-          `,
-
-          reference_image_url: userUrl,
+Ultra realistic sports photography.
+Natural skin texture.
+No cartoon.
+No CGI.
+`,
 
           guidance_scale: 12,
 
