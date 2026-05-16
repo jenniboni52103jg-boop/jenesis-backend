@@ -853,90 +853,144 @@ extra fingers, extra limbs, bad anatomy, text, watermark, logo
 `.trim();
 }
 
-/* ================= CALCIO PROMPTS ================= */
+/* ================= CALCIO ================= */
 
-function getCalcioPrompt(opts: {
-  archetypePrompt: string;
-  scenePrompt: string;
-}) {
-  return `
-Create a photorealistic World Cup 2026 football fan photo with EXACTLY TWO PEOPLE.
+type RestyleCalcioInput = {
+  userImageBase64: string;
 
-PERSON 1:
-The uploaded person must remain clearly recognizable.
-Preserve only the uploaded person's identity, face, eyes, nose, lips, skin tone, and overall facial structure.
-Do not change the uploaded person's gender or identity.
+  templateBase64: string;
 
-IDENTITY LOCK:
-The uploaded person's face must be used ONLY ONCE.
-Do not reuse, duplicate, clone, or copy this face on any other person.
-Only one person in the image can have this identity.
+  maskBase64: string;
 
-PERSON 2:
-Add ONE professional MALE football player next to the uploaded person.
-He must be clearly a man.
-He must look like a world-famous elite football player.
-He must have masculine facial structure, strong jawline, broad shoulders, athletic footballer body, premium realistic presence.
-He must be a completely different identity from the uploaded person.
-He must NOT look like her twin, sibling, clone, or female version.
-
-IMPORTANT:
-Do NOT create two women.
-Do NOT create two similar faces.
-Do NOT feminize the football player.
-Do NOT create two copies of the same person.
-
-COMPOSITION:
-The image must look like a real fan moment during World Cup 2026.
-Use a wider framing with much more visible stadium environment.
-Do NOT make it a beauty portrait.
-Do NOT make it a close-up selfie with only faces.
-
-SCENE REFERENCE GOAL:
-If the scene is campo, the framing should feel like a real fan photo near the pitch/border of the stadium, with open field and strong stadium visibility.
-If the scene is panchina, the framing should feel like a realistic bench-side or seat-side moment, with both people visible and the stadium atmosphere around them.
-If the scene is tunnel, the framing should feel like a realistic pre-match stadium tunnel moment, cinematic but believable, with visible tunnel depth and sports atmosphere.
-
-STADIUM ENVIRONMENT:
-The scene must clearly happen inside a large World Cup 2026 football stadium.
-Show:
-- stadium seating
-- crowd
-- football pitch or bench area or tunnel depending on scene
-- realistic match atmosphere
-- more background visibility
-Do NOT blur the stadium too much.
-
-STYLE GOAL:
-The result must look like a real sports photo, not a fashion portrait, not a beauty photoshoot, not an AI poster.
-It must feel like a believable fan moment captured during a real football event.
-
-FOOTBALL LOOK:
-The football player must wear the correct national team style jersey and realistic professional match outfit based on the selected archetype.
-The jersey colors must match the country correctly.
-The football player must look like a real professional national-team player.
-
-ARCHETYPE:
-${opts.archetypePrompt}
-
-SCENE:
-${opts.scenePrompt}
-`.trim();
-}
+  prompt: string;
+};
 
 function getCalcioNegativePrompt() {
   return `
-two women, two girls, female football player, same face, same identity, clone, twin, sisters,
-duplicate face, copied face, mirrored face, similar female face,
-beauty portrait, glamour portrait, fashion editorial, studio portrait,
-close-up only, face close-up, portrait crop, shallow background only,
-blurred stadium, no stadium, missing pitch, missing crowd,
-extra people, third person, child, deformed face, blurry face, bad anatomy
+duplicate person,
+two identical faces,
+clone,
+extra fingers,
+deformed hands,
+bad anatomy,
+blurry face,
+low quality,
+distorted eyes,
+multiple people,
+extra limbs,
+cropped face,
+cut head,
+mutated hands,
+unrealistic proportions,
+fake skin,
+cartoon,
+cgi,
+3d render,
+painting,
+illustration
 `.trim();
 }
 
-/* ================= SHARED FAL HELPER ================= */
+/* ================= CALCIO ASYNC================= */
+export async function restyleCalcioImage(opts: {
+  userImageBase64: string;
 
+  templateBase64: string;
+
+  maskBase64: string;
+
+  prompt: string;
+}) {
+  console.log("CALCIO RESTYLE START");
+
+  const negativePrompt = getCalcioNegativePrompt();
+
+  const uploadedUserUrl = await uploadBase64ToFal(
+    opts.userImageBase64
+  );
+
+  const uploadedTemplateUrl = await uploadBase64ToFal(
+    opts.templateBase64
+  );
+
+  const uploadedMaskUrl = await uploadBase64ToFal(
+    opts.maskBase64
+  );
+
+  console.log("USER URL =", uploadedUserUrl);
+  console.log("TEMPLATE URL =", uploadedTemplateUrl);
+  console.log("MASK URL =", uploadedMaskUrl);
+
+  try {
+    const result = await fal.subscribe("fal-ai/flux/dev/image-to-image", {
+      input: {
+        prompt: opts.prompt,
+
+        image_url: uploadedTemplateUrl,
+
+        mask_url: uploadedMaskUrl,
+
+        reference_image_url: uploadedUserUrl,
+
+        strength: 0.95,
+
+        num_inference_steps: 30,
+
+        guidance_scale: 4.5,
+
+        image_size: "square_hd",
+
+        negative_prompt: negativePrompt,
+
+        enable_safety_checker: true,
+      },
+
+      logs: true,
+
+      onQueueUpdate(update) {
+        if (update.status === "IN_PROGRESS") {
+          for (const log of update.logs ?? []) {
+            console.log("CALCIO FAL LOG:", log.message);
+          }
+        }
+      },
+    } as any);
+
+    console.log(
+      "CALCIO FAL RAW RESULT =",
+      JSON.stringify(result, null, 2)
+    );
+
+    const data: any = result?.data;
+
+    const finalUrl =
+      data?.images?.[0]?.url ??
+      data?.image?.url ??
+      null;
+
+    if (!finalUrl) {
+      console.error(
+        "CALCIO FAL RAW DATA =",
+        JSON.stringify(data, null, 2)
+      );
+
+      throw new Error(
+        "fal did not return a valid calcio image URL"
+      );
+    }
+
+    return finalUrl;
+  } catch (err: any) {
+    console.error(
+      "CALCIO FAL FULL ERROR =",
+      JSON.stringify(err, null, 2)
+    );
+
+    throw err;
+  }
+}
+
+/* ================= SHARED FAL HELPER ================= */
 async function uploadBase64ToFal(imageBase64: string) {
   const cleanBase64 = imageBase64.replace(/^data:image\/\w+;base64,/, "");
 
@@ -1072,60 +1126,3 @@ export async function restyleStyleCardImage(opts: {
   }
 }
 
-/* ================= CALCIO ================= */
-
-export async function restyleCalcioImage(opts: {
-  imageBase64: string;
-  archetypePrompt: string;
-  scenePrompt: string;
-}) {
-  console.log("CALCIO RESTYLE START");
-
-  const prompt = getCalcioPrompt({
-    archetypePrompt: opts.archetypePrompt,
-    scenePrompt: opts.scenePrompt,
-  });
-
-  const negativePrompt = getCalcioNegativePrompt();
-
-  const uploadedUrl = await uploadBase64ToFal(opts.imageBase64);
-  console.log("CALCIO FAL STORAGE URL =", uploadedUrl);
-
-  try {
-    const result = await fal.subscribe("fal-ai/flux-pulid", {
-      input: {
-        prompt,
-        reference_image_url: uploadedUrl,
-        image_size: "portrait_16_9",
-        num_inference_steps: 28,
-        guidance_scale: 4.5,
-        negative_prompt: negativePrompt,
-        id_weight: 0.82,
-        enable_safety_checker: true,
-      },
-      logs: true,
-      onQueueUpdate(update) {
-        if (update.status === "IN_PROGRESS") {
-          for (const log of update.logs ?? []) {
-            console.log("CALCIO FAL LOG:", log.message);
-          }
-        }
-      },
-    } as any);
-
-    console.log("CALCIO FAL RAW RESULT =", JSON.stringify(result, null, 2));
-
-    const data: any = result?.data;
-    const finalUrl = data?.images?.[0]?.url ?? null;
-
-    if (!finalUrl) {
-      console.error("CALCIO FAL RAW DATA =", JSON.stringify(data, null, 2));
-      throw new Error("fal did not return a valid calcio image URL");
-    }
-
-    return finalUrl;
-  } catch (err: any) {
-    console.error("CALCIO FAL FULL ERROR =", JSON.stringify(err, null, 2));
-    throw err;
-  }
-}

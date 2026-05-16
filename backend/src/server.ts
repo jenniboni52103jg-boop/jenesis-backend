@@ -16,7 +16,7 @@ import fetch from "node-fetch";
 import os from "os";
 import path from "path";
 import sharp from "sharp";
-import { CALCIO_ARCHETYPES_MAP, CalcioSceneKey } from "./calcioCards";
+import { CALCIO_ARCHETYPES_MAP } from "./calcioCards";
 import { getCouplePrompt, restyleCalcioImage, restyleImage, restyleStyleCardImage } from "./restyle";
 dotenv.config({ path: "../.env" });
 
@@ -2864,75 +2864,102 @@ async function processStyleCardsJob(
   }
 }
 /* ================== CALCIO GENERATE ================== */
+
 app.post("/calcio/generate", upload.single("image"), async (req: any, res) => {
   try {
-    const isPremium = req.body?.isPremium === "true" || req.body?.isPremium === true;
     console.log("⚽ /calcio/generate HIT");
-    console.log("BODY:", req.body);
-    console.log("FILE:", req.file ? "OK" : "MISSING");
+
+    const isPremium =
+      req.body?.isPremium === "true" ||
+      req.body?.isPremium === true;
 
     const archetypeKey = String(req.body?.archetypeKey || "");
-    const scene = String(req.body?.scene || "");
 
     if (!req.file?.buffer) {
-      return res.status(400).json({ error: "Missing image file" });
+      return res.status(400).json({
+        error: "Missing image file",
+      });
     }
 
     if (!archetypeKey) {
-      return res.status(400).json({ error: "Missing archetypeKey" });
-    }
-
-    if (!scene) {
-      return res.status(400).json({ error: "Missing scene" });
-    }
-
-    if (!["campo", "tunnel", "panchina"].includes(scene)) {
-      return res.status(400).json({ error: "Invalid scene" });
+      return res.status(400).json({
+        error: "Missing archetypeKey",
+      });
     }
 
     const archetype = CALCIO_ARCHETYPES_MAP[archetypeKey];
 
     if (!archetype) {
-      return res.status(404).json({ error: "Archetype not found" });
+      return res.status(404).json({
+        error: "Archetype not found",
+      });
     }
 
-    const sceneKey = scene as CalcioSceneKey;
-    const scenePrompt = archetype.scenes[sceneKey];
-
-    const userImageBase64 = req.file.buffer.toString("base64");
-
     console.log("archetypeKey:", archetypeKey);
-    console.log("scene:", scene);
-    console.log("image buffer size:", req.file.buffer.length);
+
+    const userImageBase64 =
+      req.file.buffer.toString("base64");
+
+    // ================= TEMPLATE =================
+
+    const templatePath = path.join(
+      __dirname,
+      "../assets/calcio",
+      archetype.templateImage
+    );
+
+    const maskPath = path.join(
+      __dirname,
+      "../assets/calcio",
+      archetype.maskImage
+    );
+
+    console.log("templatePath:", templatePath);
+    console.log("maskPath:", maskPath);
+
+    const templateBuffer = fs.readFileSync(templatePath);
+    const maskBuffer = fs.readFileSync(maskPath);
+
+    // ================= GENERATION =================
 
     const finalUrl = await restyleCalcioImage({
-      imageBase64: `data:image/jpeg;base64,${userImageBase64}`,
-      archetypePrompt: archetype.basePrompt,
-      scenePrompt,
+      userImageBase64: `data:image/jpeg;base64,${userImageBase64}`,
+
+      templateBase64: `data:image/png;base64,${templateBuffer.toString("base64")}`,
+
+      maskBase64: `data:image/png;base64,${maskBuffer.toString("base64")}`,
+
+      prompt: archetype.prompt,
     });
 
-    // AGGIUNGI QUESTO:
-  const imageBuffer = await downloadToBuffer(finalUrl);
+    // ================= DOWNLOAD =================
 
-const finalBuffer = isPremium
-  ? imageBuffer
-  : await applyWatermarkToBuffer(imageBuffer);
+    const imageBuffer = await downloadToBuffer(finalUrl);
 
-const finalBase64 = `data:image/jpeg;base64,${finalBuffer.toString("base64")}`;
+    // ================= WATERMARK =================
 
-return res.json({
-  ok: true,
-  imageUrl: finalBase64,
-});
+    const finalBuffer = isPremium
+      ? imageBuffer
+      : await applyWatermarkToBuffer(imageBuffer);
 
+    const finalBase64 = `data:image/jpeg;base64,${finalBuffer.toString(
+      "base64"
+    )}`;
+
+    // ================= RESPONSE =================
+
+    return res.json({
+      ok: true,
+      imageUrl: finalBase64,
+    });
   } catch (err: any) {
     console.error("❌ /calcio/generate error:", err);
+
     return res.status(500).json({
       error: err?.message || "Calcio generation failed",
     });
   }
 });
-
 /* ================== COUPLE CARDS ================== */
 app.post("/couple/generate", upload.fields([
   { name: "image1" },
