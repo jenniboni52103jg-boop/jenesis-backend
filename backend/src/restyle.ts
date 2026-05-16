@@ -892,7 +892,7 @@ illustration
 `.trim();
 }
 
-/* ================= CALCIO ASYNC INPAINT================= */
+/* ================= CALCIO ASYNC INPAINT ================= */
 export async function restyleCalcioImage(opts: {
   userImageBase64: string;
   templateBase64: string;
@@ -916,6 +916,7 @@ export async function restyleCalcioImage(opts: {
   console.log("TEMPLATE URL =", templateUrl);
   console.log("MASK URL =", maskUrl);
   console.log("USER URL =", userUrl);
+
   console.log("🔥 CALLING FAL INPAINT");
 
   try {
@@ -969,7 +970,10 @@ No CGI.
         onQueueUpdate(update) {
           if (update.status === "IN_PROGRESS") {
             for (const log of update.logs ?? []) {
-              console.log("FLUX FILL:", log.message);
+              console.log(
+                "FLUX FILL:",
+                log.message
+              );
             }
           }
         },
@@ -985,26 +989,54 @@ No CGI.
     );
 
     const data: any =
-      result?.data ||
-      result;
+      result?.data || result;
 
     console.log("FULL DATA =", data);
 
-    const finalUrl =
+    const finalImage =
       data?.images?.[0]?.url ||
       data?.image?.url ||
       data?.url ||
       null;
 
-    console.log("FINAL URL =", finalUrl);
+    console.log(
+      "FINAL IMAGE =",
+      finalImage
+    );
 
-    if (!finalUrl) {
+    if (!finalImage) {
       throw new Error(
         "Flux Fill did not return image"
       );
     }
 
-    return finalUrl;
+    // SE È BASE64
+    if (
+      typeof finalImage === "string" &&
+      finalImage.startsWith("data:image")
+    ) {
+      console.log(
+        "RETURNING BASE64 IMAGE"
+      );
+
+      return finalImage;
+    }
+
+    // SE È URL HTTPS
+    if (
+      typeof finalImage === "string" &&
+      finalImage.startsWith("http")
+    ) {
+      console.log(
+        "RETURNING HTTP IMAGE URL"
+      );
+
+      return finalImage;
+    }
+
+    throw new Error(
+      "Unsupported image format returned by Flux"
+    );
   } catch (err: any) {
     console.error(
       "FLUX FILL ERROR =",
