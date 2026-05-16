@@ -1,5 +1,6 @@
 import "dotenv/config";
-import { fal } from "@fal-ai/client";
+//import { fal } from "@fal-ai/client";
+import * as fal from "@fal-ai/serverless-client";
 import sharp from "sharp";
 import { Blob } from "buffer";
 
@@ -917,14 +918,14 @@ export async function restyleCalcioImage(opts: {
   console.log("USER URL =", userUrl);
 
   try {
-    const result = await fal.subscribe(
+    const result: any = await fal.subscribe(
       "fal-ai/flux-general/inpainting",
       {
         input: {
           image_url: templateUrl,
 
           mask_url: maskUrl,
-          
+
           control_image_url: userUrl,
 
           prompt: `
@@ -1072,7 +1073,7 @@ export async function restyleImage(imageBase64: string, effect: string) {
 
     console.log("FAL RAW RESULT =", JSON.stringify(result, null, 2));
 
-    const data: any = result?.data;
+    const data: any = (result as any).data;
     const finalUrl = data?.images?.[0]?.url ?? null;
 
     if (!finalUrl) {
@@ -1124,7 +1125,7 @@ export async function restyleStyleCardImage(opts: {
 
     console.log("STYLE CARD FAL RAW RESULT =", JSON.stringify(result, null, 2));
 
-    const data: any = result?.data;
+    const data: any = (result as any).data;
     const finalUrl = data?.images?.[0]?.url ?? null;
 
     if (!finalUrl) {
