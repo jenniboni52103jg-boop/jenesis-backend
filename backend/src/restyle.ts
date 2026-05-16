@@ -891,98 +891,102 @@ illustration
 `.trim();
 }
 
-/* ================= CALCIO ASYNC================= */
+/* ================= CALCIO ASYNC INPAINT================= */
 export async function restyleCalcioImage(opts: {
   userImageBase64: string;
-
   templateBase64: string;
-
   maskBase64: string;
-
   prompt: string;
 }) {
-  console.log("CALCIO RESTYLE START");
+  console.log("⚽ FLUX FILL START");
 
-  const negativePrompt = getCalcioNegativePrompt();
-
-  const uploadedUserUrl = await uploadBase64ToFal(
-    opts.userImageBase64
-  );
-
-  const uploadedTemplateUrl = await uploadBase64ToFal(
+  const templateUrl = await uploadBase64ToFal(
     opts.templateBase64
   );
 
-  const uploadedMaskUrl = await uploadBase64ToFal(
+  const maskUrl = await uploadBase64ToFal(
     opts.maskBase64
   );
 
-  console.log("USER URL =", uploadedUserUrl);
-  console.log("TEMPLATE URL =", uploadedTemplateUrl);
-  console.log("MASK URL =", uploadedMaskUrl);
+  const userUrl = await uploadBase64ToFal(
+    opts.userImageBase64
+  );
+
+  console.log("TEMPLATE URL =", templateUrl);
+  console.log("MASK URL =", maskUrl);
+  console.log("USER URL =", userUrl);
 
   try {
-    const result = await fal.subscribe("fal-ai/flux/dev/image-to-image", {
-      input: {
-        prompt: opts.prompt,
+    const result = await fal.subscribe(
+      "fal-ai/flux-pro/v1/fill",
+      {
+        input: {
+          image_url: templateUrl,
 
-        image_url: uploadedTemplateUrl,
+          mask_url: maskUrl,
 
-        mask_url: uploadedMaskUrl,
+          prompt: `
+Replace ONLY the masked person with the uploaded user.
 
-        reference_image_url: uploadedUserUrl,
+Preserve:
+- football player
+- stadium
+- lighting
+- selfie composition
+- camera angle
+- jersey
+- background
 
-        strength: 0.95,
+The uploaded user must look naturally integrated into the original selfie.
 
-        num_inference_steps: 30,
+${opts.prompt}
+          `,
 
-        guidance_scale: 4.5,
+          reference_image_url: userUrl,
 
-        image_size: "square_hd",
+          guidance_scale: 12,
 
-        negative_prompt: negativePrompt,
+          num_inference_steps: 35,
 
-        enable_safety_checker: true,
-      },
+          strength: 0.95,
 
-      logs: true,
+          sync_mode: true,
+        },
 
-      onQueueUpdate(update) {
-        if (update.status === "IN_PROGRESS") {
-          for (const log of update.logs ?? []) {
-            console.log("CALCIO FAL LOG:", log.message);
+        logs: true,
+
+        onQueueUpdate(update) {
+          if (update.status === "IN_PROGRESS") {
+            for (const log of update.logs ?? []) {
+              console.log("FLUX FILL:", log.message);
+            }
           }
-        }
-      },
-    } as any);
+        },
+      } as any
+    );
 
     console.log(
-      "CALCIO FAL RAW RESULT =",
+      "FLUX FILL RESULT =",
       JSON.stringify(result, null, 2)
     );
 
     const data: any = result?.data;
 
     const finalUrl =
-      data?.images?.[0]?.url ??
-      data?.image?.url ??
-      null;
+      data?.images?.[0]?.url ?? null;
 
     if (!finalUrl) {
-      console.error(
-        "CALCIO FAL RAW DATA =",
-        JSON.stringify(data, null, 2)
-      );
+      console.log("FULL DATA =", data);
 
       throw new Error(
-        "fal did not return a valid calcio image URL"
+        "Flux Fill did not return image"
       );
     }
 
     return finalUrl;
   } catch (err: any) {
     console.error(
-      "CALCIO FAL FULL ERROR =",
+      "FLUX FILL ERROR =",
       JSON.stringify(err, null, 2)
     );
 
