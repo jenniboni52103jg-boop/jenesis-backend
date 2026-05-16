@@ -916,7 +916,8 @@ export async function restyleCalcioImage(opts: {
   console.log("TEMPLATE URL =", templateUrl);
   console.log("MASK URL =", maskUrl);
   console.log("USER URL =", userUrl);
-
+  console.log("🔥 CALLING FAL INPAINT");
+  
   try {
     const result: any = await fal.subscribe(
       "fal-ai/flux-general/inpainting",
