@@ -917,7 +917,7 @@ export async function restyleCalcioImage(opts: {
   console.log("MASK URL =", maskUrl);
   console.log("USER URL =", userUrl);
   console.log("🔥 CALLING FAL INPAINT");
-  
+
   try {
     const result: any = await fal.subscribe(
       "fal-ai/flux-general/inpainting",
@@ -976,19 +976,29 @@ No CGI.
       } as any
     );
 
+    console.log("FULL RESULT:");
+    console.dir(result, { depth: null });
+
     console.log(
       "FLUX FILL RESULT =",
       JSON.stringify(result, null, 2)
     );
 
-    const data: any = result?.data;
+    const data: any =
+      result?.data ||
+      result;
+
+    console.log("FULL DATA =", data);
 
     const finalUrl =
-      data?.images?.[0]?.url ?? null;
+      data?.images?.[0]?.url ||
+      data?.image?.url ||
+      data?.url ||
+      null;
+
+    console.log("FINAL URL =", finalUrl);
 
     if (!finalUrl) {
-      console.log("FULL DATA =", data);
-
       throw new Error(
         "Flux Fill did not return image"
       );
