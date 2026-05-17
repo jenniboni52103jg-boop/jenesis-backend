@@ -483,132 +483,165 @@ async function swapFaceCalcio(
     );
 
     // ---------------- REPLICATE DIRECT API ----------------
-    const response = await fetch(
-      "https://api.replicate.com/v1/predictions",
-      {
-        method: "POST",
-        headers: {
-          Authorization:
-            `Token ${process.env.REPLICATE_API_KEY}`,
-          "Content-Type":
-            "application/json",
+  const replicateToken =
+    (process.env.REPLICATE_API_KEY || "")
+      .trim();
+
+  console.log(
+    "⚽ USING REPLICATE TOKEN =",
+    replicateToken
+  );
+
+  const response = await fetch(
+    "https://api.replicate.com/v1/predictions",
+    {
+      method: "POST",
+
+      headers: {
+        Authorization:
+          `Token ${replicateToken}`,
+
+        "Content-Type":
+          "application/json",
+      },
+
+      body: JSON.stringify({
+        version:
+          "a9758cb44f2bd4c0fdbe5a670f29b1a1a5d5b9f0d6e8d4f6d5c4b3a2f1e0d9c8",
+
+        input: {
+          swap_image: userUrl,
+          target_image: templateUrl,
         },
-        body: JSON.stringify({
-          version:
-            "a9758cb44f2bd4c0fdbe5a670f29b1a1a5d5b9f0d6e8d4f6d5c4b3a2f1e0d9c8",
+      }),
+    }
+  );
 
-          input: {
-            swap_image: userUrl,
-            target_image: templateUrl,
-          },
-        }),
-      }
-    );
+  const prediction =
+    await response.json();
 
-    const prediction =
-      await response.json();
+  console.log(
+    "⚽ PREDICTION =",
+    prediction
+  );
 
-    console.log(
-      "⚽ PREDICTION =",
+  if (!prediction?.urls?.get) {
+
+    console.error(
+      "❌ REPLICATE ERROR =",
       prediction
     );
 
-    if (!prediction?.urls?.get) {
-      throw new Error(
-        "Prediction URL missing"
-      );
-    }
+    throw new Error(
+      prediction?.detail ||
+      prediction?.error ||
+      "Prediction URL missing"
+    );
+  }
 
-    let finalOutput: any = null;
+  let finalOutput: any =
+    null;
 
-    for (let i = 0; i < 30; i++) {
-      await new Promise((r) =>
-        setTimeout(r, 2000)
-      );
+  for (let i = 0; i < 30; i++) {
 
-      const poll = await fetch(
-        prediction.urls.get,
-        {
-          headers: {
-  Authorization:
-    `Token ${String(
-      process.env.REPLICATE_API_KEY
-    ).trim()}`,
-},
-        }
-      );
+    await new Promise((r) =>
+      setTimeout(r, 2000)
+    );
 
-      const pollData =
-        await poll.json();
-
-      console.log(
-        "⚽ POLL STATUS =",
-        pollData.status
-      );
-
-      if (
-        pollData.status ===
-        "succeeded"
-      ) {
-        finalOutput =
-          pollData.output;
-        break;
+    const poll = await fetch(
+      prediction.urls.get,
+      {
+        headers: {
+          Authorization:
+            `Token ${replicateToken}`,
+        },
       }
+    );
 
-      if (
-        pollData.status ===
-        "failed"
-      ) {
-        throw new Error(
-          "Face swap failed"
-        );
-      }
-    }
-
-    if (!finalOutput) {
-      throw new Error(
-        "Timeout waiting prediction"
-      );
-    }
-
-    let finalUrl: string | null =
-      null;
-
-    if (
-      Array.isArray(finalOutput)
-    ) {
-      finalUrl =
-        finalOutput[0];
-    } else if (
-      typeof finalOutput ===
-      "string"
-    ) {
-      finalUrl = finalOutput;
-    }
-
-    if (!finalUrl) {
-      throw new Error(
-        "Calcio face swap failed"
-      );
-    }
+    const pollData =
+      await poll.json();
 
     console.log(
-      "✅ CALCIO FACE SWAP DONE"
+      "⚽ POLL STATUS =",
+      pollData.status
     );
 
-    return finalUrl;
+    if (
+      pollData.status ===
+      "succeeded"
+    ) {
 
-  } catch (err: any) {
+      finalOutput =
+        pollData.output;
 
-    console.error(
-      "❌ CALCIO FACE SWAP ERROR",
-      err
-    );
+      break;
+    }
 
-    throw err;
+    if (
+      pollData.status ===
+      "failed"
+    ) {
+
+      console.error(
+        "❌ POLL FAILED =",
+        pollData
+      );
+
+      throw new Error(
+        "Face swap failed"
+      );
+    }
   }
-}
 
+  if (!finalOutput) {
+
+    throw new Error(
+      "Timeout waiting prediction"
+    );
+  }
+
+  let finalUrl: string | null =
+    null;
+
+  if (
+    Array.isArray(finalOutput)
+  ) {
+
+    finalUrl =
+      finalOutput[0];
+
+  } else if (
+    typeof finalOutput ===
+    "string"
+  ) {
+
+    finalUrl =
+      finalOutput;
+  }
+
+  if (!finalUrl) {
+
+    throw new Error(
+      "Calcio face swap failed"
+    );
+  }
+
+  console.log(
+    "✅ CALCIO FACE SWAP DONE"
+  );
+
+  return finalUrl;
+
+} catch (err: any) {
+
+  console.error(
+    "❌ CALCIO FACE SWAP ERROR =",
+    err
+  );
+
+  throw err;
+}
+}
 /* ================== HELPERS ELEVENLABS ================== */
 async function elevenTextToSpeech(text: string, voiceId?: string) {
   const finalVoiceId = voiceId || requireEnv("ELEVENLABS_VOICE_ID");
