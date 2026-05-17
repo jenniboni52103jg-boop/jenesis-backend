@@ -17,7 +17,7 @@ import os from "os";
 import path from "path";
 import sharp from "sharp";
 import { CALCIO_ARCHETYPES_MAP } from "./calcioCards";
-import { getCouplePrompt, restyleCalcioImage, restyleImage, restyleStyleCardImage } from "./restyle";
+import { getCouplePrompt, restyleImage, restyleStyleCardImage } from "./restyle";
 dotenv.config({ path: "../.env" });
 
 
@@ -2926,34 +2926,22 @@ app.post("/calcio/generate", upload.single("image"), async (req: any, res) => {
 
     // ================= TEMPLATE =================
 
-    const templatePath = path.join(
+const templatePath = path.join(
   process.cwd(),
   "src/assets/calcio",
-  archetype.templateImage
+  `${archetype.id}.jpg`
 );
 
-const maskPath = path.join(
-  process.cwd(),
-  "src/assets/calcio",
-  archetype.maskImage
+console.log("⚽ TEMPLATE:", templatePath);
+
+// ================= FACE SWAP =================
+
+const finalUrl = await swapFace(
+  templatePath,
+  req.file.buffer
 );
-    console.log("templatePath:", templatePath);
-    console.log("maskPath:", maskPath);
 
-    const templateBuffer = fs.readFileSync(templatePath);
-    const maskBuffer = fs.readFileSync(maskPath);
-
-    // ================= GENERATION =================
-
-    const finalUrl = await restyleCalcioImage({
-      userImageBase64: `data:image/jpeg;base64,${userImageBase64}`,
-
-      templateBase64: `data:image/png;base64,${templateBuffer.toString("base64")}`,
-
-      maskBase64: `data:image/png;base64,${maskBuffer.toString("base64")}`,
-
-      prompt: archetype.prompt,
-    });
+console.log("✅ CALCIO FACE SWAP DONE");
 
     // ================= DOWNLOAD =================
 

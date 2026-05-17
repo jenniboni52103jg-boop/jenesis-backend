@@ -931,29 +931,28 @@ export async function restyleCalcioImage(opts: {
           control_image_url: userUrl,
 
           prompt: `
-Realistic football selfie.
+Ultra realistic selfie photo with Lionel Messi at a football stadium.
 
-Replace ONLY the masked person with the uploaded user.
+The uploaded person must keep:
+- same face
+- same identity
+- same skin tone
+- same hairstyle
+- same facial structure
 
-The generated person must preserve:
-- facial identity
-- face shape
-- skin tone
-- hairstyle
-- realism
+Natural selfie composition.
+Both subjects integrated naturally.
+Same lighting.
+Same camera lens.
+Same shadows.
+Same skin texture.
 
-Keep untouched:
-- football player
-- stadium
-- jersey
-- lighting
-- selfie framing
-- background
-
-Ultra realistic sports photography.
-Natural skin texture.
-No cartoon.
-No CGI.
+Professional sports photography.
+Instagram selfie style.
+No collage.
+No split image.
+No double exposure.
+No face distortion.
 `,
 
           guidance_scale: 12,

@@ -9,10 +9,6 @@ export type CalcioCard = {
 
   subtitle: string;
 
-  templateImage: string;
-
-  maskImage: string;
-
   prompt: string;
 };
 
@@ -25,22 +21,37 @@ export const CALCIO_ARCHETYPES_CARDS: CalcioCard[] = [
     id: "arg_selfie",
 
     title: "Argentina Superstar",
+
     subtitle: "Selfie bordo campo",
 
-    templateImage: "arg_template.png",
-
-    maskImage: "arg_mask.png",
-
     prompt: `
-Preserve the football player,
-stadium, lighting and selfie composition.
+Ultra realistic football selfie photo.
 
-Replace only the fan beside the player
-with the uploaded user.
+A young woman taking a selfie beside an Argentina football superstar at stadium side.
 
-Realistic smartphone selfie.
-Authentic football atmosphere.
-Natural skin texture and realistic proportions.
+Preserve the uploaded person's:
+- facial identity
+- face shape
+- skin tone
+- hairstyle
+
+The final image must look:
+- authentic
+- naturally photographed
+- iphone selfie
+- sports photography
+- same lighting
+- same camera lens
+- same skin texture
+- same depth of field
+
+The football player and user must feel truly together in the same scene.
+
+Natural candid moment.
+Ultra realistic.
+No CGI.
+No cartoon.
+No fake face.
 `,
   },
 
@@ -48,21 +59,31 @@ Natural skin texture and realistic proportions.
     id: "arg2_selfie",
 
     title: "Argentina Matchday",
+
     subtitle: "VIP selfie",
 
-    templateImage: "arg2_template.png",
-
-    maskImage: "arg2_mask.png",
-
     prompt: `
-Keep the football player,
-stadium environment and selfie framing unchanged.
+Ultra realistic VIP football selfie.
 
-Replace only the supporter beside the player
-with the uploaded user.
+A woman taking a selfie beside an Argentina football superstar during matchday.
 
-Realistic football selfie.
-Authentic Argentina stadium atmosphere.
+Preserve the uploaded user's:
+- facial identity
+- skin tone
+- hairstyle
+- realistic facial details
+
+Authentic stadium atmosphere.
+Natural lighting.
+Realistic iphone selfie.
+Same camera perspective.
+Natural sports photography.
+
+Both subjects must look naturally photographed together.
+
+No CGI.
+No 3D render.
+No cartoon.
 `,
   },
 
@@ -72,21 +93,34 @@ Authentic Argentina stadium atmosphere.
     id: "bra_selfie",
 
     title: "Brazil Bench Selfie",
+
     subtitle: "Selfie calcistico",
 
-    templateImage: "bra_template.png",
-
-    maskImage: "bra_mask.png",
-
     prompt: `
-Keep the football player,
-bench environment and stadium details unchanged.
+Ultra realistic football bench selfie.
 
-Replace only the fan beside the player
-with the uploaded user.
+A young woman beside a Brazil football superstar near the team bench.
 
-Natural smartphone selfie look.
-Realistic lighting and skin texture.
+Preserve the uploaded person's:
+- facial identity
+- realistic face
+- hairstyle
+- skin tone
+
+The final image must feel:
+- naturally photographed
+- authentic
+- realistic
+- candid
+
+Real smartphone selfie.
+Natural stadium lighting.
+Same camera lens.
+Realistic sports photography.
+
+No fake face.
+No CGI.
+No cartoon.
 `,
   },
 
@@ -94,21 +128,30 @@ Realistic lighting and skin texture.
     id: "bra2_selfie",
 
     title: "Brazil Superstar",
+
     subtitle: "Pitch-side selfie",
 
-    templateImage: "bra2_template.png",
-
-    maskImage: "bra2_mask.png",
-
     prompt: `
-Preserve the football player,
-stadium lighting and football atmosphere.
+Ultra realistic football selfie beside a Brazil superstar.
 
-Replace only the supporter area
-with the uploaded user.
+A stylish woman taking a selfie near the football pitch before the match.
 
-Realistic Brazilian football selfie.
-Natural facial identity and skin texture.
+Preserve the uploaded user's:
+- identity
+- skin tone
+- hairstyle
+- facial structure
+
+Authentic Brazilian football atmosphere.
+Natural lighting.
+Realistic skin texture.
+Real iphone selfie look.
+
+The image must look naturally photographed together.
+
+No CGI.
+No cartoon.
+No 3D render.
 `,
   },
 
@@ -116,21 +159,31 @@ Natural facial identity and skin texture.
     id: "bra3_selfie",
 
     title: "Brazil Victory Cam",
+
     subtitle: "Post match selfie",
 
-    templateImage: "bra3_template.png",
-
-    maskImage: "bra3_mask.png",
-
     prompt: `
-Keep the football player,
-stadium crowd and sports atmosphere intact.
+Ultra realistic post-match football selfie.
 
-Replace only the fan beside the player
-with the uploaded user.
+A woman celebrating beside a Brazil football superstar after victory.
 
-Authentic football selfie.
-Realistic proportions and lighting.
+Preserve:
+- facial identity
+- face shape
+- hairstyle
+- skin tone
+
+Authentic sports atmosphere.
+Natural candid selfie.
+Realistic stadium lighting.
+Same camera perspective.
+Real sports photography.
+
+Both people must feel truly together.
+
+No CGI.
+No fake face.
+No cartoon.
 `,
   },
 
@@ -140,21 +193,30 @@ Realistic proportions and lighting.
     id: "col_selfie",
 
     title: "Colombia Matchday",
+
     subtitle: "Atmosfera stadio",
 
-    templateImage: "col_template.png",
-
-    maskImage: "col_mask.png",
-
     prompt: `
-Preserve the football player,
-stadium and lighting exactly.
+Ultra realistic Colombia football selfie.
 
-Replace only the supporter/fan area
-with the uploaded user.
+A young woman taking a selfie beside a Colombia football superstar during matchday.
 
-Realistic football selfie.
-Natural sports atmosphere.
+Preserve the uploaded user's:
+- facial identity
+- hairstyle
+- skin tone
+- realistic face proportions
+
+Natural stadium atmosphere.
+Authentic football photography.
+Realistic lighting.
+Natural skin texture.
+
+Both subjects must look naturally together.
+
+No cartoon.
+No CGI.
+No 3D.
 `,
   },
 
@@ -162,21 +224,32 @@ Natural sports atmosphere.
     id: "col2_selfie",
 
     title: "Colombia Superstar",
+
     subtitle: "VIP stadium selfie",
 
-    templateImage: "col2_template.png",
-
-    maskImage: "col2_mask.png",
-
     prompt: `
-Keep the football player,
-stadium environment and lighting unchanged.
+Ultra realistic VIP stadium selfie.
 
-Replace only the fan beside the player
-with the uploaded user.
+A woman beside a Colombia football superstar inside a crowded stadium.
 
-Realistic Colombian football selfie.
-Natural skin texture and identity preservation.
+Preserve the uploaded person's:
+- facial identity
+- hairstyle
+- realistic face details
+- skin tone
+
+The image must look:
+- authentic
+- naturally photographed
+- cinematic
+- realistic
+
+Real smartphone selfie.
+Natural stadium lighting.
+Same depth of field.
+
+No fake face.
+No cartoon.
 `,
   },
 
@@ -187,19 +260,25 @@ Natural skin texture and identity preservation.
 
     subtitle: "Post match selfie",
 
-    templateImage: "col3_template.png",
-
-    maskImage: "col3_mask.png",
-
     prompt: `
-Preserve the football player,
-match atmosphere and selfie framing.
+Ultra realistic football victory selfie.
 
-Replace only the supporter area
-with the uploaded user.
+A happy woman taking a selfie beside a Colombia football superstar after the match.
 
-Authentic football selfie.
+Preserve the uploaded user's:
+- facial identity
+- hairstyle
+- skin tone
+- facial realism
+
+Authentic football celebration atmosphere.
+Natural lighting.
 Realistic sports photography.
+Same camera perspective.
+
+No CGI.
+No cartoon.
+No fake face.
 `,
   },
 
@@ -212,20 +291,27 @@ Realistic sports photography.
 
     subtitle: "VIP stadium selfie",
 
-    templateImage: "eng_template.png",
-
-    maskImage: "eng_mask.png",
-
     prompt: `
-Keep the football player,
-stadium crowd and lighting unchanged.
+Ultra realistic English football selfie.
 
-Replace only the fan beside the football player
-with the uploaded user.
+A stylish woman beside an England football superstar inside a premium stadium area.
 
-Realistic smartphone selfie.
-Authentic English football atmosphere.
-Natural facial identity and realistic skin texture.
+Preserve the uploaded user's:
+- facial identity
+- face shape
+- hairstyle
+- skin tone
+
+Realistic iphone selfie.
+Authentic football atmosphere.
+Natural lighting.
+Real sports photography.
+
+Both subjects must feel naturally photographed together.
+
+No CGI.
+No cartoon.
+No fake face.
 `,
   },
 
@@ -238,19 +324,27 @@ Natural facial identity and realistic skin texture.
 
     subtitle: "Post match moment",
 
-    templateImage: "fra_template.png",
-
-    maskImage: "fra_mask.png",
-
     prompt: `
-Keep the football player,
-stadium and match atmosphere intact.
+Ultra realistic France football selfie.
 
-Replace only the fan/supporter
-with the uploaded user.
+A woman celebrating beside a France football superstar after victory.
 
-Realistic post-match smartphone selfie.
-Natural facial details and realistic proportions.
+Preserve the uploaded person's:
+- facial identity
+- hairstyle
+- skin tone
+- realistic face details
+
+Natural sports photography.
+Authentic celebration atmosphere.
+Realistic lighting.
+Natural skin texture.
+
+The image must feel candid and real.
+
+No CGI.
+No fake face.
+No cartoon.
 `,
   },
 
@@ -263,19 +357,31 @@ Natural facial details and realistic proportions.
 
     subtitle: "Pre-match selfie",
 
-    templateImage: "por_template.png",
-
-    maskImage: "por_mask.png",
-
     prompt: `
-Preserve the football player,
-tunnel environment and cinematic lighting.
+Cinematic football tunnel selfie.
 
-Replace only the fan area
-with the uploaded user.
+A stylish young woman taking a selfie beside a Portugal football superstar before the match.
 
-Realistic pre-match selfie.
-Authentic sports photography.
+Preserve the uploaded user's:
+- facial identity
+- face shape
+- hairstyle
+- skin tone
+
+The final image must look:
+- naturally photographed
+- realistic
+- cinematic
+- authentic
+- iphone selfie quality
+
+Same camera lens.
+Same lighting.
+Same skin texture.
+
+No fake face.
+No CGI.
+No cartoon.
 `,
   },
 
@@ -288,19 +394,28 @@ Authentic sports photography.
 
     subtitle: "Pitch-side selfie",
 
-    templateImage: "spa_template.png",
-
-    maskImage: "spa_mask.png",
-
     prompt: `
-Preserve the football player,
-stadium environment and sports lighting.
+Ultra realistic Spain football selfie.
 
-Replace only the supporter area
-with the uploaded user.
+A woman taking a selfie beside a Spain football superstar near the football pitch.
 
-Realistic football selfie.
-Natural Spanish matchday atmosphere.
+Preserve the uploaded person's:
+- facial identity
+- hairstyle
+- skin tone
+- realistic face proportions
+
+Authentic sports atmosphere.
+Natural lighting.
+Realistic iphone selfie.
+Natural skin texture.
+Same camera perspective.
+
+Both people must feel naturally together.
+
+No cartoon.
+No CGI.
+No fake face.
 `,
   },
 ];
@@ -308,5 +423,8 @@ Natural Spanish matchday atmosphere.
 // ================= MAP =================
 
 export const CALCIO_ARCHETYPES_MAP = Object.fromEntries(
-  CALCIO_ARCHETYPES_CARDS.map((card) => [card.id, card])
+  CALCIO_ARCHETYPES_CARDS.map((card) => [
+    card.id,
+    card,
+  ])
 ) as Record<string, CalcioCard>;
