@@ -482,61 +482,55 @@ const templateUrl =
       userUrl
     );
 
-    // REPLICATE
-    const output: any =
-      await replicate.run(
-        "codeplugtech/face-swap:278a81e7ebb94d4adb90c7adad0782a2d3a9d1ff3619df06f3a7343a91d6a2cb",
-        {
-          input: {
-            swap_image: templateUrl,
-
-            input_image: userUrl,
-
-            // IMPORTANTISSIMO
-            target_face_index: 0,
-
-            face_restore: true,
-
-            upscale: 2,
-          },
-        }
-      );
-
-    console.log(
-      "⚽ REPLICATE OUTPUT =",
-      output
-    );
-
-    let finalUrl: string | null =
-      null;
-
-    if (Array.isArray(output)) {
-      finalUrl = output[0];
-    } else if (
-      typeof output === "string"
-    ) {
-      finalUrl = output;
+   // REPLICATE
+const output: any =
+  await replicate.run(
+    "codeplugtech/face-swap",
+    {
+      input: {
+        swap_image: userUrl,
+        target_image: templateUrl,
+      },
     }
+  );
 
-    if (!finalUrl) {
-      throw new Error(
-        "Calcio face swap failed"
-      );
-    }
+console.log(
+  "⚽ REPLICATE OUTPUT =",
+  output
+);
 
-    console.log(
-      "✅ CALCIO FACE SWAP DONE"
-    );
+let finalUrl: string | null =
+  null;
 
-    return finalUrl;
-  } catch (err: any) {
-    console.error(
-      "❌ CALCIO FACE SWAP ERROR",
-      err
-    );
+if (Array.isArray(output)) {
+  finalUrl = output[0];
+} else if (
+  typeof output === "string"
+) {
+  finalUrl = output;
+}
 
-    throw err;
-  }
+if (!finalUrl) {
+  throw new Error(
+    "Calcio face swap failed"
+  );
+}
+
+console.log(
+  "✅ CALCIO FACE SWAP DONE"
+);
+
+return finalUrl;
+
+} catch (err: any) {
+
+console.error(
+  "❌ CALCIO FACE SWAP ERROR",
+  err
+);
+
+throw err;
+}
 }
 
 /* ================== HELPERS ELEVENLABS ================== */
