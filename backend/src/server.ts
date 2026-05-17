@@ -485,11 +485,11 @@ const templateUrl =
    // REPLICATE
 const output: any =
   await replicate.run(
-    "codeplugtech/face-swap",
+    "lucataco/faceswap",
     {
       input: {
-        swap_image: userUrl,
-        target_image: templateUrl,
+        swap_image: templateUrl,
+        input_image: userUrl,
       },
     }
   );
