@@ -2921,15 +2921,12 @@ app.post("/calcio/generate", upload.single("image"), async (req: any, res) => {
 
     console.log("archetypeKey:", archetypeKey);
 
-    const userImageBase64 =
-      req.file.buffer.toString("base64");
-
     // ================= TEMPLATE =================
 
 const templatePath = path.join(
-  process.cwd(),
-  "src/assets/calcio",
-  `${archetype.id}.jpg`
+  __dirname,
+  "../src/assets/calcio",
+  `${archetypeKey.replace("_selfie", "")}_template.jpg`
 );
 
 console.log("⚽ TEMPLATE:", templatePath);
@@ -2971,6 +2968,7 @@ console.log("✅ CALCIO FACE SWAP DONE");
     });
   }
 });
+
 /* ================== COUPLE CARDS ================== */
 app.post("/couple/generate", upload.fields([
   { name: "image1" },
