@@ -19,7 +19,11 @@ import sharp from "sharp";
 import { CALCIO_ARCHETYPES_MAP } from "./calcioCards";
 import { getCouplePrompt, restyleImage, restyleStyleCardImage } from "./restyle";
 dotenv.config({ path: "../.env" });
+import Replicate from "replicate";
 
+const replicate = new Replicate({
+  auth: process.env.REPLICATE_API_KEY,
+});
 
 async function applyWatermarkToVideo(videoUrl: string): Promise<Buffer> {
 const tempInput = path.join(os.tmpdir(), `input_${Date.now()}.mp4`);
@@ -442,7 +446,99 @@ async function swapFace(templatePath: string, userBuffer: Buffer) {
   }
 }
 
-//}
+// ---------------- SWAPFACE CALCIO ----------------
+async function swapFaceCalcio(
+  templatePath: string,
+  userBuffer: Buffer
+) {
+  process.env.REPLICATE_API_KEY =
+    requireEnv("REPLICATE_API_KEY");
+
+  try {
+    console.log("⚽ CALCIO FACE SWAP START");
+
+    // TEMPLATE
+    const templateImage: any =
+  fs.readFileSync(templatePath);
+
+const templateUrl =
+  await fal.storage.upload(
+    templateImage
+  );
+
+    // USER
+    const userUrl =
+  await fal.storage.upload(
+    userBuffer as any
+  );
+
+    console.log(
+      "⚽ TEMPLATE URL =",
+      templateUrl
+    );
+
+    console.log(
+      "⚽ USER URL =",
+      userUrl
+    );
+
+    // REPLICATE
+    const output: any =
+      await replicate.run(
+        "codeplugtech/face-swap:278a81e7ebb94d4adb90c7adad0782a2d3a9d1ff3619df06f3a7343a91d6a2cb",
+        {
+          input: {
+            swap_image: templateUrl,
+
+            input_image: userUrl,
+
+            // IMPORTANTISSIMO
+            target_face_index: 0,
+
+            face_restore: true,
+
+            upscale: 2,
+          },
+        }
+      );
+
+    console.log(
+      "⚽ REPLICATE OUTPUT =",
+      output
+    );
+
+    let finalUrl: string | null =
+      null;
+
+    if (Array.isArray(output)) {
+      finalUrl = output[0];
+    } else if (
+      typeof output === "string"
+    ) {
+      finalUrl = output;
+    }
+
+    if (!finalUrl) {
+      throw new Error(
+        "Calcio face swap failed"
+      );
+    }
+
+    console.log(
+      "✅ CALCIO FACE SWAP DONE"
+    );
+
+    return finalUrl;
+  } catch (err: any) {
+    console.error(
+      "❌ CALCIO FACE SWAP ERROR",
+      err
+    );
+
+    throw err;
+  }
+}
+
 /* ================== HELPERS ELEVENLABS ================== */
 async function elevenTextToSpeech(text: string, voiceId?: string) {
   const finalVoiceId = voiceId || requireEnv("ELEVENLABS_VOICE_ID");
@@ -2933,10 +3029,11 @@ console.log("⚽ TEMPLATE:", templatePath);
 
 // ================= FACE SWAP =================
 
-const finalUrl = await swapFace(
-  templatePath,
-  req.file.buffer
-);
+const finalUrl =
+  await swapFaceCalcio(
+    templatePath,
+    req.file.buffer
+  );
 
 console.log("✅ CALCIO FACE SWAP DONE");
 
