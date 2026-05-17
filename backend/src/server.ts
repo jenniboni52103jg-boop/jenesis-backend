@@ -483,16 +483,16 @@ const templateUrl =
     );
 
    // REPLICATE
-const output: any =
-  await replicate.run(
-    "lucataco/faceswap",
-    {
-      input: {
-        swap_image: templateUrl,
-        input_image: userUrl,
-      },
-    }
-  );
+const output: any = await replicate.run(
+  "yan-ops/face_swap",
+  {
+    input: {
+      source_image: userUrl,
+      target_image: templateUrl,
+      face_restore: true,
+    },
+  }
+);
 
 console.log(
   "⚽ REPLICATE OUTPUT =",
