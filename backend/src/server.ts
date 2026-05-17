@@ -507,7 +507,7 @@ async function swapFaceCalcio(
 
       body: JSON.stringify({
         version:
-          "a9758cb44f2bd4c0fdbe5a670f29b1a1a5d5b9f0d6e8d4f6d5c4b3a2f1e0d9c8",
+"0383f62e173d3d9d1d0f44e92e4a0f409775888b8598eafbfef6f947c3853e22",
 
         input: {
           swap_image: userUrl,
