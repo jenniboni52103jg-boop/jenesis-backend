@@ -459,18 +459,18 @@ async function swapFaceCalcio(
 
     // TEMPLATE
     const templateImage: any =
-  fs.readFileSync(templatePath);
+      fs.readFileSync(templatePath);
 
-const templateUrl =
-  await fal.storage.upload(
-    templateImage
-  );
+    const templateUrl =
+      await fal.storage.upload(
+        templateImage
+      );
 
     // USER
     const userUrl =
-  await fal.storage.upload(
-    userBuffer as any
-  );
+      await fal.storage.upload(
+        userBuffer as any
+      );
 
     console.log(
       "⚽ TEMPLATE URL =",
@@ -482,54 +482,130 @@ const templateUrl =
       userUrl
     );
 
-   // REPLICATE
-const output: any = await replicate.run(
-  "yan-ops/face_swap:9a5d6d1f0c7d4f4b8f1f8e2c5d6a7b8c9d0e1f2a3b4c5d6e7f8g9h0i1j2k3l4",
-  {
-    input: {
-      source_image: userUrl,
-      target_image: templateUrl,
-    },
+    // ---------------- REPLICATE DIRECT API ----------------
+
+    const response = await fetch(
+      "https://api.replicate.com/v1/predictions",
+      {
+        method: "POST",
+        headers: {
+          Authorization:
+            `Token ${process.env.REPLICATE_API_KEY}`,
+          "Content-Type":
+            "application/json",
+        },
+        body: JSON.stringify({
+          version:
+            "a9758cb44f2bd4c0fdbe5a670f29b1a1a5d5b9f0d6e8d4f6d5c4b3a2f1e0d9c8",
+
+          input: {
+            swap_image: userUrl,
+            target_image: templateUrl,
+          },
+        }),
+      }
+    );
+
+    const prediction =
+      await response.json();
+
+    console.log(
+      "⚽ PREDICTION =",
+      prediction
+    );
+
+    if (!prediction?.urls?.get) {
+      throw new Error(
+        "Prediction URL missing"
+      );
+    }
+
+    let finalOutput: any = null;
+
+    for (let i = 0; i < 30; i++) {
+      await new Promise((r) =>
+        setTimeout(r, 2000)
+      );
+
+      const poll = await fetch(
+        prediction.urls.get,
+        {
+          headers: {
+            Authorization:
+              `Token ${process.env.REPLICATE_API_KEY}`,
+          },
+        }
+      );
+
+      const pollData =
+        await poll.json();
+
+      console.log(
+        "⚽ POLL STATUS =",
+        pollData.status
+      );
+
+      if (
+        pollData.status ===
+        "succeeded"
+      ) {
+        finalOutput =
+          pollData.output;
+        break;
+      }
+
+      if (
+        pollData.status ===
+        "failed"
+      ) {
+        throw new Error(
+          "Face swap failed"
+        );
+      }
+    }
+
+    if (!finalOutput) {
+      throw new Error(
+        "Timeout waiting prediction"
+      );
+    }
+
+    let finalUrl: string | null =
+      null;
+
+    if (
+      Array.isArray(finalOutput)
+    ) {
+      finalUrl =
+        finalOutput[0];
+    } else if (
+      typeof finalOutput ===
+      "string"
+    ) {
+      finalUrl = finalOutput;
+    }
+
+    if (!finalUrl) {
+      throw new Error(
+        "Calcio face swap failed"
+      );
+    }
+
+    console.log(
+      "✅ CALCIO FACE SWAP DONE"
+    );
+
+    return finalUrl;
+
+  } catch (err: any) {
+
+    console.error(
+      "❌ CALCIO FACE SWAP ERROR",
+      err
+    );
+
+    throw err;
   }
-);
-
-console.log(
-  "⚽ REPLICATE OUTPUT =",
-  output
-);
-
-let finalUrl: string | null =
-  null;
-
-if (Array.isArray(output)) {
-  finalUrl = output[0];
-} else if (
-  typeof output === "string"
-) {
-  finalUrl = output;
-}
-
-if (!finalUrl) {
-  throw new Error(
-    "Calcio face swap failed"
-  );
-}
-
-console.log(
-  "✅ CALCIO FACE SWAP DONE"
-);
-
-return finalUrl;
-
-} catch (err: any) {
-
-console.error(
-  "❌ CALCIO FACE SWAP ERROR",
-  err
-);
-
-throw err;
-}
 }
 
 /* ================== HELPERS ELEVENLABS ================== */
