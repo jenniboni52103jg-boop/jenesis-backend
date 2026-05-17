@@ -484,12 +484,11 @@ const templateUrl =
 
    // REPLICATE
 const output: any = await replicate.run(
-  "yan-ops/face_swap",
+  "yan-ops/face_swap:9a5d6d1f0c7d4f4b8f1f8e2c5d6a7b8c9d0e1f2a3b4c5d6e7f8g9h0i1j2k3l4",
   {
     input: {
       source_image: userUrl,
       target_image: templateUrl,
-      face_restore: true,
     },
   }
 );
