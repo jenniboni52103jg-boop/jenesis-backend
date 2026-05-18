@@ -930,36 +930,55 @@ export async function restyleCalcioImage(opts: {
 
           control_image_url: userUrl,
 
-          prompt: `
-Ultra realistic selfie photo with Lionel Messi at a football stadium.
+         prompt: `
+Ultra realistic stadium selfie photo.
 
-The uploaded person must keep:
+IMPORTANT:
+The uploaded person must preserve EXACT identity.
+
+STRICT RULES:
 - same face
-- same identity
-- same skin tone
+- same eyes
+- same nose
+- same jawline
+- same eyebrows
+- same lips
 - same hairstyle
-- same facial structure
+- same skin texture
+- same facial proportions
+- same ethnicity
+- same age
 
-Natural selfie composition.
-Both subjects integrated naturally.
-Same lighting.
-Same camera lens.
-Same shadows.
-Same skin texture.
+The person must look IDENTICAL to the uploaded selfie.
 
-Professional sports photography.
-Instagram selfie style.
-No collage.
-No split image.
-No double exposure.
-No face distortion.
+Do NOT redesign the face.
+Do NOT beautify the face.
+Do NOT generate another person.
+
+Natural stadium selfie with Lionel Messi.
+
+Messi and the uploaded person taking a realistic selfie together after football match.
+
+Natural phone camera perspective.
+Realistic shadows.
+Realistic skin pores.
+Realistic DSLR quality.
+Instagram sports selfie.
+
+NO AI LOOK.
+NO CGI.
+NO CARTOON.
+NO BEAUTIFIED FACE.
 `,
 
-          guidance_scale: 12,
+negative_prompt:
+  getCalcioNegativePrompt(),
 
-          num_inference_steps: 35,
+          guidance_scale: 18,
 
-          strength: 0.95,
+          num_inference_steps: 50,
+
+          strength: 0.72,
 
           sync_mode: true,
         },
