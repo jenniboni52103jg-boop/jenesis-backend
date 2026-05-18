@@ -19,12 +19,12 @@ import sharp from "sharp";
 import { CALCIO_ARCHETYPES_MAP } from "./calcioCards";
 import { getCouplePrompt, restyleImage, restyleStyleCardImage } from "./restyle";
 dotenv.config({ path: "../.env" });
-//import Replicate from "replicate";
+import Replicate from "replicate";
 import { restyleCalcioImage } from "./restyle";
 
-//const replicate = new Replicate({
- // auth: process.env.REPLICATE_API_KEY,
-//});
+const replicate = new Replicate({
+  auth: process.env.REPLICATE_API_KEY,
+});
 
 async function applyWatermarkToVideo(videoUrl: string): Promise<Buffer> {
 const tempInput = path.join(os.tmpdir(), `input_${Date.now()}.mp4`);
@@ -1537,3 +1537,1662 @@ async function matchColorToTemplate(faceBuffer: Buffer, templateBuffer: Buffer) 
     })
     .toBuffer();
 }
+
+/* ================== funzione FACESWAP ================== */
+async function faceSwapWithTemplate(opts: {
+  userFace: Buffer;
+  templateBuffer: Buffer;
+}) {
+  const apiKey = requireEnv("STABILITY_API_KEY");
+
+  const form = new FormData();
+
+  // TEMPLATE = BASE
+  form.append("image", opts.templateBuffer, {
+    filename: "template.jpg",
+    contentType: "image/jpeg",
+  });
+
+  // 👇 QUESTO È IL SEGRETO
+ form.append("prompt", `
+Replace ONLY the face in this image.
+
+Keep EXACTLY:
+- same body
+- same outfit
+- same pose
+- same background
+- same lighting
+- same composition
+Use the face from the identity image.
+
+Ultra realistic face blending.
+
+The face must:
+- perfectly match skin tone of the scene
+- match lighting direction
+- match shadows and highlights
+- blend seamlessly into the head
+
+Ultra realistic skin blending.
+No visible edges.
+No artifacts.
+No effects AI
+`);
+
+  form.append("negative_prompt", `
+different clothes, different background, different pose, multiple faces, distorted face
+`);
+
+  form.append("strength", "0.2");
+
+  const resp = await fetch(
+    "https://api.stability.ai/v2beta/stable-image/generate/core",
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        Accept: "application/json",
+        ...form.getHeaders(),
+      },
+      body: form as any,
+    }
+  );
+
+  const data = await resp.json();
+
+  const base64 =
+    data?.image ||
+    data?.artifacts?.[0]?.base64 ||
+    data?.images?.[0]?.base64;
+
+  if (!base64) throw new Error("Face swap failed");
+
+  return Buffer.from(base64, "base64");
+}
+
+/* ================== STABILITY stabillity calcio ================== */
+async function generateStabilityImage(opts: {
+  promptText: string;
+  style?: string;
+  ratio?: string;
+  resolution?: string;
+}) {
+  const { promptText, style = "photorealistic", ratio = "9:16" } = opts;
+
+  const STABILITY_API_KEY = requireEnv("STABILITY_API_KEY");
+
+  const form = new FormData();
+  form.append("prompt", String(promptText));
+  form.append("output_format", "jpeg");
+  form.append("aspect_ratio", toStabilityAspectRatio(String(ratio)));
+
+  const preset = styleToPreset(String(style ?? ""));
+  if (preset) form.append("style_preset", preset);
+
+  const resp = await fetch(
+    "https://api.stability.ai/v2beta/stable-image/generate/sd3",
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${STABILITY_API_KEY}`,
+        Accept: "application/json",
+        ...form.getHeaders(),
+      },
+      body: form as any,
+    }
+  );
+
+  const text = await resp.text();
+
+  if (!resp.ok) {
+    console.log("❌ Stability TEXT2IMG status:", resp.status);
+    console.log("❌ Stability TEXT2IMG body:", text);
+    throw new Error(`Stability error ${resp.status}: ${text}`);
+  }
+
+  const result = safeJsonParse(text);
+  if (!result) {
+    throw new Error("Stability: risposta non JSON");
+  }
+
+  const base64 = pickBase64(result);
+  if (!base64) {
+    console.log("❌ Stability TEXT2IMG JSON:", result);
+    throw new Error("Stability: nessuna immagine trovata nella risposta");
+  }
+
+  return {
+    imageUrl: `data:image/jpeg;base64,${base64}`,
+  };
+}
+/* ================== FUNZIONE UPSCALE ================== */
+async function upscaleImage(buffer: Buffer): Promise<Buffer> {
+  const apiKey = requireEnv("STABILITY_API_KEY");
+
+  const form = new FormData();
+  form.append("image", buffer, {
+    filename: "image.jpg",
+    contentType: "image/jpeg",
+  });
+
+  form.append("output_format", "jpeg");
+
+  const resp = await fetch(
+    "https://api.stability.ai/v2beta/stable-image/upscale/creative",
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        Accept: "application/json",
+        ...form.getHeaders(),
+      },
+      body: form as any,
+    }
+  );
+
+  const text = await resp.text();
+  const data = safeJsonParse(text);
+
+  if (!resp.ok) {
+    console.log("❌ Upscale error:", text);
+    throw new Error("Upscale failed");
+  }
+
+  const base64 =
+    data?.image ||
+    data?.artifacts?.[0]?.base64 ||
+    data?.images?.[0]?.base64;
+
+  if (!base64) {
+    console.log("❌ Upscale response:", data);
+    throw new Error("Upscale no image");
+  }
+
+  return Buffer.from(base64, "base64");
+}
+/* ================== STABILITY TEXT → IMAGE ================== */
+app.post("/generate-image", async (req, res) => {
+  try {
+    const isPremium =
+      req.body?.isPremium === "true" || req.body?.isPremium === true;
+
+    const { promptText, style, ratio, resolution } = req.body ?? {};
+
+    if (!promptText || !ratio) {
+      return res.status(400).json({
+        error: "promptText o ratio mancanti",
+      });
+    }
+
+    // 📐 RATIO MAP
+    const ratioPromptMap: any = {
+      "9:16": "vertical image, portrait orientation, full body framing",
+      "1:1": "square image, centered composition",
+      "16:9": "wide cinematic image, landscape orientation",
+      "3:4": "portrait image, classic photography ratio",
+      "4:3": "horizontal photography, balanced composition",
+      "2:3": "portrait photography, DSLR ratio",
+    };
+
+    // 🧠 BASE PROMPT
+    let finalPrompt = String(promptText);
+
+ if (resolution === "2k" && isPremium) {
+  finalPrompt += `
+
+ULTRA PREMIUM MODE:
+- hyper realistic photography
+- insane level of detail
+- ultra sharp 8k textures
+- cinematic lighting like a movie scene
+- volumetric light, depth of field
+- professional color grading (Hollywood look)
+- skin micro details, pores, fine imperfections
+- realistic reflections and shadows
+- global illumination
+- perfect exposure balance
+
+This MUST look like a high-end professional photo, not AI.
+`;
+}
+    // 🎯 STYLE
+    if (style === "photorealistic") {
+      finalPrompt += `
+
+Ultra high-end realistic photography.
+
+STRICT RULES:
+- must look like a REAL photo taken with a camera
+- NOT a 3D render
+- NOT a cartoon
+- NOT Pixar style
+- NOT animated
+- NOT CGI
+
+If subject is person:
+-real human skin texture
+- pores, imperfections, natural asymmetry
+- natural lighting, cinematic shadows
+- 85mm lens, DSLR portrait
+- realistic face details (NO smooth skin)
+- realistic eyes (no cartoon eyes)
+
+
+If subject is animal:
+- real anatomy
+- real fur
+- correct proportions
+- real animal anatomy
+- natural fur, NOT stylized
+- correct proportions
+- realistic eyes (NOT oversized)
+
+If the subject is an object:
+- professional product photography
+- studio lighting, soft shadows
+- ultra realistic materials
+- sharp details
+
+Global rules:
+- no AI look
+- no plastic skin
+- shot on Canon EOS R5
+- high dynamic range
+- cinematic color grading
+- no over-smoothing
+`;
+    }
+
+    // 📐 RATIO
+    finalPrompt += `
+${ratioPromptMap?.[ratio] || ""}
+`;
+
+    // 🔥 REFINEMENT
+    finalPrompt += `
+
+ULTRA QUALITY REFINEMENT
+IMPORTANT:
+- if animal is requested → NEVER generate a human
+- preserve animal identity strictly
+- ultra sharp focus
+- extremely detailed textures
+- realistic lighting and shadows
+- no blur, no distortion
+- no artifacts
+- perfect anatomy
+- real photography look
+
+NEGATIVE:
+cartoon, 3d render, cgi, pixar, disney, toy, plastic, fake, anime, big eyes, stylized, low quality, blurry
+
+DO NOT look like AI generated.
+`;
+
+if (style === "cartoon") {
+  finalPrompt += `
+
+Cartoon / animated style illustration.
+
+STYLE RULES:
+- stylized character
+- smooth skin
+- clean outlines
+- vibrant colors
+- soft shading
+- slightly exaggerated features
+- big expressive eyes
+- perfect symmetry
+
+REFERENCES:
+- Pixar style
+- Disney style
+- animated movie character
+
+QUALITY:
+- ultra clean render
+- no realism
+- no skin texture
+- no pores
+- no camera look
+
+NEGATIVE:
+realistic, photo, DSLR, skin texture, pores, noise
+`;
+}
+    // 🔥 BLOCCO PREMIUM
+    const finalResolution =
+      resolution === "2k" && isPremium ? "2k" : "1k";
+
+    if (resolution === "2k" && !isPremium) {
+      return res.status(403).json({
+        error: "Ultra HD solo PRO",
+      });
+    }
+
+    // 🎯 GENERAZIONE
+    const result = await generateStabilityImage({
+      promptText: finalPrompt,
+      style: String(style ?? "photorealistic"),
+      ratio: String(ratio),
+      resolution: String(finalResolution),
+    });
+
+// 🧠 BUFFER
+let buffer = Buffer.from(
+  result.imageUrl.split(",")[1],
+  "base64"
+) as Buffer;
+
+// ⭐ SOLO PRO → UPSCALE
+if (resolution === "2k" && isPremium) {
+  buffer = await upscaleImage(buffer);
+}
+
+// 🎯 DIFFERENZA QUALITÀ
+if (isPremium) {
+  buffer = await sharp(buffer)
+    .jpeg({ quality: 100 }) // 🔥 PRO
+    .sharpen(1.5)
+    .toBuffer();
+} else {
+  buffer = await sharp(buffer)
+    .jpeg({ quality: 75 }) // 👈 FREE
+    .blur(0.3)
+    .toBuffer();
+}
+
+// 💧 WATERMARK
+const finalBuffer = isPremium
+  ? buffer
+  : await applyWatermarkToBuffer(buffer);
+
+return res.json({
+  imageUrl: `data:image/jpeg;base64,${finalBuffer.toString("base64")}`,
+});
+
+  } catch (err: any) {
+    console.log("❌ Errore generate-image:", err?.message || err);
+
+    return res.status(500).json({
+      error: err?.message || "Errore interno server",
+    });
+  }
+});
+
+/* ================== RUNWAY IMAGE → VIDEO ================== */
+app.post("/api/runway/image-to-video", upload.single("image"), async (req: any, res) => {
+  try {
+  
+    console.log("IS PREMIUM:", req.body.isPremium);
+
+    const isPremium =
+      req.body?.isPremium === "true" || req.body?.isPremium === true;
+
+    // 🔥 QUALITY
+    const { quality } = req.body;
+    const isUltra = quality === "ultra";
+
+    console.log("📦 FILE:", req.file);
+    console.log("REQ.FILE:", req.file);
+
+    if (!req.file || !req.file.buffer) {
+  console.log("❌ FILE NON ARRIVATO");
+  return res.status(400).json({ error: "Missing image file" });
+}
+
+    const prompt = String(req.body?.prompt ?? "Animate this image naturally");
+    const ratio = toRunwayRatio(String(req.body?.ratio ?? "720:1280"));
+    const durationRaw = Number(req.body?.duration ?? 5);
+    const duration = durationRaw === 10 ? 10 : 5;
+
+    console.log("🎬 Runway start image-to-video...");
+    console.log("ratio:", ratio);
+    console.log("duration:", duration);
+    console.log("QUALITY:", quality);
+
+    const mimeType = req.file.mimetype || "image/jpeg";
+    const dataUri = bufferToDataUri(req.file.buffer, mimeType);
+
+    // 🚀 GENERAZIONE VIDEO
+    const task = await runway.imageToVideo
+      .create({
+        model: "gen4.5",
+        promptImage: dataUri,
+        promptText: prompt,
+        ratio,
+        duration,
+      })
+      .waitForTaskOutput();
+
+    const videoUrl = normalizeRunwayOutput(task);
+
+    if (!videoUrl) {
+      console.log("❌ Runway task output:", task);
+      return res.status(500).json({
+        error: "Runway non ha restituito un videoUrl valido",
+      });
+   }
+
+    console.log("🎬 Processing video...");
+
+    // 📥 scarica video
+    const videoBuffer = await fetch(videoUrl).then((r) => r.buffer());
+
+     //📁 path
+    const inputPath = path.join(TEMP_DIR, `runway_${Date.now()}.mp4`);
+    const outputPath = path.join(VIDEOS_DIR, `runway_wm_${Date.now()}.mp4`);
+
+    fs.writeFileSync(inputPath, videoBuffer);
+
+    let processedInput = inputPath;
+
+    // 💧 WATERMARK SOLO FREE
+    const filters = isPremium
+      ? []
+      : [
+          {
+            filter: "drawtext",
+            options: {
+              text: "JenesisAI",
+              fontcolor: "white@0.5",
+              fontsize: "h/20",
+              x: "(w-text_w)/2",
+              y: "(h-text_h)*0.9",
+              shadowcolor: "black",
+              shadowx: 2,
+              shadowy: 2,
+            },
+          },
+        ];
+
+        const filterString = isPremium
+  ? null
+  : "drawtext=text='JenesisAI':fontcolor=white@0.5:fontsize=40:x=(w-text_w)/2:y=h-60:shadowcolor=black:shadowx=2:shadowy=2";
+
+
+     //🎬 FFMPEG (QUALITÀ REALE)
+   await new Promise((resolve, reject) => {
+   const command = ffmpeg(inputPath)
+    .outputOptions([
+      "-c:v libx264",
+      isUltra ? "-crf 16" : "-crf 23",
+      "-preset slow",
+      "-pix_fmt yuv420p",
+    ]);
+
+  if (filterString) {
+    command.videoFilters(filterString);
+  }
+
+  command
+    .save(outputPath)
+    .on("end", resolve)
+    .on("error", reject);
+});
+
+    // 🧹 cleanup
+    try { fs.unlinkSync(inputPath); } catch {}
+    try { fs.unlinkSync(processedInput); } catch {}
+
+    const finalUrl = `${getPublicBaseUrl(req)}/videos/${path.basename(outputPath)}`;
+
+    console.log("✅ Runway video pronto");
+
+    return res.json({
+      videoUrl: finalUrl,
+      taskId: task?.id ?? null,
+    });
+
+  } 
+  catch (err: any) {
+  console.log("💥 RUNWAY ERROR:", err);
+
+  const msg =
+    err?.error?.error || // ← QUESTO È QUELLO GIUSTO
+    err?.message ||
+    "";
+
+  if (msg.includes("credits")) {
+    return res.status(402).json({
+      error: "NO_CREDITS",
+      message: "Crediti esauriti"
+    });
+  }
+
+  return res.status(500).json({
+    error: "GENERATION_FAILED",
+  });
+}
+});
+
+/* ------------------- NUOVA ROUTE: GENERATE MOTION SPEAKING VIDEO ------------------- */
+app.post("/api/generate-motion-speaking-video", upload.single("image"), async (req: any, res) => {
+  try {
+  
+    console.log("--- INIZIO PROCESSO VIDEO ---");
+    console.log("BODY RICEVUTO:", req.body);
+
+    // 1. Estrazione e Validazione Input
+    const isPremium = req.body?.isPremium === "true" || req.body?.isPremium === true;
+    const prompt = String(req.body?.actionPrompt || "Animate naturally, cinematic movement");
+    const speech = String(req.body?.speechText || "");
+    const voiceId = String(req.body?.voiceId || "");
+
+    if (!speech || speech.trim().length < 2) {
+      return res.status(400).json({ error: "Il testo del parlato (speechText) è troppo breve o mancante." });
+    }
+
+    if (!voiceId) {
+      return res.status(400).json({ error: "voiceId mancante." });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({ error: "File immagine non ricevuto dal server." });
+    }
+
+    // 2. Preparazione Immagine (Base64 per Runway)
+    const dataUri = `data:${req.file.mimetype};base64,${req.file.buffer.toString("base64")}`;
+
+    /* STEP 1 — Runway Gen-4.5: Generazione Movimento */
+    console.log("🚀 Chiamata a Runway...");
+    const runwayTask = await runway.imageToVideo.create({
+      model: "gen4.5",
+      promptImage: dataUri,
+      promptText: prompt,
+      ratio: "720:1280",
+      duration: 5,
+    }).waitForTaskOutput(); // Fondamentale: attende che il video sia pronto
+
+    console.log("RUNWAY TASK COMPLETATO:", runwayTask.id);
+
+    const videoUrl = Array.isArray(runwayTask.output) 
+      ? runwayTask.output[0] 
+      : (runwayTask as any).videoUrl;
+
+      console.log("🎬 VIDEO URL:", videoUrl);
+
+if (!videoUrl) {
+  console.log("❌ RUNWAY OUTPUT:", runwayTask);
+  throw new Error("❌ VIDEO NON GENERATO DA RUNWAY");
+}
+
+    if (!videoUrl) {
+      throw new Error("Runway non ha restituito un URL video valido.");
+    }
+
+    /* STEP 2 — Hedra: Generazione Voce */
+    console.log("🎙️ Chiamata a Hedra per l'audio...");
+    const audioGenId = await hedraGenerateAudio({
+      text: speech,
+      voiceId,
+    });
+
+    const audioResult = await hedraPollGenerationResult(audioGenId);
+    
+    // Fallback multipli per recuperare l'URL audio da Hedra
+    let audioUrl = audioResult?.url || audioResult?.audio_url || audioResult?.download_url || 
+                   audioResult?.asset?.url || audioResult?.result?.url;
+
+    if (!audioUrl && (audioResult?.asset_id || audioResult?.asset?.id)) {
+      const assetId = audioResult?.asset_id || audioResult?.asset?.id;
+      audioUrl = await hedraGetAssetDownloadUrl(assetId);
+    }
+
+    if (!audioUrl) {
+      throw new Error("Impossibile recuperare l'URL audio da Hedra.");
+    }
+
+    /* STEP 3 — Download Audio e Processing */
+    const audioPath = path.join(TEMP_DIR, `audio_${Date.now()}.mp3`);
+    const outputPath = path.join(VIDEOS_DIR, `final_${Date.now()}.mp4`);
+
+    const audioResponse = await fetch(audioUrl, {
+      headers: { "User-Agent": "Mozilla/5.0" },
+      redirect: "follow"
+    });
+
+    if (!audioResponse.ok) throw new Error("Download audio fallito");
+    const audioBuffer = await audioResponse.buffer();
+    fs.writeFileSync(audioPath, audioBuffer);
+
+    /* STEP 4 — FFmpeg: Merge Audio + Video + Watermark */
+    console.log("🎬 Avvio FFmpeg (Merge)...");
+    
+    const filters = isPremium ? [] : [
+      {
+        filter: "drawtext",
+        options: {
+          text: "JenesisAI",
+          fontcolor: "white@0.5",
+          fontsize: "h/20",
+          x: "(w-text_w)/2",
+          y: "(h-text_h)*0.9",
+          shadowcolor: "black",
+          shadowx: 2,
+          shadowy: 2,
+        },
+      },
+    ];
+  
+//const videoBuffer = await fetch(videoUrl).then(r => r.buffer());
+
+//const videoPath = path.join(TEMP_DIR, `video_${Date.now()}.mp4`);
+//fs.writeFileSync(videoPath, videoBuffer);
+
+console.log("📥 DOWNLOAD VIDEO RUNWAY...");
+
+const videoResponse = await fetch(videoUrl);
+
+if (!videoResponse.ok) {
+  throw new Error("Download video Runway fallito");
+}
+
+const arrayBuffer = await videoResponse.arrayBuffer();
+const videoBuffer = Buffer.from(arrayBuffer);
+
+const videoPath = path.join(TEMP_DIR, `video_${Date.now()}.mp4`);
+
+fs.writeFileSync(videoPath, videoBuffer);
+
+console.log("✅ VIDEO SALVATO:", videoPath);
+
+    await new Promise((resolve, reject) => {
+      ffmpeg(videoPath) // Usa direttamente l'URL di Runway
+        .input(audioPath)
+        .videoFilters(filters)
+        .outputOptions("-shortest") // Taglia il video/audio alla durata del più corto
+        .on("end", resolve)
+        .on("error", (err) => {
+          console.error("FFmpeg Error:", err);
+          reject(err);
+        })
+        .save(outputPath);
+    });
+
+    console.log("📁 FILE PATH:", outputPath);
+
+if (!fs.existsSync(outputPath)) {
+  throw new Error("❌ FILE NON ESISTE DOPO FFMPEG");
+}
+
+const stats = fs.statSync(outputPath);
+console.log("📦 FILE SIZE (MB):", stats.size / 1024 / 1024);
+
+
+    /* STEP 5 — Upload finale su Cloudinary */
+    console.log("☁️ Upload su Cloudinary...");
+   let uploadRes;
+
+try {
+
+  uploadRes = await cloudinary.uploader.upload(outputPath, {
+  resource_type: "video",
+  folder: "generated_avatars",
+  use_filaname: true
+});
+
+  console.log("✅ CLOUDINARY OK:", uploadRes.secure_url);
+
+} catch (cloudErr: any) {
+
+  console.log("❌ CLOUDINARY ERROR:");
+  console.log(cloudErr);
+
+  throw new Error(
+    cloudErr?.message || "Cloudinary upload failed"
+  );
+
+}
+    // Pulizia file temporanei
+    try { fs.unlinkSync(audioPath); fs.unlinkSync(outputPath); } catch (e) {}
+
+    console.log("✅ PROCESSO COMPLETATO. URL:", uploadRes.secure_url);
+
+    //return res.json({
+    //  success: true,
+      //videoUrl: uploadRes.secure_url,
+    //});
+    console.log("🔥 FINAL RESPONSE:", {
+  success: true,
+  videoUrl: uploadRes?.secure_url,
+  uploadRes,
+});
+
+return res.json({
+  success: true,
+  videoUrl: uploadRes?.secure_url,
+  uploadRes,
+});
+
+  } catch (err: any) {
+    console.error("❌ ERRORE CRITICO ROUTE:");
+    
+    // Estrai il messaggio di errore in modo più preciso
+    const errMsg = err?.body?.error || err?.message || "Errore sconosciuto";
+    console.log("Dettaglio errore:", errMsg);
+
+    // Se i crediti sono finiti, mandiamo un messaggio chiaro all'app
+    if (errMsg.toLowerCase().includes("credits")) {
+        return res.status(402).json({
+            success: false,
+            error: "NO_CREDITS",
+            message: "I crediti di Runway sono finiti! Ricarica l'account."
+        });
+    }
+
+    return res.status(500).json({
+        success: false,
+        error: "SERVER_ERROR",
+        message: errMsg
+    });
+}
+});
+
+/* ======================================= TALKING PHOTO =================================================== */
+ app.post("/generate-talking-photo", async (req, res) => {
+  try {
+    const { imageBase64, script, voiceId, audioBase64 } = req.body ?? {};
+
+    if (!imageBase64) {
+      return res.status(400).json({ error: "Missing image" });
+    }
+
+    if (!script && !audioBase64) {
+      return res.status(400).json({
+        error: "Missing script or audioBase64",
+      });
+    }
+
+    console.log("🗣️ Hedra talking photo start");
+
+    const imageAssetId = await hedraCreateAsset({
+      name: "talking.jpg",
+      type: "image",
+    });
+
+    await hedraUploadAsset({
+      assetId: imageAssetId,
+      fileBuffer: Buffer.from(imageBase64, "base64"),
+      fileName: "talking.jpg",
+      mimeType: "image/jpeg",
+    });
+
+    let finalAudioAssetId: string | undefined;
+
+    if (audioBase64) {
+      console.log("🎤 Uploading user audio...");
+
+      const uploadedAudioAssetId = await hedraCreateAsset({
+        name: "voice.mp3",
+        type: "audio",
+      });
+
+      await hedraUploadAsset({
+        assetId: uploadedAudioAssetId,
+        fileBuffer: Buffer.from(audioBase64, "base64"),
+        fileName: "voice.mp3",
+        mimeType: "audio/mpeg",
+      });
+
+      finalAudioAssetId = uploadedAudioAssetId;
+      console.log("✅ User audio uploaded:", finalAudioAssetId);
+    } else {
+      if (!voiceId) {
+        return res.status(400).json({ error: "Missing voiceId" });
+      }
+
+      const audioGenId = await hedraGenerateAudio({
+        text: String(script).slice(0, 300),
+        voiceId,
+      });
+
+      const audioResult = await hedraPollGenerationResult(audioGenId);
+
+      const generatedAudioAssetId =
+        audioResult?.asset_id ||
+        audioResult?.id ||
+        audioResult?.asset?.id ||
+        null;
+
+      if (!generatedAudioAssetId) {
+        console.log(
+          "❌ Hedra audio result:",
+          JSON.stringify(audioResult, null, 2)
+        );
+        throw new Error("Hedra audio asset_id mancante");
+      }
+
+      finalAudioAssetId = generatedAudioAssetId;
+    }
+
+    if (!finalAudioAssetId) {
+      throw new Error("Audio asset finale mancante");
+    }
+
+    const videoGenId = await hedraCreateTalkingVideo({
+      imageAssetId,
+      audioAssetId: finalAudioAssetId,
+    });
+
+    const videoResult = await hedraPollGenerationResult(videoGenId);
+
+    let videoUrl =
+      videoResult?.url ||
+      videoResult?.video_url ||
+      videoResult?.download_url ||
+      videoResult?.streaming_url ||
+      videoResult?.asset?.url ||
+      videoResult?.asset?.download_url ||
+      videoResult?.result?.url ||
+      null;
+
+    const finalAssetId =
+      videoResult?.asset_id ||
+      videoResult?.id ||
+      videoResult?.asset?.id ||
+      null;
+
+    if (!videoUrl && finalAssetId) {
+      console.log("ℹ️ Trying Hedra asset lookup with assetId:", finalAssetId);
+      videoUrl = await hedraGetAssetDownloadUrl(finalAssetId);
+    }
+
+    if (!videoUrl) {
+      console.log(
+        "❌ Hedra video result without URL:",
+        JSON.stringify(videoResult, null, 2)
+      );
+      throw new Error("Hedra non ha restituito videoUrl");
+    }
+
+    console.log("✅ Hedra talking photo ready:", videoUrl);
+
+    return res.json({ videoUrl });
+  } catch (err: any) {
+    console.error("❌ Talking photo error:", err);
+    return res.status(500).json({ error: stringifyUnknownError(err) });
+  }
+})
+
+/* ======================================= ROUTA CREDITS =================================================== */
+app.post("/confirm-purchase", async (req, res) => {
+  try {
+    //const { userId, productId } = req.body;
+    const userId = String(req.body.userId);
+    const productId = String(req.body.productId);
+
+    let creditsToAdd = 0;
+
+    if (productId === "credits_330") creditsToAdd = 330;
+    if (productId === "credits_660") creditsToAdd = 660;
+    if (productId === "credits_1320") creditsToAdd = 1320;
+    if (productId === "credits_3300") creditsToAdd = 3300;
+    if (productId === "credits_6600") creditsToAdd = 6600;
+    if (productId === "credits_13200") creditsToAdd = 13200;
+
+    if (creditsToAdd === 0) {
+      return res.status(400).json({ error: "Invalid product" });
+    }
+
+    const user = await getUserFromDB(userId);
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const newCredits = (user.credits || 0) + creditsToAdd;
+
+    await updateUserCredits(userId, newCredits);
+
+    return res.json({ success: true, credits: newCredits });
+
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: "Server error" });
+  }
+});
+
+/* ================== HEDRA VOICES ================== */
+app.get("/api/hedra/voices", async (_req, res) => {
+  try {
+    const apiKey = requireEnv("HEDRA_API_KEY");
+
+    const resp = await fetch("https://api.hedra.com/web-app/public/voices", {
+      headers: {
+        "X-API-Key": apiKey,
+      },
+    });
+
+    const text = await resp.text();
+    const data = safeJsonParse(text);
+
+    if (!resp.ok) {
+      console.log("❌ Hedra voices raw error:", text);
+      return res.status(resp.status).json({
+        error:
+          data?.messages?.[0] ||
+          data?.message ||
+          `Hedra voices error ${resp.status}`,
+      });
+    }
+
+    const voices = Array.isArray(data)
+      ? data.map((v: any) => ({
+          id: v.id,
+          name: v.name,
+          preview_url: v.asset?.preview_url || null,
+        }))
+      : [];
+
+    return res.json({ voices });
+
+  } catch (err: any) {
+    console.error("❌ Hedra voices error:", err);
+    return res.status(500).json({ error: err?.message });
+  }
+});
+
+/* ============= AVATAR JOB START ============ */
+app.post("/generate-avatar", upload.none(), async (req, res) => {
+  try {
+    const isPremium = req.body?.isPremium === "true" || req.body?.isPremium === true;
+    const {
+      imageBase64,
+      avatarPrompt,
+      avatarStyle,
+      avatarMode,
+      avatarInputType,
+      avatarPreset,
+    } = req.body;
+
+    console.log("🔥 /generate-avatar HIT");
+    console.log("BODY KEYS:", Object.keys(req.body || {}));
+    console.log("BASE64 LENGTH:", req.body?.imageBase64?.length || 0);
+
+    if (!imageBase64) {
+      return res.status(400).json({ error: "Missing image" });
+    }
+
+    if (!avatarPrompt) {
+      return res.status(400).json({ error: "Missing avatar action" });
+    }
+
+    const imageUrl = `data:image/jpeg;base64,${imageBase64}`;
+    const prompt = `
+Create a vertical TikTok style talking avatar video.
+
+Action:
+${avatarPrompt}
+
+Style:
+${avatarStyle === "3d" ? "3D animated avatar" : "2D animated avatar"}
+
+Natural speaking, expressive gestures, short viral style video.
+`;
+
+    console.log("🚀 Runway avatar create START");
+
+    const createdTask: any = await runway.imageToVideo.create({
+      model: "gen4.5",
+      promptImage: imageUrl,
+      promptText: prompt,
+      ratio: "720:1280",
+      duration: 5,
+    });
+
+    console.log("✅ Runway task created:", createdTask.id);
+
+    const finishedTask: any = await runway.tasks
+      .retrieve(createdTask.id)
+      .waitForTaskOutput();
+
+    console.log("✅ Runway task finished");
+
+    const videoUrl =
+      (Array.isArray(finishedTask?.output)
+        ? finishedTask.output[0]?.url || finishedTask.output[0]
+        : null) ||
+      finishedTask?.videoUrl ||
+      null;
+
+    if (!videoUrl) {
+      console.log("❌ finishedTask:", finishedTask);
+      return res.status(500).json({ error: "Video generation failed" });
+    }
+
+    return res.json({ videoUrl });
+  } catch (err: any) {
+  console.error("Avatar error:", err);
+
+  const rawMessage =
+    err?.error?.error ||
+    err?.message ||
+    "";
+
+  if (
+    rawMessage.includes("enough credits") ||
+    rawMessage.includes("credits")
+  ) {
+    return res.status(400).json({
+      error:
+        "You have finished your AI video credits. Recharge credits to continue generating avatars.",
+    });
+  }
+
+  return res.status(500).json({
+    error: rawMessage || "Avatar generation failed",
+  });
+}
+});
+
+/* ============= AVATAR JOB START ============ */
+app.post("/generate-speaking-avatar", async (req, res) => {
+  const isPremium = req.body?.isPremium === "true" || req.body?.isPremium === true;
+  try {
+   const {
+  imageBase64,
+  avatarPrompt,
+  avatarVisualPrompt,
+  voiceMode,
+  voiceId,
+  recordedAudioBase64,
+} = req.body ?? {};
+
+    if (!imageBase64) {
+      return res.status(400).json({ error: "Missing image" });
+    }
+
+    if (!avatarPrompt?.trim() && voiceMode !== "my_voice" && voiceMode !== "clone") {
+      return res.status(400).json({ error: "Missing avatar prompt" });
+    }
+
+    if ((voiceMode === "my_voice" || voiceMode === "clone") && !recordedAudioBase64) {
+      return res.status(400).json({ error: "Missing recorded audio" });
+    }
+
+    const job = createAvatarJob();
+
+    res.json({
+      ok: true,
+      jobId: job.id,
+      status: job.status,
+    });
+
+    void runAvatarJob(job.id, {
+  imageBase64,
+  avatarPrompt,
+  avatarVisualPrompt,
+  voiceMode,
+  voiceId,
+  recordedAudioBase64,
+  isPremium,
+});
+
+  } catch (err: any) {
+    return res.status(500).json({
+      error: stringifyUnknownError(err),
+    });
+  }
+});
+/* ============= AVATAR JOB STATUS ============ */
+app.get("/avatar-job/:jobId", async (req, res) => {
+  try {
+    const jobId = String(req.params.jobId || "");
+    const job = avatarJobs.get(jobId);
+
+    if (!job) {
+      return res.status(404).json({ error: "Job not found" });
+    }
+
+    return res.json(job);
+  } catch (err: any) {
+    return res.status(500).json({
+      error: stringifyUnknownError(err),
+    });
+  }
+});
+
+/* ================== ROUTE VOCI ELEVENLABS ================== */
+app.get("/api/elevenlabs/voices", async (_req, res) => {
+  
+  try {
+    const apiKey = requireEnv("ELEVENLABS_API_KEY");
+
+    const resp = await fetch("https://api.elevenlabs.io/v1/voices", {
+      headers: {
+        "xi-api-key": apiKey,
+      },
+    });
+
+    const text = await resp.text();
+    const data = safeJsonParse(text);
+
+    if (!resp.ok) {
+      return res.status(resp.status).json({
+        error: data?.detail?.message || data?.message || "ElevenLabs voices error",
+      });
+    }
+
+    const voices = Array.isArray(data?.voices)
+      ? data.voices.map((v: any) => ({
+          id: v.voice_id,
+          name: v.name,
+          preview_url: v.preview_url || null,
+        }))
+      : [];
+
+    return res.json({ voices });
+  } catch (err: any) {
+    return res.status(500).json({ error: err?.message || "Errore interno server" });
+  }
+});
+
+/* ================== ROUTE elevenlabs clone VOCI  ================== */
+app.post("/api/elevenlabs/clone-voice", async (req, res) => {
+  try {
+    const isPremium = req.body?.isPremium === "true" || req.body?.isPremium === true;
+    const {
+      recordedAudioBase64,
+      recordedAudioMimeType,
+      voiceName,
+    } = req.body ?? {};
+
+    if (!recordedAudioBase64) {
+      return res.status(400).json({ error: "Missing recordedAudioBase64" });
+    }
+
+    const buffer = Buffer.from(recordedAudioBase64, "base64");
+
+    const mimeType = recordedAudioMimeType || "audio/mp4";
+
+    const extension =
+      mimeType.includes("wav")
+        ? "wav"
+        : mimeType.includes("mpeg")
+        ? "mp3"
+        : "m4a";
+
+    const cloned = await elevenCloneVoice({
+      name: voiceName || `My Voice ${Date.now()}`,
+      audioBuffer: buffer,
+      fileName: `voice_sample.${extension}`,
+      mimeType,
+      description: "Voice clone from app",
+    });
+
+    return res.json({
+      ok: true,
+      voiceId: cloned.voiceId,
+    });
+  } catch (err: any) {
+    return res.status(500).json({
+      error: stringifyUnknownError(err),
+    });
+  }
+});
+
+app.get("/api/elevenlabs/my-voices", async (_req, res) => {
+  try {
+    const voices = await elevenGetUserVoices();
+
+    const cloned = voices.filter(
+      (v: any) =>
+        v.category === "cloned" ||
+        v.category === "generated" ||
+        v.category === "professional"
+    );
+
+    return res.json({ voices: cloned });
+  } catch (err: any) {
+    return res.status(500).json({
+      error: stringifyUnknownError(err),
+    });
+  }
+});
+
+/* ================== ROUTE effetti per cards photo ================== */
+app.post("/ai-photos/generate", async (req, res) => {
+  try {
+    const { imageBase64, templateKey } = req.body as {
+      imageBase64: string;
+      templateKey: string;
+    };
+
+    if (!imageBase64) {
+      return res.status(400).json({ error: "Missing image" });
+    }
+
+    if (!templateKey) {
+      return res.status(400).json({ error: "Missing templateKey" });
+    }
+
+    // 🔥 convert base64 → buffer
+    const userBuffer = Buffer.from(imageBase64, "base64");
+
+    // 🔥 templates
+    const templates = getTemplates(templateKey);
+
+    const results: string[] = [];
+
+    for (const templatePath of templates) {
+      console.log("➡️ TEMPLATE:", templatePath);
+
+      const swapped = await swapFace(templatePath, userBuffer);
+
+      console.log("✅ SWAP DONE:", templatePath);
+
+      results.push(swapped);
+    }
+
+    return res.json({ images: results });
+
+  } catch (err: any) {
+    console.error("❌ AI PHOTOS ERROR:", err);
+
+    return res.status(500).json({
+      error: err?.message || "AI Photos failed",
+    });
+  }
+});
+
+function getTemplates(templateKey: string) {
+  const basePath = path.join(
+    process.cwd(),
+    "backend/src/assets/style-templates",
+    templateKey
+  );
+
+  return [
+    path.join(basePath, "autunno1.jpg"),
+    path.join(basePath, "autunno2.jpg"),
+    path.join(basePath, "autunno3.jpg"),
+    path.join(basePath, "autunno4.jpg"),
+  ];
+}
+/* ======================================= ROUTE AI EFFECTS ============================ */
+app.post("/effects/generate", async (req, res) => {
+  try {
+    const isPremium = req.body?.isPremium === "true" || req.body?.isPremium === true;
+    console.log("EFFECTS ROUTE START");
+
+    const { imageBase64, effect } = req.body ?? {};
+
+    console.log("EFFECTS imageBase64 =", imageBase64 ? "OK" : "MISSING");
+    console.log("EFFECTS effect =", effect);
+
+    if (!imageBase64) {
+      return res.status(400).json({ error: "Missing imageBase64" });
+    }
+
+    if (!effect) {
+      return res.status(400).json({ error: "Missing effect" });
+    }
+   
+const prompt = req.body.prompt || "";
+
+const finalPrompt = `
+Keep the same person, same face identity.
+
+Apply this style:
+${prompt}
+
+IMPORTANT:
+- The face must remain ultra realistic and identical
+- Natural skin texture, real human face
+- No distortion, no fake AI look
+- cinematic camera, depth of field, 35mm lens
+
+The environment and outfit must follow the style (${effect})
+with strong cinematic impact, dramatic lighting, high detail.
+`;
+   const finalImageUrl = await restyleImage(
+  String(imageBase64),
+  finalPrompt
+);
+   const buffer = await downloadToBuffer(finalImageUrl);
+
+   const finalBuffer = isPremium
+  ? buffer
+  : await applyWatermarkToBuffer(buffer);
+
+return res.json({
+  imageUrl: `data:image/jpeg;base64,${finalBuffer.toString("base64")}`,
+});
+
+  } catch (err: any) {
+    console.error("EFFECTS ROUTE ERROR =", err);
+    return res.status(500).json({
+      error: err?.message || "Effects generation failed",
+    });
+  }
+});
+
+/* ================== STYLE CARDS PRO (EXPLORER) ================== */
+// memoria jobs
+const styleCardJobs = new Map();
+
+/* ===== START JOB ===== */
+app.post("/style-cards/start", upload.single("image"), async (req: any, res) => {
+  try {
+ const isPremium = req.body?.isPremium === "true" || req.body?.isPremium === true;
+  console.log("FILE:", req.file);
+  console.log("BODY:", req.body);
+
+const templateKey = req.body?.templateKey;
+
+if (!req.file) {
+  return res.status(400).json({
+    error: "file non ricevuto",
+  });
+}
+
+if (!templateKey || templateKey === "undefined") {
+  return res.status(400).json({
+    error: "templateKey mancante",
+    body: req.body,
+  });
+}  
+
+    if (!req.file?.buffer) {
+      return res.status(400).json({ error: "Missing image file" });
+    }
+
+    const jobId = createJobId();
+
+    styleCardJobs.set(jobId, {
+      status: "processing",
+      images: [],
+      error: null,
+    });
+
+    // 🚀 async (NON blocca)
+    processStyleCardsJob(jobId, req.file.buffer, templateKey, isPremium);
+
+    return res.json({ jobId });
+  } catch (e) {
+    return res.status(500).json({ error: "Errore start job" });
+  }
+});
+
+/* ===== STATUS ===== */
+app.get("/style-cards/status/:jobId", (req, res) => {
+  const job = styleCardJobs.get(req.params.jobId);
+  console.log("STATUS CHECK:", req.params.jobId, job?.status);
+
+  if (!job) {
+    return res.status(404).json({ error: "Job non trovato" });
+  }
+
+  return res.json(job);
+});
+
+/* ===== PROCESS JOB CORRETTO explorer ===== */
+async function processStyleCardsJob(
+  jobId: string,
+  userBuffer: Buffer,
+  templateKey: string,
+  isPremium: boolean
+) {
+  try {
+    console.log("🎯 STYLE CARDS JOB START:", jobId);
+
+    // 1. Mappa i template in base alla chiave che arriva dal front-end
+    const templateFolder = path.join(__dirname, "assets", "style-templates", templateKey);
+    
+    // Controlla se la cartella esiste, altrimenti usa una di fallback
+    if (!fs.existsSync(templateFolder)) {
+       throw new Error(`Cartella template non trovata: ${templateFolder}`);
+    }
+
+    const files = fs.readdirSync(templateFolder).filter(f => f.endsWith('.jpg') || f.endsWith('.png'));
+    const templatePaths = files.map(f => path.join(templateFolder, f)).slice(0, 4); // Prendi i primi 4
+
+    const finalImagesBase64: string[] = [];
+
+    for (const templatePath of templatePaths) {
+      console.log("➡️ Elaborazione Face Swap su:", templatePath);
+      
+      // USA FAL AI (swapFace) - È IL PIÙ VELOCE E PRECISO PER I CONNOTATI
+      const swappedUrl = await swapFace(templatePath, userBuffer);
+      
+      // Scarica il risultato per applicare post-processing o watermark
+      const swappedBuffer = await downloadToBuffer(swappedUrl);
+
+      // Migliora leggermente la qualità (Sharp)
+      const refinedBuffer = await sharp(swappedBuffer)
+        .modulate({ brightness: 1.05, saturation: 1.1 })
+        .sharpen()
+        .jpeg({ quality: 90 })
+        .toBuffer();
+
+      // Applica Watermark se non premium
+      const finalBuf = isPremium ? refinedBuffer : await applyWatermarkToBuffer(refinedBuffer);
+
+      finalImagesBase64.push(`data:image/jpeg;base64,${finalBuf.toString("base64")}`);
+    }
+
+    // Aggiorna lo stato del Job
+    styleCardJobs.set(jobId, {
+      status: "complete",
+      images: finalImagesBase64,
+      error: null,
+    });
+
+  } catch (e: any) {
+    console.error("❌ STYLE CARDS ERROR:", e);
+    styleCardJobs.set(jobId, {
+      status: "failed",
+      images: [],
+      error: e.message,
+    });
+  }
+}
+/* ================== CALCIO GENERATE ================== */
+app.post("/calcio/generate", upload.single("image"), async (req: any, res) => {
+  try {
+    console.log("⚽ /calcio/generate HIT");
+
+    const isPremium =
+      req.body?.isPremium === "true" ||
+      req.body?.isPremium === true;
+
+    const archetypeKey = String(req.body?.archetypeKey || "");
+
+    if (!req.file?.buffer) {
+      return res.status(400).json({
+        error: "Missing image file",
+      });
+    }
+
+    if (!archetypeKey) {
+      return res.status(400).json({
+        error: "Missing archetypeKey",
+      });
+    }
+
+    const archetype = CALCIO_ARCHETYPES_MAP[archetypeKey];
+
+    if (!archetype) {
+      return res.status(404).json({
+        error: "Archetype not found",
+      });
+    }
+
+    console.log("archetypeKey:", archetypeKey);
+
+   // ================= TEMPLATE =================
+
+const templatePath = path.join(
+  __dirname,
+  "../src/assets/calcio",
+  `${archetypeKey.replace("_selfie", "")}_template.jpg`
+);
+
+console.log("⚽ TEMPLATE:", templatePath);
+
+// verifica template
+if (!fs.existsSync(templatePath)) {
+  throw new Error(`Template not found: ${templatePath}`);
+}
+
+// ================= LOAD IMAGES =================
+
+const templateBuffer = fs.readFileSync(templatePath);
+
+const templateBase64 =
+  `data:image/jpeg;base64,${templateBuffer.toString("base64")}`;
+
+const userBase64 =
+  `data:image/jpeg;base64,${req.file.buffer.toString("base64")}`;
+
+// ================= FACE SWAP =================
+
+const finalUrl = await restyleCalcioImage({
+  userImageBase64: userBase64,
+  templateBase64,
+  prompt: archetype.prompt,
+});
+
+console.log("✅ CALCIO FACE SWAP DONE");
+
+    // ================= DOWNLOAD =================
+
+    const imageBuffer = await downloadToBuffer(finalUrl);
+
+    // ================= WATERMARK =================
+
+    const finalBuffer = isPremium
+      ? imageBuffer
+      : await applyWatermarkToBuffer(imageBuffer);
+
+    const finalBase64 = `data:image/jpeg;base64,${finalBuffer.toString(
+      "base64"
+    )}`;
+
+    // ================= RESPONSE =================
+
+    return res.json({
+      ok: true,
+      imageUrl: finalBase64,
+    });
+  } catch (err: any) {
+    console.error("❌ /calcio/generate error:", err);
+
+    return res.status(500).json({
+      error: err?.message || "Calcio generation failed",
+    });
+  }
+});
+
+/* ====================================== COUPLE CARDS ================================ */
+app.post("/couple/generate", upload.fields([
+  { name: "image1" },
+  { name: "image2" }
+]), async (req, res) => {
+
+  const userId = req.query.userId;
+
+if (!userId) {
+  return res.status(400).json({ error: "userId mancante" });
+}
+  try {
+    const isPremium = req.body?.isPremium === "true" || req.body?.isPremium === true;
+
+    // ✅ QUI VA IL TUO CODICE
+   const image1 = (req.files as any)?.image1?.[0];
+const image2 = (req.files as any)?.image2?.[0];
+
+if (!image1 || !image2) {
+  return res.status(400).json({ error: "Immagini mancanti" });
+}
+
+const file1 = image1;
+const file2 = image2;
+  
+const buffer1 = await convertIfHeic(file1);
+const buffer2 = await convertIfHeic(file2);
+
+const face1 = await sharp(buffer1)
+  .resize(512, 512, { fit: "cover" })
+  .jpeg()
+  .toBuffer();
+
+const face2 = await sharp(buffer2)
+  .resize(512, 512, { fit: "cover" })
+  .jpeg()
+  .toBuffer();
+
+    // ---------------- TEMPLATE IMAGE ----------------
+const templateMap: any = {
+  cheek: "./assets/couple/1.jpg",
+  forehead: "./assets/couple/2.jpg",
+  arms: "./assets/couple/3.jpg",
+  studio: "./assets/couple/4.jpg",
+  walk: "./assets/couple/5.jpg",
+  luxury: "./assets/couple/6.jpg",
+};
+
+const templatePath = templateMap[req.body.templateKey];
+
+if (!templatePath) {
+  return res.status(400).json({ error: "Invalid templateKey" });
+}
+
+const templateBuffer = fs.readFileSync(templatePath);
+
+    if (!file1 || !file2) {
+      return res.status(400).json({ error: "Missing images" });
+    }
+
+    // unisci immagini
+   const merged = await sharp({
+  create: {
+    width: 1536,
+    height: 768,
+    channels: 3,
+    background: { r: 0, g: 0, b: 0 }
+  }
+})
+  .composite([
+    { input: face1, top: 0, left: 0 },
+    { input: face2, top: 0, left: 512 },
+    { input: templateBuffer, top: 0, left: 1024, blend: "over" },
+  ])
+  .jpeg({ quality: 95 })
+  .toBuffer();
+
+const mergedBase64 = merged.toString("base64");
+    
+    const imageUrl = await restyleStyleCardImage({
+  imageBase64: `data:image/jpeg;base64,${mergedBase64}`,
+  prompt: getCouplePrompt(req.body.templateKey),
+  templateKey: req.body.templateKey,
+});
+    // 👉 qui dopo chiameremo FAL
+   const buffer = await downloadToBuffer(imageUrl);
+
+const finalBuffer = isPremium
+  ? buffer
+  : await applyWatermarkToBuffer(buffer);
+
+const finalBase64 = `data:image/jpeg;base64,${finalBuffer.toString("base64")}`;
+
+return res.json({
+  imageUrl: finalBase64,
+});
+
+  } catch (err: any) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
+});
+/* ================== START ================== */
+
+const PORT = Number(process.env.PORT) || 4000;
+
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`✅ Server avviato su porta ${PORT}`);
+});
+export { };

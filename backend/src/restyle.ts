@@ -896,7 +896,6 @@ illustration
 export async function restyleCalcioImage(opts: {
   userImageBase64: string;
   templateBase64: string;
-  maskBase64: string;
   prompt: string;
 }) {
   console.log("⚽ FLUX FILL START");
@@ -905,16 +904,11 @@ export async function restyleCalcioImage(opts: {
     opts.templateBase64
   );
 
-  const maskUrl = await uploadBase64ToFal(
-    opts.maskBase64
-  );
-
   const userUrl = await uploadBase64ToFal(
     opts.userImageBase64
   );
 
   console.log("TEMPLATE URL =", templateUrl);
-  console.log("MASK URL =", maskUrl);
   console.log("USER URL =", userUrl);
 
   console.log("🔥 CALLING FAL INPAINT");
@@ -925,8 +919,6 @@ export async function restyleCalcioImage(opts: {
       {
         input: {
           image_url: templateUrl,
-
-          mask_url: maskUrl,
 
           control_image_url: userUrl,
 
