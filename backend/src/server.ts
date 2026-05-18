@@ -483,154 +483,58 @@ async function swapFaceCalcio(
     );
 
     // ---------------- REPLICATE DIRECT API ----------------
-  const replicateToken =
-    (process.env.REPLICATE_API_KEY || "")
-      .trim();
+  // ---------------- REPLICATE ----------------
 
-  console.log(
-    "⚽ USING REPLICATE TOKEN =",
-    replicateToken
+console.log(
+  "⚽ START REPLICATE FACE SWAP"
+);
+
+const output = await replicate.run(
+  "codeplugtech/face-swap:278a81e7ebb2664cf11efc7cac294b9d95f8f2db8b7d5cbf60d6ea0df19e9bdb",
+  {
+    input: {
+      swap_image: userUrl,
+      target_image: templateUrl,
+    },
+  }
+);
+
+console.log(
+  "⚽ REPLICATE OUTPUT =",
+  output
+);
+
+let finalUrl: string | null =
+  null;
+
+if (
+  Array.isArray(output)
+) {
+
+  finalUrl =
+    output[0] as string;
+
+} else if (
+  typeof output ===
+  "string"
+) {
+
+  finalUrl =
+    output;
+}
+
+if (!finalUrl) {
+
+  throw new Error(
+    "Calcio face swap failed"
   );
+}
 
-  const response = await fetch(
-    "https://api.replicate.com/v1/predictions",
-    {
-      method: "POST",
+console.log(
+  "✅ CALCIO FACE SWAP DONE"
+);
 
-      headers: {
-        Authorization:
-          `Token ${replicateToken}`,
-
-        "Content-Type":
-          "application/json",
-      },
-
-      body: JSON.stringify({
-        version:
-"0383f62e173d3d9d1d0f44e92e4a0f409775888b8598eafbfef6f947c3853e22",
-
-        input: {
-          swap_image: userUrl,
-          target_image: templateUrl,
-        },
-      }),
-    }
-  );
-
-  const prediction =
-    await response.json();
-
-  console.log(
-    "⚽ PREDICTION =",
-    prediction
-  );
-
-  if (!prediction?.urls?.get) {
-
-    console.error(
-      "❌ REPLICATE ERROR =",
-      prediction
-    );
-
-    throw new Error(
-      prediction?.detail ||
-      prediction?.error ||
-      "Prediction URL missing"
-    );
-  }
-
-  let finalOutput: any =
-    null;
-
-  for (let i = 0; i < 30; i++) {
-
-    await new Promise((r) =>
-      setTimeout(r, 2000)
-    );
-
-    const poll = await fetch(
-      prediction.urls.get,
-      {
-        headers: {
-          Authorization:
-            `Token ${replicateToken}`,
-        },
-      }
-    );
-
-    const pollData =
-      await poll.json();
-
-    console.log(
-      "⚽ POLL STATUS =",
-      pollData.status
-    );
-
-    if (
-      pollData.status ===
-      "succeeded"
-    ) {
-
-      finalOutput =
-        pollData.output;
-
-      break;
-    }
-
-    if (
-      pollData.status ===
-      "failed"
-    ) {
-
-      console.error(
-        "❌ POLL FAILED =",
-        pollData
-      );
-
-      throw new Error(
-        "Face swap failed"
-      );
-    }
-  }
-
-  if (!finalOutput) {
-
-    throw new Error(
-      "Timeout waiting prediction"
-    );
-  }
-
-  let finalUrl: string | null =
-    null;
-
-  if (
-    Array.isArray(finalOutput)
-  ) {
-
-    finalUrl =
-      finalOutput[0];
-
-  } else if (
-    typeof finalOutput ===
-    "string"
-  ) {
-
-    finalUrl =
-      finalOutput;
-  }
-
-  if (!finalUrl) {
-
-    throw new Error(
-      "Calcio face swap failed"
-    );
-  }
-
-  console.log(
-    "✅ CALCIO FACE SWAP DONE"
-  );
-
-  return finalUrl;
+return finalUrl;
 
 } catch (err: any) {
 
