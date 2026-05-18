@@ -20,6 +20,7 @@ import { CALCIO_ARCHETYPES_MAP } from "./calcioCards";
 import { getCouplePrompt, restyleImage, restyleStyleCardImage } from "./restyle";
 dotenv.config({ path: "../.env" });
 import Replicate from "replicate";
+import { restyleCalcioImage } from "./restyle";
 
 const replicate = new Replicate({
   auth: process.env.REPLICATE_API_KEY,
@@ -447,105 +448,102 @@ async function swapFace(templatePath: string, userBuffer: Buffer) {
 }
 
 // ---------------- SWAPFACE CALCIO ----------------
-async function swapFaceCalcio(
-  templatePath: string,
-  userBuffer: Buffer
-) {
-  process.env.REPLICATE_API_KEY =
-    requireEnv("REPLICATE_API_KEY");
+//async function swapFaceCalcio(
+  //templatePath: string,
+  //userBuffer: Buffer
+//) {
+  //process.env.REPLICATE_API_KEY =
+    //requireEnv("REPLICATE_API_KEY");
 
-  try {
-    console.log("⚽ CALCIO FACE SWAP START");
+  //try {
+    //console.log("⚽ CALCIO FACE SWAP START");
 
     // TEMPLATE
-    const templateImage: any =
-      fs.readFileSync(templatePath);
+    //const templateImage: any =
+      //fs.readFileSync(templatePath);
 
-    const templateUrl =
-      await fal.storage.upload(
-        templateImage
-      );
+    //const templateUrl =
+      //await fal.storage.upload(
+        //templateImage
+      //);
 
     // USER
-    const userUrl =
-      await fal.storage.upload(
-        userBuffer as any
-      );
+    //const userUrl =
+      //await fal.storage.upload(
+        //userBuffer as any
+      //);
 
-    console.log(
-      "⚽ TEMPLATE URL =",
-      templateUrl
-    );
+    //console.log(
+      //"⚽ TEMPLATE URL =",
+      //templateUrl
+    //);
 
-    console.log(
-      "⚽ USER URL =",
-      userUrl
-    );
+    //console.log(
+      //"⚽ USER URL =",
+      //userUrl
+    //);
 
     // ---------------- REPLICATE DIRECT API ----------------
-  // ---------------- REPLICATE ----------------
+//console.log(
+  //"⚽ START REPLICATE FACE SWAP"
+//);
 
-console.log(
-  "⚽ START REPLICATE FACE SWAP"
-);
+//const output = await replicate.run(
+ // "codeplugtech/face-swap:278a81e7ebb2664cf11efc7cac294b9d95f8f2db8b7d5cbf60d6ea0df19e9bdb",
+ // {
+    //input: {
+      //swap_image: userUrl,
+      //target_image: templateUrl,
+    //},
+  //}
+//);
 
-const output = await replicate.run(
-  "codeplugtech/face-swap:278a81e7ebb2664cf11efc7cac294b9d95f8f2db8b7d5cbf60d6ea0df19e9bdb",
-  {
-    input: {
-      swap_image: userUrl,
-      target_image: templateUrl,
-    },
-  }
-);
+//console.log(
+  //"⚽ REPLICATE OUTPUT =",
+  //output
+//);
 
-console.log(
-  "⚽ REPLICATE OUTPUT =",
-  output
-);
+//let finalUrl: string | null =
+  //null;
 
-let finalUrl: string | null =
-  null;
+//if (
+  //Array.isArray(output)
+//) {
 
-if (
-  Array.isArray(output)
-) {
+  //finalUrl =
+  //  output[0] as string;
 
-  finalUrl =
-    output[0] as string;
+//} else if (
+  //typeof output ===
+  //"string"
+//) {
 
-} else if (
-  typeof output ===
-  "string"
-) {
+  //finalUrl =
+  //  output;
+//}
 
-  finalUrl =
-    output;
-}
+//if (!finalUrl) {
 
-if (!finalUrl) {
+  //throw new Error(
+    //"Calcio face swap failed"
+  //);
+//}
 
-  throw new Error(
-    "Calcio face swap failed"
-  );
-}
+//console.log(
+ // "✅ CALCIO FACE SWAP DONE"
+//);
 
-console.log(
-  "✅ CALCIO FACE SWAP DONE"
-);
+//return finalUrl;
+//} catch (err: any) {
 
-return finalUrl;
+  //console.error(
+    //"❌ CALCIO FACE SWAP ERROR =",
+  //  err
+  //);
 
-} catch (err: any) {
-
-  console.error(
-    "❌ CALCIO FACE SWAP ERROR =",
-    err
-  );
-
-  throw err;
-}
-}
+  //throw err;
+//}
+//}
 /* ================== HELPERS ELEVENLABS ================== */
 async function elevenTextToSpeech(text: string, voiceId?: string) {
   const finalVoiceId = voiceId || requireEnv("ELEVENLABS_VOICE_ID");
@@ -3036,11 +3034,35 @@ console.log("⚽ TEMPLATE:", templatePath);
 
 // ================= FACE SWAP =================
 
+const templateBuffer =
+  fs.readFileSync(templatePath);
+
+const templateBase64 =
+  `data:image/jpeg;base64,${templateBuffer.toString("base64")}`;
+
+const userBase64 =
+  `data:image/jpeg;base64,${req.file.buffer.toString("base64")}`;
+
+// MASK
+const maskPath = path.join(
+  __dirname,
+  "../src/assets/calcio/masks",
+  `${archetypeKey.replace("_selfie", "")}_mask.png`
+);
+
+const maskBuffer =
+  fs.readFileSync(maskPath);
+
+const maskBase64 =
+  `data:image/png;base64,${maskBuffer.toString("base64")}`;
+
 const finalUrl =
-  await swapFaceCalcio(
-    templatePath,
-    req.file.buffer
-  );
+  await restyleCalcioImage({
+    userImageBase64: userBase64,
+    templateBase64,
+    maskBase64,
+    prompt: archetype.prompt,
+  });
 
 console.log("✅ CALCIO FACE SWAP DONE");
 
