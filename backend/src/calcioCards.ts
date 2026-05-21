@@ -56,7 +56,7 @@ No CGI.
 No cartoon.
 No fake face.
 `,
-templateImage: "arg_selfie.jpg",
+templateImage: "arg_template.jpg",
   },
 
   {
@@ -89,7 +89,7 @@ No CGI.
 No 3D render.
 No cartoon.
 `,
-templateImage: "arg2_selfie.jpg",
+templateImage: "arg2_template.jpg",
   },
 
   // ================= BRAZIL =================
@@ -127,7 +127,7 @@ No fake face.
 No CGI.
 No cartoon.
 `,
-templateImage: "bra_selfie.jpg",
+templateImage: "bra_template.jpg",
   },
 
   {
@@ -159,7 +159,7 @@ No CGI.
 No cartoon.
 No 3D render.
 `,
-templateImage: "bra2_selfie.jpg",
+templateImage: "bra2_template.jpg",
   },
 
   {
@@ -192,7 +192,7 @@ No CGI.
 No fake face.
 No cartoon.
 `,
-templateImage: "bra3_selfie.jpg",
+templateImage: "bra3_template.jpg",
   },
 
   // ================= COLOMBIA =================
@@ -226,7 +226,7 @@ No cartoon.
 No CGI.
 No 3D.
 `,
-templateImage: "col_selfie.jpg",
+templateImage: "col_template.jpg",
   },
 
   {
@@ -260,7 +260,7 @@ Same depth of field.
 No fake face.
 No cartoon.
 `,
-templateImage: "col2_selfie.jpg",
+templateImage: "col2_template.jpg",
   },
 
   {
@@ -290,7 +290,7 @@ No CGI.
 No cartoon.
 No fake face.
 `,
-templateImage: "col3_selfie.jpg",
+templateImage: "col3_template.jpg",
   },
 
   // ================= ENGLAND =================
@@ -324,7 +324,7 @@ No CGI.
 No cartoon.
 No fake face.
 `,
-templateImage: "eng_selfie.jpg",
+templateImage: "eng_template.jpg",
   },
 
   // ================= FRANCE =================
@@ -358,7 +358,7 @@ No CGI.
 No fake face.
 No cartoon.
 `,
-templateImage: "fra_selfie.jpg",
+templateImage: "fra_template.jpg",
   },
 
   // ================= PORTUGAL =================
@@ -396,7 +396,7 @@ No fake face.
 No CGI.
 No cartoon.
 `,
-templateImage: "por_selfie.jpg",
+templateImage: "por_template.jpg",
   },
 
   // ================= SPAIN =================
@@ -431,7 +431,7 @@ No cartoon.
 No CGI.
 No fake face.
 `,
-templateImage: "spa_selfie.jpg",
+templateImage: "spa_template.jpg",
   },
 
 ];
