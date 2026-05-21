@@ -10,6 +10,9 @@ export type CalcioCard = {
   subtitle: string;
 
   prompt: string;
+
+  templateImage: string;
+  
 };
 
 // ================= CARDS =================
@@ -53,6 +56,7 @@ No CGI.
 No cartoon.
 No fake face.
 `,
+templateImage: "arg_selfie.jpg",
   },
 
   {
@@ -85,6 +89,7 @@ No CGI.
 No 3D render.
 No cartoon.
 `,
+templateImage: "arg2_selfie.jpg",
   },
 
   // ================= BRAZIL =================
@@ -122,6 +127,7 @@ No fake face.
 No CGI.
 No cartoon.
 `,
+templateImage: "bra_selfie.jpg",
   },
 
   {
@@ -153,6 +159,7 @@ No CGI.
 No cartoon.
 No 3D render.
 `,
+templateImage: "bra2_selfie.jpg",
   },
 
   {
@@ -185,6 +192,7 @@ No CGI.
 No fake face.
 No cartoon.
 `,
+templateImage: "bra3_selfie.jpg",
   },
 
   // ================= COLOMBIA =================
@@ -218,6 +226,7 @@ No cartoon.
 No CGI.
 No 3D.
 `,
+templateImage: "col_selfie.jpg",
   },
 
   {
@@ -251,6 +260,7 @@ Same depth of field.
 No fake face.
 No cartoon.
 `,
+templateImage: "col2_selfie.jpg",
   },
 
   {
@@ -280,6 +290,7 @@ No CGI.
 No cartoon.
 No fake face.
 `,
+templateImage: "col3_selfie.jpg",
   },
 
   // ================= ENGLAND =================
@@ -313,6 +324,7 @@ No CGI.
 No cartoon.
 No fake face.
 `,
+templateImage: "eng_selfie.jpg",
   },
 
   // ================= FRANCE =================
@@ -346,6 +358,7 @@ No CGI.
 No fake face.
 No cartoon.
 `,
+templateImage: "fra_selfie.jpg",
   },
 
   // ================= PORTUGAL =================
@@ -383,6 +396,7 @@ No fake face.
 No CGI.
 No cartoon.
 `,
+templateImage: "por_selfie.jpg",
   },
 
   // ================= SPAIN =================
@@ -417,7 +431,9 @@ No cartoon.
 No CGI.
 No fake face.
 `,
+templateImage: "spa_selfie.jpg",
   },
+
 ];
 
 // ================= MAP =================

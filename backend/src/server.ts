@@ -2989,6 +2989,7 @@ async function processStyleCardsJob(
     });
   }
 }
+
 /* ================== CALCIO GENERATE ================== */
 app.post("/calcio/generate", upload.single("image"), async (req: any, res) => {
   try {
@@ -3022,40 +3023,24 @@ app.post("/calcio/generate", upload.single("image"), async (req: any, res) => {
 
     console.log("archetypeKey:", archetypeKey);
 
-   // ================= TEMPLATE =================
+    const userImageBase64 =
+      req.file.buffer.toString("base64");
 
+    // ================= TEMPLATE =================
 const templatePath = path.join(
   __dirname,
-  "../src/assets/calcio",
-  `${archetypeKey.replace("_selfie", "")}_template.jpg`
+  "../assets/calcio",
+  archetype.templateImage
 );
 
-console.log("⚽ TEMPLATE:", templatePath);
+console.log("templatePath:", templatePath);
 
-// verifica template
-if (!fs.existsSync(templatePath)) {
-  throw new Error(`Template not found: ${templatePath}`);
-}
+    // ================= GENERATION =================
 
-// ================= LOAD IMAGES =================
-
-const templateBuffer = fs.readFileSync(templatePath);
-
-const templateBase64 =
-  `data:image/jpeg;base64,${templateBuffer.toString("base64")}`;
-
-const userBase64 =
-  `data:image/jpeg;base64,${req.file.buffer.toString("base64")}`;
-
-// ================= FACE SWAP =================
-
-const finalUrl = await restyleCalcioImage({
-  userImageBase64: userBase64,
-  templateBase64,
-  prompt: archetype.prompt,
-});
-
-console.log("✅ CALCIO FACE SWAP DONE");
+    const finalUrl = await swapFaceCalcio(
+  templatePath,
+  req.file.buffer
+);
 
     // ================= DOWNLOAD =================
 
@@ -3085,6 +3070,104 @@ console.log("✅ CALCIO FACE SWAP DONE");
     });
   }
 });
+
+// ---------------- SWAPFACE CALCIO ----------------
+async function swapFaceCalcio(
+  templatePath: string,
+  userBuffer: Buffer
+) {
+  process.env.REPLICATE_API_KEY =
+    requireEnv("REPLICATE_API_KEY");
+
+  try {
+    console.log("⚽ CALCIO FACE SWAP START");
+
+    // TEMPLATE
+    const templateBase64 =
+      fs.readFileSync(templatePath, {
+        encoding: "base64",
+      });
+
+   // const templateUrl =
+     // await uploadBase64ToFal(
+       // templateBase64
+      //);
+
+    // USER
+    const userBase64 =
+      userBuffer.toString("base64");
+
+    //const userUrl =
+      //await uploadBase64ToFal(
+       // userBase64
+     // );
+
+   // console.log(
+      //"⚽ TEMPLATE URL =",
+     // templateUrl
+   // );
+
+    //console.log(
+      //"⚽ USER URL =",
+      //userUrl
+    //);
+
+    // REPLICATE
+    const output: any =
+      await replicate.run(
+        "codeplugtech/face-swap:278a81e7ebb94d4adb90c7adad0782a2d3a9d1ff3619df06f3a7343a91d6a2cb",
+        {
+          input: {
+            //swap_image: templateUrl,
+
+           // input_image: userUrl,
+
+            // IMPORTANTISSIMO
+            target_face_index: 0,
+
+            face_restore: true,
+
+            upscale: 2,
+          },
+        }
+      );
+
+    console.log(
+      "⚽ REPLICATE OUTPUT =",
+      output
+    );
+
+    let finalUrl: string | null =
+      null;
+
+    if (Array.isArray(output)) {
+      finalUrl = output[0];
+    } else if (
+      typeof output === "string"
+    ) {
+      finalUrl = output;
+    }
+
+    if (!finalUrl) {
+      throw new Error(
+        "Calcio face swap failed"
+      );
+    }
+
+    console.log(
+      "✅ CALCIO FACE SWAP DONE"
+    );
+
+    return finalUrl;
+  } catch (err: any) {
+    console.error(
+      "❌ CALCIO FACE SWAP ERROR",
+      err
+    );
+
+    throw err;
+  }
+}
 
 /* ====================================== COUPLE CARDS ================================ */
 app.post("/couple/generate", upload.fields([
