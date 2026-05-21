@@ -21,7 +21,7 @@ import { checkPremium } from "../services/revenuecat";
 import { addProjectToProjects } from "./projects";
 
 
-const API_URL = "https://jenesis-backend.onrender.com";
+const API_URL = "https://jenesis-backend-1.onrender.com";
 
 
 type HedraVoice = {

@@ -1,74 +1,361 @@
 "use strict";
-// ================= TYPES =================
+// backend/src/calcioCards.ts
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CALCIO_ARCHETYPES_MAP = exports.CALCIO_ARCHETYPES_CARDS = void 0;
 // ================= CARDS =================
 exports.CALCIO_ARCHETYPES_CARDS = [
+    // ================= ARGENTINA =================
     {
-        id: "arg_compact_playmaker",
-        title: "Argentina – Playmaker compatto",
-        subtitle: "Selfie a bordo campo",
-        archetypeKey: "arg_compact_playmaker",
-        presetKey: "realistic",
-        basePrompt: "A world-class male Argentine football star, realistic athletic build, premium professional footballer, handsome and masculine face, wearing a realistic Argentina national team style jersey with light blue and white stripes, elite sports presence, authentic match-day look, looks like a real famous football player",
-        scenes: {
-            campo: "On a football pitch after the match, stadium lights, realistic sports atmosphere, natural selfie perspective.",
-            tunnel: "Inside a football stadium tunnel before a match, dramatic sports lighting, realistic environment.",
-            panchina: "Sitting on the bench inside a football stadium, relaxed sports atmosphere, realistic setting.",
-        },
+        id: "arg_selfie",
+        title: "Argentina Superstar",
+        subtitle: "Selfie bordo campo",
+        prompt: `
+Ultra realistic football selfie photo.
+
+A young woman taking a selfie beside an Argentina football superstar at stadium side.
+
+Preserve the uploaded person's:
+- facial identity
+- face shape
+- skin tone
+- hairstyle
+
+The final image must look:
+- authentic
+- naturally photographed
+- iphone selfie
+- sports photography
+- same lighting
+- same camera lens
+- same skin texture
+- same depth of field
+
+The football player and user must feel truly together in the same scene.
+
+Natural candid moment.
+Ultra realistic.
+No CGI.
+No cartoon.
+No fake face.
+`,
     },
     {
-        id: "col_strong_striker",
-        title: "Colombia – Attaccante potente",
-        subtitle: "Tunnel pre-partita",
-        archetypeKey: "col_strong_striker",
-        presetKey: "cinematic",
-        basePrompt: "A world-class male Colombian football star, realistic athletic build, premium professional footballer, handsome and masculine face, wearing a realistic Colombia national team style jersey in strong yellow with dark blue and red details, elite sports presence, authentic match-day look, looks like a real famous football player",
-        scenes: {
-            campo: "On a football pitch before kickoff, energetic stadium atmosphere, realistic sports environment.",
-            tunnel: "Inside a football stadium tunnel before the match, cinematic sports lighting, intense mood.",
-            panchina: "Near the team bench in a stadium, strong sports atmosphere, realistic environment.",
-        },
+        id: "arg2_selfie",
+        title: "Argentina Matchday",
+        subtitle: "VIP selfie",
+        prompt: `
+Ultra realistic VIP football selfie.
+
+A woman taking a selfie beside an Argentina football superstar during matchday.
+
+Preserve the uploaded user's:
+- facial identity
+- skin tone
+- hairstyle
+- realistic facial details
+
+Authentic stadium atmosphere.
+Natural lighting.
+Realistic iphone selfie.
+Same camera perspective.
+Natural sports photography.
+
+Both subjects must look naturally photographed together.
+
+No CGI.
+No 3D render.
+No cartoon.
+`,
+    },
+    // ================= BRAZIL =================
+    {
+        id: "bra_selfie",
+        title: "Brazil Bench Selfie",
+        subtitle: "Selfie calcistico",
+        prompt: `
+Ultra realistic football bench selfie.
+
+A young woman beside a Brazil football superstar near the team bench.
+
+Preserve the uploaded person's:
+- facial identity
+- realistic face
+- hairstyle
+- skin tone
+
+The final image must feel:
+- naturally photographed
+- authentic
+- realistic
+- candid
+
+Real smartphone selfie.
+Natural stadium lighting.
+Same camera lens.
+Realistic sports photography.
+
+No fake face.
+No CGI.
+No cartoon.
+`,
     },
     {
-        id: "bra_skills_winger",
-        title: "Brazil – Ala tecnica",
-        subtitle: "Panchina relax",
-        archetypeKey: "bra_skills_winger",
-        presetKey: "social",
-        basePrompt: "A world-class male Brazilian football star, realistic athletic build, premium professional footballer, handsome and masculine face, wearing a realistic Brazil national team style jersey in bright yellow with green details and deep blue accents, elite sports presence, authentic match-day look, looks like a real famous football player",
-        scenes: {
-            campo: "On a football field during a relaxed moment, bright stadium lighting, realistic environment.",
-            tunnel: "Inside a football stadium tunnel, stylish sports atmosphere, clean lighting.",
-            panchina: "Sitting on the bench in a football stadium, relaxed and friendly sports mood.",
-        },
+        id: "bra2_selfie",
+        title: "Brazil Superstar",
+        subtitle: "Pitch-side selfie",
+        prompt: `
+Ultra realistic football selfie beside a Brazil superstar.
+
+A stylish woman taking a selfie near the football pitch before the match.
+
+Preserve the uploaded user's:
+- identity
+- skin tone
+- hairstyle
+- facial structure
+
+Authentic Brazilian football atmosphere.
+Natural lighting.
+Realistic skin texture.
+Real iphone selfie look.
+
+The image must look naturally photographed together.
+
+No CGI.
+No cartoon.
+No 3D render.
+`,
     },
     {
-        id: "por_skills_winger",
-        title: "Portogallo – Ala tecnica",
-        subtitle: "Panchina relax",
-        archetypeKey: "por_skills_winger",
-        presetKey: "social",
-        basePrompt: "A world-class male Portuguese football star, realistic athletic build, premium professional footballer, handsome and masculine face, wearing a realistic Portugal national team style jersey in deep red with green details, elite sports presence, authentic match-day look, looks like a real famous football player",
-        scenes: {
-            campo: "On a football pitch in a premium stadium atmosphere, realistic lighting.",
-            tunnel: "Inside a football stadium tunnel before the match, polished sports lighting.",
-            panchina: "On the stadium bench in a calm pre-match moment, realistic environment.",
-        },
+        id: "bra3_selfie",
+        title: "Brazil Victory Cam",
+        subtitle: "Post match selfie",
+        prompt: `
+Ultra realistic post-match football selfie.
+
+A woman celebrating beside a Brazil football superstar after victory.
+
+Preserve:
+- facial identity
+- face shape
+- hairstyle
+- skin tone
+
+Authentic sports atmosphere.
+Natural candid selfie.
+Realistic stadium lighting.
+Same camera perspective.
+Real sports photography.
+
+Both people must feel truly together.
+
+No CGI.
+No fake face.
+No cartoon.
+`,
+    },
+    // ================= COLOMBIA =================
+    {
+        id: "col_selfie",
+        title: "Colombia Matchday",
+        subtitle: "Atmosfera stadio",
+        prompt: `
+Ultra realistic Colombia football selfie.
+
+A young woman taking a selfie beside a Colombia football superstar during matchday.
+
+Preserve the uploaded user's:
+- facial identity
+- hairstyle
+- skin tone
+- realistic face proportions
+
+Natural stadium atmosphere.
+Authentic football photography.
+Realistic lighting.
+Natural skin texture.
+
+Both subjects must look naturally together.
+
+No cartoon.
+No CGI.
+No 3D.
+`,
     },
     {
-        id: "fra_skills_winger",
-        title: "Francia – Ala tecnica",
-        subtitle: "Panchina relax",
-        archetypeKey: "fra_skills_winger",
-        presetKey: "social",
-        basePrompt: "A world-class male French football star, realistic athletic build, premium professional footballer, handsome and masculine face, wearing a realistic France national team style jersey in dark navy blue with elegant national details, elite sports presence, authentic match-day look, looks like a real famous football player",
-        scenes: {
-            campo: "On a football pitch in a large stadium, realistic sports mood.",
-            tunnel: "Inside a football stadium tunnel, modern dramatic lighting.",
-            panchina: "Relaxed moment on the stadium bench, realistic sports background.",
-        },
+        id: "col2_selfie",
+        title: "Colombia Superstar",
+        subtitle: "VIP stadium selfie",
+        prompt: `
+Ultra realistic VIP stadium selfie.
+
+A woman beside a Colombia football superstar inside a crowded stadium.
+
+Preserve the uploaded person's:
+- facial identity
+- hairstyle
+- realistic face details
+- skin tone
+
+The image must look:
+- authentic
+- naturally photographed
+- cinematic
+- realistic
+
+Real smartphone selfie.
+Natural stadium lighting.
+Same depth of field.
+
+No fake face.
+No cartoon.
+`,
+    },
+    {
+        id: "col3_selfie",
+        title: "Colombia Victory",
+        subtitle: "Post match selfie",
+        prompt: `
+Ultra realistic football victory selfie.
+
+A happy woman taking a selfie beside a Colombia football superstar after the match.
+
+Preserve the uploaded user's:
+- facial identity
+- hairstyle
+- skin tone
+- facial realism
+
+Authentic football celebration atmosphere.
+Natural lighting.
+Realistic sports photography.
+Same camera perspective.
+
+No CGI.
+No cartoon.
+No fake face.
+`,
+    },
+    // ================= ENGLAND =================
+    {
+        id: "eng_selfie",
+        title: "England Superstar",
+        subtitle: "VIP stadium selfie",
+        prompt: `
+Ultra realistic English football selfie.
+
+A stylish woman beside an England football superstar inside a premium stadium area.
+
+Preserve the uploaded user's:
+- facial identity
+- face shape
+- hairstyle
+- skin tone
+
+Realistic iphone selfie.
+Authentic football atmosphere.
+Natural lighting.
+Real sports photography.
+
+Both subjects must feel naturally photographed together.
+
+No CGI.
+No cartoon.
+No fake face.
+`,
+    },
+    // ================= FRANCE =================
+    {
+        id: "fra_selfie",
+        title: "France Victory Selfie",
+        subtitle: "Post match moment",
+        prompt: `
+Ultra realistic France football selfie.
+
+A woman celebrating beside a France football superstar after victory.
+
+Preserve the uploaded person's:
+- facial identity
+- hairstyle
+- skin tone
+- realistic face details
+
+Natural sports photography.
+Authentic celebration atmosphere.
+Realistic lighting.
+Natural skin texture.
+
+The image must feel candid and real.
+
+No CGI.
+No fake face.
+No cartoon.
+`,
+    },
+    // ================= PORTUGAL =================
+    {
+        id: "por_selfie",
+        title: "Portugal Tunnel Cam",
+        subtitle: "Pre-match selfie",
+        prompt: `
+Cinematic football tunnel selfie.
+
+A stylish young woman taking a selfie beside a Portugal football superstar before the match.
+
+Preserve the uploaded user's:
+- facial identity
+- face shape
+- hairstyle
+- skin tone
+
+The final image must look:
+- naturally photographed
+- realistic
+- cinematic
+- authentic
+- iphone selfie quality
+
+Same camera lens.
+Same lighting.
+Same skin texture.
+
+No fake face.
+No CGI.
+No cartoon.
+`,
+    },
+    // ================= SPAIN =================
+    {
+        id: "spa_selfie",
+        title: "Spain Matchday",
+        subtitle: "Pitch-side selfie",
+        prompt: `
+Ultra realistic Spain football selfie.
+
+A woman taking a selfie beside a Spain football superstar near the football pitch.
+
+Preserve the uploaded person's:
+- facial identity
+- hairstyle
+- skin tone
+- realistic face proportions
+
+Authentic sports atmosphere.
+Natural lighting.
+Realistic iphone selfie.
+Natural skin texture.
+Same camera perspective.
+
+Both people must feel naturally together.
+
+No cartoon.
+No CGI.
+No fake face.
+`,
     },
 ];
-// ================= MAP (IMPORTANTISSIMO) =================
-exports.CALCIO_ARCHETYPES_MAP = Object.fromEntries(exports.CALCIO_ARCHETYPES_CARDS.map((card) => [card.archetypeKey, card]));
+// ================= MAP =================
+exports.CALCIO_ARCHETYPES_MAP = Object.fromEntries(exports.CALCIO_ARCHETYPES_CARDS.map((card) => [
+    card.id,
+    card,
+]));

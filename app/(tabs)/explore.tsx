@@ -109,7 +109,7 @@ const COST = hasFreeTrial ? 60 : 0;
   const [images, setImages] = useState<string[]>([]);
 
   const router = useRouter();
-  const API_URL = "https://jenesis-backend.onrender.com";
+  const API_URL = "https://jenesis-backend-1.onrender.com";
   const PROJECTS_KEY = "projects";
 
   const [calcioModalOpen, setCalcioModalOpen] = React.useState(false);
