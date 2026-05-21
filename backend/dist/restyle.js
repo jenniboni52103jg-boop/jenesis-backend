@@ -1,20 +1,54 @@
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getStyleCardPrompts = getStyleCardPrompts;
 exports.getCouplePrompt = getCouplePrompt;
+exports.restyleCalcioImage = restyleCalcioImage;
 exports.restyleImage = restyleImage;
 exports.restyleStyleCardImage = restyleStyleCardImage;
-exports.restyleCalcioImage = restyleCalcioImage;
 require("dotenv/config");
-const client_1 = require("@fal-ai/client");
+//import { fal } from "@fal-ai/client";
+const fal = __importStar(require("@fal-ai/serverless-client"));
 const sharp_1 = __importDefault(require("sharp"));
 const buffer_1 = require("buffer");
 console.log("RESTYLE FILE = FAL");
 console.log("FAL_KEY =", process.env.FAL_KEY ? "OK" : "MISSING");
-client_1.fal.config({
+fal.config({
     credentials: process.env.FAL_KEY,
 });
 /* ================= STYLE CARDS PROMPTS ================= */
@@ -425,7 +459,7 @@ ultra detailed face, high skin detail, natural pores, realistic skin texture, sh
 `.trim();
         return [prompt1, prompt2, prompt3, prompt4];
     }
-    if (templateKey === "anime") {
+    if (templateKey === "travel") {
         const prompt1 = `
 Keep the exact same person, preserve facial identity, eyes, nose, lips, and proportions.
 
@@ -817,81 +851,133 @@ low quality, blurry, distorted face, duplicate person,
 extra fingers, extra limbs, bad anatomy, text, watermark, logo
 `.trim();
 }
-/* ================= CALCIO PROMPTS ================= */
-function getCalcioPrompt(opts) {
-    return `
-Create a photorealistic World Cup 2026 football fan photo with EXACTLY TWO PEOPLE.
-
-PERSON 1:
-The uploaded person must remain clearly recognizable.
-Preserve only the uploaded person's identity, face, eyes, nose, lips, skin tone, and overall facial structure.
-Do not change the uploaded person's gender or identity.
-
-IDENTITY LOCK:
-The uploaded person's face must be used ONLY ONCE.
-Do not reuse, duplicate, clone, or copy this face on any other person.
-Only one person in the image can have this identity.
-
-PERSON 2:
-Add ONE professional MALE football player next to the uploaded person.
-He must be clearly a man.
-He must look like a world-famous elite football player.
-He must have masculine facial structure, strong jawline, broad shoulders, athletic footballer body, premium realistic presence.
-He must be a completely different identity from the uploaded person.
-He must NOT look like her twin, sibling, clone, or female version.
-
-IMPORTANT:
-Do NOT create two women.
-Do NOT create two similar faces.
-Do NOT feminize the football player.
-Do NOT create two copies of the same person.
-
-COMPOSITION:
-The image must look like a real fan moment during World Cup 2026.
-Use a wider framing with much more visible stadium environment.
-Do NOT make it a beauty portrait.
-Do NOT make it a close-up selfie with only faces.
-
-SCENE REFERENCE GOAL:
-If the scene is campo, the framing should feel like a real fan photo near the pitch/border of the stadium, with open field and strong stadium visibility.
-If the scene is panchina, the framing should feel like a realistic bench-side or seat-side moment, with both people visible and the stadium atmosphere around them.
-If the scene is tunnel, the framing should feel like a realistic pre-match stadium tunnel moment, cinematic but believable, with visible tunnel depth and sports atmosphere.
-
-STADIUM ENVIRONMENT:
-The scene must clearly happen inside a large World Cup 2026 football stadium.
-Show:
-- stadium seating
-- crowd
-- football pitch or bench area or tunnel depending on scene
-- realistic match atmosphere
-- more background visibility
-Do NOT blur the stadium too much.
-
-STYLE GOAL:
-The result must look like a real sports photo, not a fashion portrait, not a beauty photoshoot, not an AI poster.
-It must feel like a believable fan moment captured during a real football event.
-
-FOOTBALL LOOK:
-The football player must wear the correct national team style jersey and realistic professional match outfit based on the selected archetype.
-The jersey colors must match the country correctly.
-The football player must look like a real professional national-team player.
-
-ARCHETYPE:
-${opts.archetypePrompt}
-
-SCENE:
-${opts.scenePrompt}
-`.trim();
-}
 function getCalcioNegativePrompt() {
     return `
-two women, two girls, female football player, same face, same identity, clone, twin, sisters,
-duplicate face, copied face, mirrored face, similar female face,
-beauty portrait, glamour portrait, fashion editorial, studio portrait,
-close-up only, face close-up, portrait crop, shallow background only,
-blurred stadium, no stadium, missing pitch, missing crowd,
-extra people, third person, child, deformed face, blurry face, bad anatomy
+duplicate person,
+two identical faces,
+clone,
+extra fingers,
+deformed hands,
+bad anatomy,
+blurry face,
+low quality,
+distorted eyes,
+multiple people,
+extra limbs,
+cropped face,
+cut head,
+mutated hands,
+unrealistic proportions,
+fake skin,
+cartoon,
+cgi,
+3d render,
+painting,
+illustration
 `.trim();
+}
+/* ================= CALCIO ASYNC INPAINT ================= */
+async function restyleCalcioImage(opts) {
+    console.log("⚽ FLUX FILL START");
+    const templateUrl = await uploadBase64ToFal(opts.templateBase64);
+    const maskUrl = await uploadBase64ToFal(opts.maskBase64);
+    const userUrl = await uploadBase64ToFal(opts.userImageBase64);
+    console.log("TEMPLATE URL =", templateUrl);
+    console.log("MASK URL =", maskUrl);
+    console.log("USER URL =", userUrl);
+    console.log("🔥 CALLING FAL INPAINT");
+    try {
+        const result = await fal.subscribe("fal-ai/flux-general/inpainting", {
+            input: {
+                image_url: templateUrl,
+                mask_url: maskUrl,
+                control_image_url: userUrl,
+                prompt: `
+Ultra realistic stadium selfie photo.
+
+IMPORTANT:
+The uploaded person must preserve EXACT identity.
+
+STRICT RULES:
+- same face
+- same eyes
+- same nose
+- same jawline
+- same eyebrows
+- same lips
+- same hairstyle
+- same skin texture
+- same facial proportions
+- same ethnicity
+- same age
+
+The person must look IDENTICAL to the uploaded selfie.
+
+Do NOT redesign the face.
+Do NOT beautify the face.
+Do NOT generate another person.
+
+Natural stadium selfie with Lionel Messi.
+
+Messi and the uploaded person taking a realistic selfie together after football match.
+
+Natural phone camera perspective.
+Realistic shadows.
+Realistic skin pores.
+Realistic DSLR quality.
+Instagram sports selfie.
+
+NO AI LOOK.
+NO CGI.
+NO CARTOON.
+NO BEAUTIFIED FACE.
+`,
+                negative_prompt: getCalcioNegativePrompt(),
+                guidance_scale: 18,
+                num_inference_steps: 50,
+                strength: 0.72,
+                sync_mode: true,
+            },
+            logs: true,
+            onQueueUpdate(update) {
+                if (update.status === "IN_PROGRESS") {
+                    for (const log of update.logs ?? []) {
+                        console.log("FLUX FILL:", log.message);
+                    }
+                }
+            },
+        });
+        console.log("FULL RESULT:");
+        console.dir(result, { depth: null });
+        console.log("FLUX FILL RESULT =", JSON.stringify(result, null, 2));
+        const data = result?.data || result;
+        console.log("FULL DATA =", data);
+        const finalImage = data?.images?.[0]?.url ||
+            data?.image?.url ||
+            data?.url ||
+            null;
+        console.log("FINAL IMAGE =", finalImage);
+        if (!finalImage) {
+            throw new Error("Flux Fill did not return image");
+        }
+        // SE È BASE64
+        if (typeof finalImage === "string" &&
+            finalImage.startsWith("data:image")) {
+            console.log("RETURNING BASE64 IMAGE");
+            return finalImage;
+        }
+        // SE È URL HTTPS
+        if (typeof finalImage === "string" &&
+            finalImage.startsWith("http")) {
+            console.log("RETURNING HTTP IMAGE URL");
+            return finalImage;
+        }
+        throw new Error("Unsupported image format returned by Flux");
+    }
+    catch (err) {
+        console.error("FLUX FILL ERROR =", JSON.stringify(err, null, 2));
+        throw err;
+    }
 }
 /* ================= SHARED FAL HELPER ================= */
 async function uploadBase64ToFal(imageBase64) {
@@ -915,7 +1001,7 @@ async function uploadBase64ToFal(imageBase64) {
         .jpeg({ quality: 95 })
         .toBuffer();
     const blob = new buffer_1.Blob([jpegBuffer], { type: "image/jpeg" });
-    const uploaded = await client_1.fal.storage.upload(blob);
+    const uploaded = await fal.storage.upload(blob);
     return uploaded;
 }
 /* ================= EFFECTS AI CREATE ================= */
@@ -927,7 +1013,7 @@ async function restyleImage(imageBase64, effect) {
     const uploadedUrl = await uploadBase64ToFal(imageBase64);
     console.log("FAL STORAGE URL =", uploadedUrl);
     try {
-        const result = await client_1.fal.subscribe("fal-ai/flux-pulid", {
+        const result = await fal.subscribe("fal-ai/flux-pulid", {
             input: {
                 prompt,
                 reference_image_url: uploadedUrl,
@@ -948,7 +1034,7 @@ async function restyleImage(imageBase64, effect) {
             },
         });
         console.log("FAL RAW RESULT =", JSON.stringify(result, null, 2));
-        const data = result?.data;
+        const data = result.data;
         const finalUrl = data?.images?.[0]?.url ?? null;
         if (!finalUrl) {
             console.error("FAL RAW DATA =", JSON.stringify(data, null, 2));
@@ -968,7 +1054,7 @@ async function restyleStyleCardImage(opts) {
     const uploadedUrl = await uploadBase64ToFal(opts.imageBase64);
     console.log("STYLE CARD FAL STORAGE URL =", uploadedUrl);
     try {
-        const result = await client_1.fal.subscribe("fal-ai/flux-pulid", {
+        const result = await fal.subscribe("fal-ai/flux-pulid", {
             input: {
                 prompt: opts.prompt,
                 reference_image_url: uploadedUrl,
@@ -989,7 +1075,7 @@ async function restyleStyleCardImage(opts) {
             },
         });
         console.log("STYLE CARD FAL RAW RESULT =", JSON.stringify(result, null, 2));
-        const data = result?.data;
+        const data = result.data;
         const finalUrl = data?.images?.[0]?.url ?? null;
         if (!finalUrl) {
             console.error("STYLE CARD FAL RAW DATA =", JSON.stringify(data, null, 2));
@@ -999,51 +1085,6 @@ async function restyleStyleCardImage(opts) {
     }
     catch (err) {
         console.error("STYLE CARD FAL FULL ERROR =", JSON.stringify(err, null, 2));
-        throw err;
-    }
-}
-/* ================= CALCIO ================= */
-async function restyleCalcioImage(opts) {
-    console.log("CALCIO RESTYLE START");
-    const prompt = getCalcioPrompt({
-        archetypePrompt: opts.archetypePrompt,
-        scenePrompt: opts.scenePrompt,
-    });
-    const negativePrompt = getCalcioNegativePrompt();
-    const uploadedUrl = await uploadBase64ToFal(opts.imageBase64);
-    console.log("CALCIO FAL STORAGE URL =", uploadedUrl);
-    try {
-        const result = await client_1.fal.subscribe("fal-ai/flux-pulid", {
-            input: {
-                prompt,
-                reference_image_url: uploadedUrl,
-                image_size: "portrait_16_9",
-                num_inference_steps: 28,
-                guidance_scale: 4.5,
-                negative_prompt: negativePrompt,
-                id_weight: 0.82,
-                enable_safety_checker: true,
-            },
-            logs: true,
-            onQueueUpdate(update) {
-                if (update.status === "IN_PROGRESS") {
-                    for (const log of update.logs ?? []) {
-                        console.log("CALCIO FAL LOG:", log.message);
-                    }
-                }
-            },
-        });
-        console.log("CALCIO FAL RAW RESULT =", JSON.stringify(result, null, 2));
-        const data = result?.data;
-        const finalUrl = data?.images?.[0]?.url ?? null;
-        if (!finalUrl) {
-            console.error("CALCIO FAL RAW DATA =", JSON.stringify(data, null, 2));
-            throw new Error("fal did not return a valid calcio image URL");
-        }
-        return finalUrl;
-    }
-    catch (err) {
-        console.error("CALCIO FAL FULL ERROR =", JSON.stringify(err, null, 2));
         throw err;
     }
 }

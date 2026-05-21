@@ -855,7 +855,6 @@ extra fingers, extra limbs, bad anatomy, text, watermark, logo
 }
 
 /* ================= CALCIO ================= */
-
 type RestyleCalcioInput = {
   userImageBase64: string;
 
@@ -915,65 +914,45 @@ export async function restyleCalcioImage(opts: {
 
   try {
     const result: any = await fal.subscribe(
-      "fal-ai/flux-general/inpainting",
+      "fal-ai/flux/dev/image-to-image",
       {
         input: {
-          image_url: templateUrl,
+  image_url: userUrl,
 
-          control_image_url: userUrl,
-
-         prompt: `
+  prompt: `
 Ultra realistic stadium selfie photo.
 
 IMPORTANT:
-The uploaded person must preserve EXACT identity.
+Preserve EXACT identity of uploaded person.
 
-STRICT RULES:
-- same face
-- same eyes
-- same nose
-- same jawline
-- same eyebrows
-- same lips
-- same hairstyle
-- same skin texture
-- same facial proportions
-- same ethnicity
-- same age
+The uploaded person taking a realistic selfie with Lionel Messi after football match.
 
-The person must look IDENTICAL to the uploaded selfie.
+Natural stadium lighting.
+Realistic phone selfie.
+Same exact face.
+Same exact identity.
+Same hairstyle.
+Same facial proportions.
+Professional sports photography.
+Ultra realistic.
+Instagram football selfie.
 
-Do NOT redesign the face.
-Do NOT beautify the face.
-Do NOT generate another person.
-
-Natural stadium selfie with Lionel Messi.
-
-Messi and the uploaded person taking a realistic selfie together after football match.
-
-Natural phone camera perspective.
-Realistic shadows.
-Realistic skin pores.
-Realistic DSLR quality.
-Instagram sports selfie.
-
-NO AI LOOK.
 NO CGI.
+NO AI LOOK.
 NO CARTOON.
-NO BEAUTIFIED FACE.
 `,
 
-negative_prompt:
-  getCalcioNegativePrompt(),
+  negative_prompt:
+    getCalcioNegativePrompt(),
 
-          guidance_scale: 18,
+  strength: 0.68,
 
-          num_inference_steps: 50,
+  num_inference_steps: 40,
 
-          strength: 0.72,
+  guidance_scale: 7,
 
-          sync_mode: true,
-        },
+  sync_mode: true,
+},
 
         logs: true,
 
